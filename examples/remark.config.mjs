@@ -1,5 +1,5 @@
-import stopslop from "remark-lint-stopslop/remark";
+import slopstopper from "remark-lint-slopstopper/remark";
 
 export default {
-  plugins: [[stopslop, { options: { preset: "low-density" } }]],
+  plugins: [[slopstopper, { options: { preset: "low-density" } }]],
 };

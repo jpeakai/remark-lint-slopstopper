@@ -1,4 +1,4 @@
-# remark-lint-stopslop
+# remark-lint-slopstopper
 
 Remark preset and plugin for Markdown linting, concise prose, and Mermaid diagram analysis. It provides the upstream recommended remark-lint preset plus five opt-in policies for prose layout, sentence and paragraph budgets, Mermaid contrast, and visual complexity.
 
@@ -7,7 +7,7 @@ Requires Node.js 24 or newer, or Bun 1.3 or newer.
 ## Install
 
 ```sh
-bun add -d remark-lint-stopslop remark-cli
+bun add -d remark-lint-slopstopper remark-cli
 ```
 
 ## Use the preset
@@ -15,9 +15,9 @@ bun add -d remark-lint-stopslop remark-cli
 The default export enables GitHub Flavored Markdown and the recommended remark-lint rules:
 
 ```js
-import stopslop from "remark-lint-stopslop";
+import slopstopper from "remark-lint-slopstopper";
 
-export default { plugins: [stopslop] };
+export default { plugins: [slopstopper] };
 ```
 
 ## Enable custom policies
@@ -25,10 +25,10 @@ export default { plugins: [stopslop] };
 Import the remark plugin to enable the five custom policies:
 
 ```js
-import stopslop from "remark-lint-stopslop/remark";
+import slopstopper from "remark-lint-slopstopper/remark";
 
 export default {
-  plugins: [[stopslop, {
+  plugins: [[slopstopper, {
     options: { maxWords: 25, maxSentences: 5 },
     rules: { "sentence-word-budget-exceeded": { maxWords: 20 } }
   }]]

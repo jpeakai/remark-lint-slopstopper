@@ -7,7 +7,7 @@ import remarkStringify from "remark-stringify";
 import { unified } from "unified";
 import type { VFile } from "vfile";
 import { analyzeProse } from "../prose/analyze.ts";
-import remarkStopslop from "../remark/plugin.ts";
+import remarkSlopstopper from "../remark/plugin.ts";
 import { createDocument } from "./context.ts";
 
 test("the supplied remark tree retains lazy language on every paragraph and text node", async () => {
@@ -121,7 +121,7 @@ test("following remark plugins receive language views on reparsed fixer-round no
     .use(() => (tree: Root) => {
       trees.push(tree);
     })
-    .use(remarkStopslop, { fix: true })
+    .use(remarkSlopstopper, { fix: true })
     .use(() => (tree: Root) => {
       trees.push(tree);
     });
@@ -171,7 +171,7 @@ test("reused remark processors analyze each actual host tree rather than cached 
       const text = paragraph?.children.find((node) => node.type === "text");
       if (text) text.value = "One sentence.";
     })
-    .use(remarkStopslop, {
+    .use(remarkSlopstopper, {
       rules: {
         "sentence-word-budget-exceeded": false,
         "paragraph-sentence-budget-exceeded": false,

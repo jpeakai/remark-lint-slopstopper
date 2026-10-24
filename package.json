@@ -1,5 +1,5 @@
 {
-  "name": "remark-lint-stopslop",
+  "name": "remark-lint-slopstopper",
   "version": "0.1.0",
   "type": "module",
   "engines": {

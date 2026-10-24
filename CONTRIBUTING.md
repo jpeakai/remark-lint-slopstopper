@@ -1,7 +1,7 @@
 # Contributing documentation policies
 
 Start with the [package architecture](ARCHITECTURE.md), then choose the prose or Mermaid entry point below.
-The custom plugin is exported as `remark-lint-stopslop/remark`; the root `remark-lint-stopslop` export is an upstream recommended preset.
+The custom plugin is exported as `remark-lint-slopstopper/remark`; the root `remark-lint-slopstopper` export is an upstream recommended preset.
 Adding a custom policy does not automatically enable it in the root preset.
 
 ## Add a prose rule
@@ -20,7 +20,7 @@ Add options to `RuleOptions` when a typed shared option is needed; per-rule sett
 ## Reuse the document model
 
 Accept `DocumentContext` when called by an orchestrator.
-For direct callers, `createDocument(source, {tree, cwd})` is exported as `remark-lint-stopslop/document`.
+For direct callers, `createDocument(source, {tree, cwd})` is exported as `remark-lint-slopstopper/document`.
 Pass the actual host tree when available; reparsing source alone would lose upstream tree edits.
 The optional `cwd` controls project vocabulary and defaults to the process working directory.
 
@@ -41,7 +41,7 @@ For example, an asynchronous assertion can inspect a sentence without owning NLP
 
 ```ts
 import assert from "node:assert/strict";
-import { createDocument } from "remark-lint-stopslop/document";
+import { createDocument } from "remark-lint-slopstopper/document";
 
 const document = createDocument("The parser validates requests.");
 const paragraph = document.paragraphs[0];

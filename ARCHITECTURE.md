@@ -4,7 +4,7 @@ This package separates five Markdown policies from shared document models, langu
 The [remark adapter](src/remark/plugin.ts) owns configuration, native suppression and optional source edits.
 All models and caches are transient process memory.
 See [contributing](CONTRIBUTING.md) to add a policy.
-The [root export](index.ts) is a separate upstream recommended remark preset; custom policies require `remark-lint-stopslop/remark`.
+The [root export](index.ts) is a separate upstream recommended remark preset; custom policies require `remark-lint-slopstopper/remark`.
 
 ## Package boundaries
 

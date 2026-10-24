@@ -11,8 +11,8 @@ import { createDocument } from "../document/context.ts";
 import { pointAt } from "../document/positions.ts";
 import { fences } from "../mermaid/markdown.ts";
 import { RULES } from "../rules.ts";
-import type { RemarkStopslopOptions, RemarkRuleSetting } from "./plugin.ts";
-import remarkStopslop from "./plugin.ts";
+import type { RemarkSlopstopperOptions, RemarkRuleSetting } from "./plugin.ts";
+import remarkSlopstopper from "./plugin.ts";
 
 const options = { maxWords: 8, maxSentences: 2, preset: "low-density" };
 const graph =
@@ -54,11 +54,11 @@ test("prose-only remark execution does not install Mermaid's browser globals", (
   assert.equal(result, "");
 });
 
-function processor(fix = false, rules?: RemarkStopslopOptions["rules"]) {
+function processor(fix = false, rules?: RemarkSlopstopperOptions["rules"]) {
   return unified()
     .use(remarkParse)
     .use(remarkStringify)
-    .use(remarkStopslop, { fix, options, rules });
+    .use(remarkSlopstopper, { fix, options, rules });
 }
 
 test("all five policies report native remark errors by default", async () => {
@@ -99,7 +99,7 @@ test("lint-only transformation preserves source and never records applied edits"
   const file = new VFile(fixture);
   await remark.run(remark.parse(file), file);
   assert.equal(String(file), fixture);
-  assert.equal(file.data.stopslopFixes, undefined);
+  assert.equal(file.data.slopstopperFixes, undefined);
   assert.ok(file.messages.length > 0);
 });
 
@@ -117,7 +117,7 @@ test("identical source in different host ASTs never reuses stale diagnostics", a
         );
       }
     })
-    .use(remarkStopslop);
+    .use(remarkSlopstopper);
   const paragraph = await remark.process({
     value: source,
     path: "paragraph.md",
@@ -135,7 +135,7 @@ test("lint-only Mermaid policies never change diagrams in fix mode", async () =>
   const source = ["```mermaid", graph, "```", ""].join("\n");
   const file = await processor(true).process(source);
   assert.equal(String(file), source);
-  assert.deepEqual(file.data.stopslopFixes, []);
+  assert.deepEqual(file.data.slopstopperFixes, []);
   assert.ok(
     file.messages.some(
       (message) => message.ruleId === "contrast-text-below-aa",

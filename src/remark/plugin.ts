@@ -27,7 +27,7 @@ export type RemarkRuleSetting =
   | RuleOptions
   | [Severity, RuleOptions?];
 
-export interface RemarkStopslopOptions {
+export interface RemarkSlopstopperOptions {
   fix?: boolean;
   options?: RuleOptions;
   rules?: Partial<Record<ShortRuleId, RemarkRuleSetting>>;
@@ -62,7 +62,7 @@ function setting(value: RemarkRuleSetting | undefined): Setting | null {
 const shortName = (ruleId: PolicyRuleId): ShortRuleId =>
   ruleId.split("/")[1] as ShortRuleId;
 
-function configuredRules(options: RemarkStopslopOptions): RuleConfiguration[] {
+function configuredRules(options: RemarkSlopstopperOptions): RuleConfiguration[] {
   return RULES.flatMap((ruleId) => {
     const config = setting(options.rules?.[shortName(ruleId)]);
     return config ? [{ ruleId, ...config }] : [];
@@ -105,7 +105,7 @@ function emitDiagnostics(
   }
 }
 
-function reporter(options: RemarkStopslopOptions): ReportDiagnostics {
+function reporter(options: RemarkSlopstopperOptions): ReportDiagnostics {
   const settings = configuredRules(options);
   const control = remarkMessageControl({
     name: "lint",
@@ -154,7 +154,7 @@ function applyRound(file: VFile, report: Report): TextEdit[] | null {
 
 function transformer(
   processor: Processor,
-  options: RemarkStopslopOptions,
+  options: RemarkSlopstopperOptions,
 ): Transformer<Root> {
   const report = reporter(options);
   return async (tree, file) => {
@@ -172,16 +172,16 @@ function transformer(
       // A Markdown serializer could reformat unrelated bytes. Compile the
       // verified source edits, even if remark-stringify is also installed.
       processor.compiler = (_tree, currentFile) => String(currentFile);
-      file.data.stopslopFixes = applied;
+      file.data.slopstopperFixes = applied;
     }
     return currentTree;
   };
 }
 
 /** Native remark/VFile diagnostics, with opt-in source-preserving whitespace fixes. */
-export default function remarkStopslop(
+export default function remarkSlopstopper(
   this: Processor,
-  options: RemarkStopslopOptions = {},
+  options: RemarkSlopstopperOptions = {},
 ): Transformer<Root> {
   this.use(remarkGfm).use(remarkFrontmatter, ["yaml", "toml"]);
   return transformer(this, options);

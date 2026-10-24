@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "remark-lint-stopslop",
+      "name": "remark-lint-slopstopper",
       "dependencies": {
         "@mermaid-js/parser": "1.2.1",
         "@statelyai/graph": "2.6.0",

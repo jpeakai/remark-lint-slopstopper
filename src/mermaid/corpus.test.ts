@@ -8,7 +8,7 @@ import remarkParse from "remark-parse";
 import { unified } from "unified";
 import { VFile } from "vfile";
 import { createDocument } from "../document/context.ts";
-import remarkStopslop from "../remark/plugin.ts";
+import remarkSlopstopper from "../remark/plugin.ts";
 import { analyzeMermaid, MERMAID_RULES } from "./analyze.ts";
 import { calculateComplexity, thresholdsFrom } from "./complexity/metrics.ts";
 import { fences } from "./markdown.ts";
@@ -101,7 +101,7 @@ test("initial scenarios cover every supported registered Mermaid detector", asyn
 test("complete revised corpus passes all five native remark policies", async () => {
   assert.equal(before.length, 43);
   assert.equal(after.length, 61);
-  const processor = unified().use(remarkParse).use(remarkStopslop);
+  const processor = unified().use(remarkParse).use(remarkSlopstopper);
   const file = new VFile(improved);
   await processor.run(processor.parse(file), file);
   assert.deepEqual(

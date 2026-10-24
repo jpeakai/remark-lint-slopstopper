@@ -1,6 +1,6 @@
 # Lint rule reference
 
-This reference covers the custom policies exported by `remark-lint-stopslop/remark` and the upstream rules enabled by the root `remark-lint-stopslop` preset.
+This reference covers the custom policies exported by `remark-lint-slopstopper/remark` and the upstream rules enabled by the root `remark-lint-slopstopper` preset.
 The root preset does not automatically enable the custom policies.
 See [configuration](README.md#enable-custom-policies), [contributing](CONTRIBUTING.md) and [architecture](ARCHITECTURE.md).
 
@@ -8,8 +8,8 @@ See [configuration](README.md#enable-custom-policies), [contributing](CONTRIBUTI
 
 | Entry point | Enabled checks | Automatic edits |
 | --- | --- | --- |
-| `remark-lint-stopslop` | GFM and upstream recommended remark-lint rules | None provided by this package |
-| `remark-lint-stopslop/remark` | Custom prose and Mermaid policies | Sentence layout when `fix: true` |
+| `remark-lint-slopstopper` | GFM and upstream recommended remark-lint rules | None provided by this package |
+| `remark-lint-slopstopper/remark` | Custom prose and Mermaid policies | Sentence layout when `fix: true` |
 
 Every enabled custom policy reports a fatal VFile error.
 Custom severity settings accept errors or disabling, not warnings.

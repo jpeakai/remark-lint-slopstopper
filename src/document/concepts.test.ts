@@ -8,12 +8,12 @@ import remarkParse from "remark-parse";
 import remarkStringify from "remark-stringify";
 import { unified } from "unified";
 import { analyzeProse } from "../prose/analyze.ts";
-import remarkStopslop from "../remark/plugin.ts";
+import remarkSlopstopper from "../remark/plugin.ts";
 import { conceptVocabulary } from "./concepts.ts";
 import { createDocument } from "./context.ts";
 
 test("only concept headings teach nouns; tables, definitions and code examples are ignored", async () => {
-  const cwd = await mkdtemp(join(tmpdir(), "stopslop-concepts-"));
+  const cwd = await mkdtemp(join(tmpdir(), "slopstopper-concepts-"));
   try {
     await writeFile(
       join(cwd, "CONCEPTS.md"),
@@ -67,8 +67,8 @@ test("only concept headings teach nouns; tables, definitions and code examples a
 });
 
 test("concurrent project vocabularies do not mutate Compromise globally", async () => {
-  const cwd = await mkdtemp(join(tmpdir(), "stopslop-concepts-"));
-  const empty = await mkdtemp(join(tmpdir(), "stopslop-empty-"));
+  const cwd = await mkdtemp(join(tmpdir(), "slopstopper-concepts-"));
+  const empty = await mkdtemp(join(tmpdir(), "slopstopper-empty-"));
   try {
     await writeFile(
       join(cwd, "CONCEPTS.md"),
@@ -97,7 +97,7 @@ test("concurrent project vocabularies do not mutate Compromise globally", async 
 });
 
 test("vocabulary reads are lazy, shared per context, and refreshed for new contexts", async () => {
-  const cwd = await mkdtemp(join(tmpdir(), "stopslop-concepts-"));
+  const cwd = await mkdtemp(join(tmpdir(), "slopstopper-concepts-"));
   try {
     const document = createDocument(
       "can handles requests.\n\nmay stores records.",
@@ -130,7 +130,7 @@ test("vocabulary reads are lazy, shared per context, and refreshed for new conte
 });
 
 test("absent concepts are optional while real file access failures remain visible", async () => {
-  const cwd = await mkdtemp(join(tmpdir(), "stopslop-concepts-"));
+  const cwd = await mkdtemp(join(tmpdir(), "slopstopper-concepts-"));
   try {
     assert.deepEqual(await conceptVocabulary(cwd)(), {});
     const file = join(cwd, "not-a-directory");
@@ -142,7 +142,7 @@ test("absent concepts are optional while real file access failures remain visibl
 });
 
 test("remark uses VFile.cwd and keeps project vocabulary on reparsed fixer nodes", async () => {
-  const cwd = await mkdtemp(join(tmpdir(), "stopslop-concepts-"));
+  const cwd = await mkdtemp(join(tmpdir(), "slopstopper-concepts-"));
   try {
     await writeFile(
       join(cwd, "CONCEPTS.md"),
@@ -152,7 +152,7 @@ test("remark uses VFile.cwd and keeps project vocabulary on reparsed fixer nodes
     const processor = unified()
       .use(remarkParse)
       .use(remarkStringify)
-      .use(remarkStopslop, {
+      .use(remarkSlopstopper, {
         fix: true,
         rules: {
           "contrast-text-below-aa": false,
@@ -181,7 +181,7 @@ test("remark uses VFile.cwd and keeps project vocabulary on reparsed fixer nodes
 });
 
 test("disabled prose policies never read concepts and concurrent node requests share the vocabulary promise", async () => {
-  const cwd = await mkdtemp(join(tmpdir(), "stopslop-concepts-"));
+  const cwd = await mkdtemp(join(tmpdir(), "slopstopper-concepts-"));
   try {
     const invalid = join(cwd, "not-a-directory");
     await writeFile(invalid, "content");
