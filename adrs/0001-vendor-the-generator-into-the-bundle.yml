@@ -1,0 +1,32 @@
+id: SLOP-0001
+slug: vendor-the-generator-into-the-bundle
+plan_id: null
+title: The bundle carries its own copy of the okf-yaml generator, schema and templates
+description: The adr skill's renderer is vendored into adrs/ and run by uv, so the bundle renders from a clone alone
+status: accepted
+accepted_on: 2026-10-24
+last_changed_on: 2026-10-24
+tags: [tooling, okf-yaml]
+
+provenance: This package is installed and read from its own repository, so its decisions must render from a clone alone, and the adr skill ships okf_render.py with a golden fixture that a verbatim copy inherits
+enforced_in:
+  - adrs/okf_render.py, adrs/templates/ and adrs/record.schema.json
+  - the fix target in the Makefile, which renders the bundle against the vendored schema
+  - the ci target, which fails when a regenerate leaves the tree dirty
+
+relates_to: []
+
+decision:
+  given: the reference generator is a single Python file whose only dependencies uv can supply without a project
+  we_prefer: vendoring the skill's generator unchanged into adrs/ and running it with uv run --no-project, over depending on a shared package or porting it to TypeScript
+  because: a clone of this repo then renders and gates its decisions with nothing outside it, while the copy stays provably the convention's
+  unless: the repo gains its own Python project, at which point the generator's dependencies move into it
+
+consequences:
+  pros:
+    - The bundle renders from this repo alone, with no package fetched from another repo.
+    - The only local divergence is the id pattern in the schema, so an upstream fix arrives by copying.
+  cons:
+    - The repo carries Python it does not maintain, in a style that is not its own.
+    - The vendored copy drifts from the skill silently, because nothing checks the skill for changes.
+    - Rendering needs uv and access to pypi.org on first run.

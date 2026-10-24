@@ -126,8 +126,8 @@ bun run check
 bun run test:node
 ```
 
-The package check includes strict TypeScript, Biome complexity rules with cognitive complexity at most 10, both Knip modes and behaviour tests.
-Keep tests beside the implementation and assert observable behaviour, including failures and disabled policies.
+The package check runs the gates listed in the [coding standards](CODING_STANDARDS.md): formatting, strict linting, strict TypeScript, both Knip modes and tests with per-file coverage.
+Write tests to the [coding standards](CODING_STANDARDS.md).
 For Mermaid changes, use the multi-diagram corpus and independently verify complete split outcomes where affected.
 For documentation diagrams, run the published Mermaid parse, complexity and dual-theme contrast gate.
 

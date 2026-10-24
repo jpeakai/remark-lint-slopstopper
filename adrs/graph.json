@@ -1,0 +1,28 @@
+{
+  "elements": [
+    {
+      "data": {
+        "id": "group-tooling",
+        "label": "tooling",
+        "colour": "#6366f1"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0001",
+        "label": "0001",
+        "parent": "group-tooling",
+        "colour": "#6366f1",
+        "file": "0001-vendor-the-generator-into-the-bundle.md",
+        "title": "The bundle carries its own copy of the okf-yaml generator, schema and templates",
+        "description": "The adr skill's renderer is vendored into adrs/ and run by uv, so the bundle renders from a clone alone",
+        "status": "accepted",
+        "tags": "tooling, okf-yaml"
+      }
+    }
+  ],
+  "layout": {
+    "name": "cose"
+  },
+  "height": 620
+}
