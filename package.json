@@ -15,7 +15,8 @@
     "test": "bun test ./src",
     "test:node": "node --test \"src/**/*.test.ts\"",
     "typecheck": "tsc --project config/tsconfig.json",
-    "lint": "biome lint .",
+    "format": "biome format --write .",
+    "lint": "biome check --error-on-warnings .",
     "lint:dead-code": "knip --config config/knip.json && knip --config config/knip.json --production --strict",
     "check": "bun run typecheck && bun run lint && bun run lint:dead-code && bun run test"
   },

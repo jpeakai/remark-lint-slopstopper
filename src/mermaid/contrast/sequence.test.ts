@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { analyzeMermaid } from "../analyze.ts";
+import { scoreSequence } from "./sequence.ts";
 
 const canvas = (color: string) => ({ light: color, dark: color });
 function audit(
@@ -243,4 +244,43 @@ test("named participant groups explicitly report unmodeled title styling", async
   assert(
     findings[0]?.message.includes("group title text styling is not modeled"),
   );
+});
+
+const withConfig = (config: Record<string, unknown>) =>
+  `---\nconfig: ${JSON.stringify(config)}\n---\nsequenceDiagram\n  A->>B: hi`;
+
+test("custom themeCSS blocks the sequence audit at its frontmatter line", async () => {
+  const { pairs, skipped } = await scoreSequence(
+    withConfig({ themeCSS: ".actor { fill: red; }" }),
+  );
+  assert.deepEqual(pairs, []);
+  assert.deepEqual(skipped, [
+    {
+      selector: "themeCSS",
+      line: 2,
+      reason: "themeCSS restyles the diagram with CSS the audit cannot model",
+      blocking: true,
+    },
+  ]);
+});
+
+test("a base colour Mermaid cannot resolve blocks the sequence audit", async () => {
+  const { pairs, skipped } = await scoreSequence(
+    withConfig({ themeVariables: { primaryColor: "not-a-colour" } }),
+  );
+  assert.deepEqual(pairs, []);
+  assert.equal(skipped.length, 1);
+  assert.equal(skipped[0]?.selector, "themeVariables");
+  assert.equal(skipped[0]?.blocking, true);
+  assert.match(
+    skipped[0]?.reason ?? "",
+    /^Mermaid could not resolve the theme: /,
+  );
+});
+
+test("source Mermaid cannot parse yields no pairs and no skipped surfaces", async () => {
+  assert.deepEqual(await scoreSequence("sequenceDiagram\n  A->>"), {
+    pairs: [],
+    skipped: [],
+  });
 });

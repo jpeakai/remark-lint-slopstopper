@@ -8,7 +8,7 @@ import {
 } from "../../parsing/graph.ts";
 import { extractStats } from "../../parsing/statistics.ts";
 import { buildWorkGraph } from "../graph/model.ts";
-import { planWork } from "../planning/search.ts";
+import { laddersOf, planWork } from "../planning/search.ts";
 import { type Build, partitionOf } from "../planning/state.ts";
 import { emitSource } from "../presentation/serialize.ts";
 import { detailView } from "../projection/detail.ts";
@@ -159,4 +159,84 @@ test("kept repeated edges stay separate while grouped ER cardinalities remain di
   ];
   assert.equal(quotientEdges(edgeWork(edges), partitionOf([])).length, 2);
   assert.equal(quotientEdges(edgeWork(edges, "er"), groups).length, 2);
+});
+
+const chain = (prefix: string, n: number): string =>
+  Array.from(
+    { length: n },
+    (_, i) => `${prefix}${i} --> ${prefix}${i + 1}`,
+  ).join("\n");
+
+async function buildOf(text: string): Promise<Build> {
+  const stats = await extractStats(text);
+  const work = buildWorkGraph(await extractGraph(text), {
+    direction: "TB",
+    rows: stats.rows,
+    measured: {
+      nodes: stats.nodes,
+      edges: stats.edges,
+      subgraphs: stats.subgraphs,
+      depth: stats.max_subgraph_depth,
+    },
+  });
+  const build = planWork(work, config, 0, laddersOf(work)[0]);
+  if (typeof build === "string") throw new Error(build);
+  assert.deepEqual(await checkContract(build, config), []);
+  return build;
+}
+
+test("an overview below the floor is reported", async () => {
+  const build = await rowBuild();
+  build.plan.overviewNodes = 0;
+  assert.ok(
+    (await checkContract(build, config)).includes(
+      "9: the overview holds 0 nodes, fewer than 1",
+    ),
+  );
+});
+
+test("a decision folds only with its whole decision region", async () => {
+  const build = await buildOf(
+    `flowchart TD\n${chain("a", 6)}\na6 --> D{Choose}\nD --> p1\nD --> q1\np1 --> J\nq1 --> J\nJ --> b0\n${chain("b", 6)}`,
+  );
+  const group = build.plan.groups.find((g) => g.members.includes("D"));
+  assert.ok(group);
+  assert.ok(group.members.includes("q1"));
+  group.members = group.members.filter((m) => m !== "q1");
+  assert.ok(
+    (await checkContract(build, config)).includes(
+      `6: protected D is folded in ${group.id}`,
+    ),
+  );
+});
+
+test("start and end transitions merged onto a group stand for every transition they merge", async () => {
+  const build = await buildOf(
+    `stateDiagram-v2\n[*] --> S0\n${chain("S", 12)}\nS12 --> C\nstate C {\n[*] --> I0\n${chain("I", 8)}\nI8 --> [*]\n}\nC --> T0\n${chain("T", 6)}\nT6 --> [*]\nS3 --> [*]\nS5 --> [*]: quit`,
+  );
+  const pseudo = build.plan.overview.pseudo;
+  const group = build.plan.groups.find((g) => g.members.includes("S5"));
+  const merged = pseudo?.edges.find((e) => e.source === group?.id);
+  assert.ok(pseudo && group && merged);
+  assert.equal(merged.label, undefined);
+  merged.label = "quit";
+  const labelled = await checkContract(build, config);
+  assert.ok(
+    labelled.includes(
+      `7: the transition of ${merged.target} onto ${group.id} carries a label not all of its transitions carry`,
+    ),
+  );
+  pseudo.edges = pseudo.edges.filter((e) => e !== merged);
+  build.plan.loss.mergedMarkers = 0;
+  const dropped = await checkContract(build, config);
+  assert.ok(
+    dropped.includes(
+      `7: the transition of ${merged.target} into ${group.id} is not drawn onto its group`,
+    ),
+  );
+  assert.ok(
+    dropped.includes(
+      "7: the declared merged start and end transitions are wrong",
+    ),
+  );
 });

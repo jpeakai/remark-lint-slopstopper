@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { extractGraph } from "../../parsing/graph.ts";
 import { buildWorkGraph } from "../graph/model.ts";
-import { flowOrder } from "./ranking.ts";
+import { byCrossing, flowOrder } from "./ranking.ts";
 
 const orderOf = async (source: string): Promise<Array<[string, number]>> => {
   const graph = await extractGraph(source);
@@ -44,4 +44,23 @@ test("state start markers select the entry into a directed cycle", async () => {
       ["C", 1],
     ],
   );
+});
+
+const workOf = async (source: string) => {
+  const graph = await extractGraph(source);
+  return buildWorkGraph(graph, {
+    direction: "TB",
+    rows: 0,
+    measured: { nodes: 0, edges: 0, subgraphs: 0, depth: 0 },
+  });
+};
+
+test("aggregate members rank by boundary crossings, then degree", async () => {
+  const work = await workOf("flowchart TB\nA-->B\nB-->C\nC-->D\nX-->B");
+  assert.deepEqual(byCrossing(work, ["A", "B", "C"]), ["B", "C", "A"]);
+});
+
+test("start and end transitions count as boundary crossings", async () => {
+  const work = await workOf("stateDiagram-v2\n[*]-->A\nA-->[*]\nA-->B\nB-->C");
+  assert.deepEqual(byCrossing(work, ["A", "B"]), ["A", "B"]);
 });

@@ -11,7 +11,7 @@ import { createDocument } from "../document/context.ts";
 import { pointAt } from "../document/positions.ts";
 import { fences } from "../mermaid/markdown.ts";
 import { RULES } from "../rules.ts";
-import type { RemarkSlopstopperOptions, RemarkRuleSetting } from "./plugin.ts";
+import type { RemarkRuleSetting, RemarkSlopstopperOptions } from "./plugin.ts";
 import remarkSlopstopper from "./plugin.ts";
 
 const options = { maxWords: 8, maxSentences: 2, preset: "low-density" };

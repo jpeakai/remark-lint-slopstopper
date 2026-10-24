@@ -69,3 +69,25 @@ test("each emitted scene owns its ordering without mutating or retaining graph s
   );
   assert.deepEqual(graph, original);
 });
+
+const roundTrips = async (source: string, direction = "TB"): Promise<void> => {
+  const graph = await extractGraph(source);
+  const family = graph.diagram_type === "er" ? "er" : "flowchart";
+  const emitted = emitSource(
+    { family, type: graph.diagram_type, direction },
+    { graph, stubs: new Set() },
+  );
+  assert.deepEqual(facts(await extractGraph(emitted)), facts(graph));
+};
+
+test("erDiagram emission keeps entities, attribute rows, labels and cardinalities", async () => {
+  await roundTrips(
+    'erDiagram\nCUSTOMER["Customer account"] {\nstring name\nint age\n}\nORDER\nCUSTOMER ||--o{ ORDER : places\nORDER }|..|{ LINE : "has lines"',
+  );
+});
+
+test("a flowchart shape with no bracket is written as shape data", async () => {
+  await roundTrips(
+    'flowchart TD\nA@{ shape: hourglass }\nB@{ shape: bolt, label: "Strike now" }\nC@{ shape: hourglass, label: "`**Bold** text`" }\nA --> B\nB --> C',
+  );
+});

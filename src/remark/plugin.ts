@@ -62,7 +62,9 @@ function setting(value: RemarkRuleSetting | undefined): Setting | null {
 const shortName = (ruleId: PolicyRuleId): ShortRuleId =>
   ruleId.split("/")[1] as ShortRuleId;
 
-function configuredRules(options: RemarkSlopstopperOptions): RuleConfiguration[] {
+function configuredRules(
+  options: RemarkSlopstopperOptions,
+): RuleConfiguration[] {
   return RULES.flatMap((ruleId) => {
     const config = setting(options.rules?.[shortName(ruleId)]);
     return config ? [{ ruleId, ...config }] : [];

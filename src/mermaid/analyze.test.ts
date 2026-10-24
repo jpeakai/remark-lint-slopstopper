@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { createDocument } from "../document/context.ts";
 import { analyzeMermaid, MERMAID_RULES } from "./analyze.ts";
 import { calculateComplexity, thresholdsFrom } from "./complexity/metrics.ts";
 import { extractStats } from "./parsing/statistics.ts";
@@ -221,4 +222,36 @@ test("transparent states use alternating nested composite backgrounds", async ()
       ),
     );
   }
+});
+
+test("a rule list naming only prose rules skips every fence", async () => {
+  assert.deepEqual(
+    await analyzeMermaid(fenced("flowchart LR\nA-->"), {
+      rules: ["prose/sentence-one-per-line"],
+    }),
+    [],
+  );
+});
+test("a rule list limits findings to the rules it names", async () => {
+  const body = "flowchart LR\nA\nstyle A fill:#fff,color:#fff";
+  const contrast = await analyzeMermaid(fenced(body), {
+    rules: [MERMAID_RULES.complexity],
+  });
+  assert.deepEqual(contrast, []);
+  const found = await analyzeMermaid(fenced(body), {
+    rules: [MERMAID_RULES.contrast],
+  });
+  assert(found.length > 0);
+  assert(found.every((d) => d.ruleId === MERMAID_RULES.contrast));
+});
+test("a failed analysis rejects and leaves later analyses running", async () => {
+  const document = createDocument(fenced("flowchart LR\nA-->B"));
+  const [code] = document.tree.children;
+  assert(code);
+  delete code.position;
+  await assert.rejects(
+    analyzeMermaid(document),
+    /Markdown parser omitted Mermaid fence positions/,
+  );
+  assert.deepEqual(await analyzeMermaid(fenced("flowchart LR\nA-->B")), []);
 });
