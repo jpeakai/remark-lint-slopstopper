@@ -1,5 +1,5 @@
-import docLint from "remark-lint-stopslop/remark";
+import stopslop from "remark-lint-stopslop/remark";
 
 export default {
-  plugins: [[docLint, { options: { preset: "low-density" } }]],
+  plugins: [[stopslop, { options: { preset: "low-density" } }]],
 };

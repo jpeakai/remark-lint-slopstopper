@@ -15,9 +15,9 @@ bun add -d remark-lint-stopslop remark-cli
 The default export enables GitHub Flavored Markdown and the recommended remark-lint rules:
 
 ```js
-import docLint from "remark-lint-stopslop";
+import stopslop from "remark-lint-stopslop";
 
-export default { plugins: [docLint] };
+export default { plugins: [stopslop] };
 ```
 
 ## Enable custom policies
@@ -25,10 +25,10 @@ export default { plugins: [docLint] };
 Import the remark plugin to enable the five custom policies:
 
 ```js
-import docLint from "remark-lint-stopslop/remark";
+import stopslop from "remark-lint-stopslop/remark";
 
 export default {
-  plugins: [[docLint, {
+  plugins: [[stopslop, {
     options: { maxWords: 25, maxSentences: 5 },
     rules: { "sentence-word-budget-exceeded": { maxWords: 20 } }
   }]]
@@ -36,6 +36,22 @@ export default {
 ```
 
 Every enabled custom policy reports an error. Only `sentence-one-per-line` supports automatic edits with `{fix: true}`. See [RULES.md](RULES.md) for policy behaviour and fixer limits.
+
+## Run with bunx
+
+The package ships TypeScript source, so pass `--bun` to run `remark-cli` on the Bun runtime:
+
+```sh
+bunx --bun remark-cli --no-stdout --frail docs/
+```
+
+remark loads `.remarkrc.mjs` from the working directory. Pass `--rc-path` to use another config, and `--output` to write fixes back to the files:
+
+```sh
+bunx --bun remark-cli --rc-path examples/remark-fix.config.mjs --output docs/
+```
+
+The config imports this package, so install it in the linted project first.
 
 ## Develop
 
