@@ -9,13 +9,13 @@ See [configuration](README.md#enable-custom-policies), [contributing](CONTRIBUTI
 | Entry point | Enabled checks | Automatic edits |
 | --- | --- | --- |
 | `remark-lint-slopstopper` | GFM and upstream recommended remark-lint rules | None provided by this package |
-| `remark-lint-slopstopper/remark` | Custom prose and Mermaid policies | Sentence layout when `fix: true` |
+| `remark-lint-slopstopper/remark` | Custom prose and Mermaid policies | Verified prose edits when `fix: true` |
 
 Every enabled custom policy reports a fatal VFile error.
 Custom severity settings accept errors or disabling, not warnings.
 The upstream preset retains upstream message severity; the repository CLI uses `--frail`, so its findings also fail the command.
 Using both entry points combines their checks.
-`fix: true` applies sentence edits but does not guarantee the file passes remaining rules.
+`fix: true` applies verified prose edits but does not guarantee the file passes remaining rules.
 
 ## Custom policies
 
@@ -27,6 +27,15 @@ Configuration uses the short policy name after the slash.
 | `prose/sentence-one-per-line` | Multiple sentences on one line or a soft wrap within a sentence | None specific | Verified whitespace edits |
 | `prose/sentence-word-budget-exceeded` | A sentence exceeding its word budget | `maxWords`, default 25 | None |
 | `prose/paragraph-sentence-budget-exceeded` | A paragraph exceeding its sentence budget | `maxSentences`, default 5 | None |
+| `prose/list-semicolon-delimited-run` | Two or more semicolons in one sentence | `minItems`, default 3 | List Promotion after a colon lead-in |
+| `prose/list-interpunct-joined-run` | Items joined by interpuncts on one line | `minItems`, default 3 | List Promotion after a colon or of a whole paragraph |
+| `prose/list-inline-enumeration-markers` | Inline markers such as `(a)` and `(b)` | None specific | Numbered List Promotion of a clean sequence |
+| `prose/list-comma-labelled-run` | Comma-joined segments that each open with a label | `minItems`, default 3 | List Promotion when every segment is labelled |
+| `prose/list-comma-code-run` | Comma-joined inline code spans | `minItems`, default 3 | List Promotion when the run closes its sentence |
+| `prose/list-comma-plain-run` | A long comma-joined series of short words closing a sentence | `minItems`, default 5 | List Promotion after a colon lead-in |
+| `prose/list-stacked-interpunct-runs` | Interpunct runs stacked on several lines | None specific | Nested List Promotion when every line has a label |
+| `prose/punctuation-em-dash-in-prose` | An em-dash in prose | None specific | Parentheses for a pair, a colon for a lone dash |
+| `prose/punctuation-interpunct-in-prose` | A stray interpunct outside a claimed run | None specific | A comma for each spaced interpunct |
 | `mermaid/contrast-text-below-aa` | Rendered text below 4.5:1 or styling that cannot be audited | `canvas: {light, dark}` | None |
 | `mermaid/complexity-visual-score-acceptable-exceeded` | Visual complexity exceeding the acceptable score | `preset`, `complexity` overrides | None |
 
@@ -92,6 +101,235 @@ The worker stores results.
 
 The rule reports sentence counts and suggested breaks without moving text automatically.
 
+### List promotion
+
+The list policies find a list hidden in running prose.
+Their automatic edit is a List Promotion: a lead-in line followed by a real Markdown list.
+Item text is sliced from the source, so links, emphasis and code travel unchanged.
+
+Inside a list item the promoted list nests under the lead-in.
+Tables, blockquotes, hard breaks and an item that would open as another block stay lint-only.
+Each run policy takes a `minItems` option, a whole number of at least 2, read the same way by its check and its edit.
+
+### Semicolon-delimited run
+
+[`list-semicolon-delimited-run.ts`](src/prose/rules/list-semicolon-delimited-run.ts) reports a sentence with two or more semicolons.
+A single joining semicolon is allowed.
+With a colon lead-in, this sentence becomes a bullet list:
+
+```text
+A release needs: a signed tag; a changelog entry; and a green build.
+```
+
+```text
+A release needs:
+
+- a signed tag
+- a changelog entry
+- a green build
+```
+
+Without a colon there is no lead-in to keep, so this stays reported for a manual rewrite:
+
+```text
+A release needs a signed tag; a changelog entry; a green build.
+```
+
+### Interpunct-joined run
+
+[`list-interpunct-joined-run.ts`](src/prose/rules/list-interpunct-joined-run.ts) reports items joined by interpuncts on one source line.
+It reports three items or more by default:
+
+```text
+Stack: Bun · TypeScript · biome.
+```
+
+With `fix: true` the items follow the label:
+
+```text
+Stack:
+
+- Bun
+- TypeScript
+- biome
+```
+
+Without a colon the run must be the whole paragraph.
+A shorter run is no list, so the stray-interpunct policy reports its glyphs instead.
+A separator inside a link or emphasis leaves the run lint-only.
+
+### Inline enumeration markers
+
+[`list-inline-enumeration-markers.ts`](src/prose/rules/list-inline-enumeration-markers.ts) reports the first two markers of one family inlined in a paragraph.
+The families are letters, numbers and roman numerals in parentheses:
+
+```text
+The engine (a) parses the file, (b) runs each fixer and (c) verifies the result.
+```
+
+A clean sequence becomes a numbered list:
+
+```text
+The engine:
+
+1. parses the file
+2. runs each fixer
+3. verifies the result
+```
+
+A gap, a mixed family or markers split across sentences stay reported.
+Two markers joined only by a conjunction read as cross-references, so this stays reported:
+
+```text
+See (a) above and (b) below.
+```
+
+### Comma-joined labelled run
+
+[`list-comma-labelled-run.ts`](src/prose/rules/list-comma-labelled-run.ts) reports three or more comma-joined segments that each open with a label.
+A label is inline code or an identifier with a digit such as `MD025`, and content must follow it:
+
+```text
+Targets: `fix` regenerates the bundle, `ci` asserts a clean tree, and `docs-ci` gates the prose.
+```
+
+The edit keeps each label:
+
+```text
+Targets:
+
+- `fix` regenerates the bundle
+- `ci` asserts a clean tree
+- `docs-ci` gates the prose
+```
+
+Bare labels with no content form a subject, not a list.
+The edit applies only when every segment of the sentence is labelled.
+
+### Comma-joined code run
+
+[`list-comma-code-run.ts`](src/prose/rules/list-comma-code-run.ts) reports three or more inline code spans joined by commas.
+An "and" or "or" may precede the last span, and the check counts a run anywhere in a sentence:
+
+```text
+The release touches `config.yaml`, `schema.json`, `Makefile` and `README.md`.
+```
+
+The edit needs the run to close its sentence after a lead-in:
+
+```text
+The release touches:
+
+- `config.yaml`
+- `schema.json`
+- `Makefile`
+- `README.md`
+```
+
+A run in the middle of a sentence, or one opening inside a link or emphasis, stays reported.
+
+### Comma-joined plain run
+
+[`list-comma-plain-run.ts`](src/prose/rules/list-comma-plain-run.ts) reports a long run of short plain-word items that closes a sentence.
+An item is one to three plain words without a verb inside it.
+A code span, a number, a link or a clause therefore ends the run.
+The run needs a colon before it, or a conjunction before its last item.
+The default is five items, because a short series reads as ordinary English.
+
+```text
+Tags: alpha, beta, rc, next, canary.
+```
+
+The edit needs the colon lead-in:
+
+```text
+Tags:
+
+- alpha
+- beta
+- rc
+- next
+- canary
+```
+
+Without a colon there is no telling where the first item starts, so this stays reported:
+
+```text
+It publishes alpha, beta, rc, next, nightly and canary.
+```
+
+### Stacked interpunct runs
+
+[`list-stacked-interpunct-runs.ts`](src/prose/rules/list-stacked-interpunct-runs.ts) reports interpunct runs stacked on two or more lines of one paragraph:
+
+```text
+Runtime: Bun · Node
+Tooling: biome · tsc
+```
+
+When every line opens with a label, the edit builds one parent item per label:
+
+```text
+- Runtime
+  - Bun
+  - Node
+- Tooling
+  - biome
+  - tsc
+```
+
+A line without a label has no parent item, so the paragraph stays reported.
+Sentence layout never joins the lines of a stacked run.
+
+### Em-dash in prose
+
+[`punctuation-em-dash-in-prose.ts`](src/prose/rules/punctuation-em-dash-in-prose.ts) reports an em-dash in any prose text, including headings and table cells.
+A pair of dashes around an aside becomes parentheses:
+
+```text
+The engine — not the fixer — decides what is kept.
+```
+
+```text
+The engine (not the fixer) decides what is kept.
+```
+
+A lone dash becomes a colon:
+
+```text
+One rule matters — never guess.
+```
+
+```text
+One rule matters: never guess.
+```
+
+Each aside of a sentence is its own finding.
+A numeric range wants an en-dash instead, so this stays reported:
+
+```text
+Pages 10 — 12 cover it.
+```
+
+A sentence that already holds a colon stays reported, as do three dashes in one sentence.
+So do an aside that reads as a marker and a dash beside markup.
+
+### Interpunct in prose
+
+[`punctuation-interpunct-in-prose.ts`](src/prose/rules/punctuation-interpunct-in-prose.ts) reports a stray interpunct outside a run that a list policy claims.
+It reads headings and table cells too.
+A spaced interpunct becomes a comma:
+
+```text
+Written in TypeScript · run on Bun.
+```
+
+```text
+Written in TypeScript, run on Bun.
+```
+
+A glyph with no space beside it, as in a product name, stays reported for a manual decision.
+
 ### Mermaid text contrast
 
 [`contrast/policy.ts`](src/mermaid/contrast/policy.ts) checks actual text surfaces in light and dark themes.
@@ -148,7 +386,13 @@ The score is:
   × (1 + maximumDepth × depthWeight)
 ```
 
-Defaults are `edgeWeight: 0.5`, `rowWeight: 0.25`, `subgraphWeight: 3` and `depthWeight: 0.1`.
+The default weights are:
+
+- `edgeWeight: 0.5`
+- `rowWeight: 0.25`
+- `subgraphWeight: 3`
+- `depthWeight: 0.1`
+
 The default preset is `high-density`; available preset definitions and accepted overrides live in [`metrics.ts`](src/mermaid/complexity/metrics.ts).
 The policy's error trigger is the acceptable visual score; node targets guide recommendations rather than defining another independently configurable rule.
 
@@ -175,6 +419,7 @@ Disabling both Mermaid policies skips their parse checks.
 ## Shared custom-policy behaviour
 
 Prose rules inspect running paragraphs and skip table cells, code blocks, frontmatter and HTML blocks.
+The punctuation policies also read headings and table cells, because a stray glyph is wrong wherever it sits.
 Lazy language views remain available to other rules on paragraph and text nodes, including nodes excluded from running prose.
 Heading-defined terms from optional `CONCEPTS.md` enrich each document's NLP vocabulary without creating a vocabulary-enforcement rule.
 
@@ -184,7 +429,25 @@ The analysis queue protects mutable official parser and theme state.
 
 Native comments such as `<!--lint disable sentence-one-per-line-->` suppress matching diagnostics and their edit eligibility.
 Suppression happens before fix selection.
-Only sentence-layout diagnostics expose accepted automatic edits; the adapter reparses after changes until stable.
+Each round applies the visible edits of one policy, in a fixed order: list promotions, then glyph swaps, then sentence layout.
+A promotion needs the separators a glyph swap would erase, and layout settles the blocks last.
+The adapter reparses after each round and reports again until stable.
+
+## Automatic edit verification
+
+Every edit is reparsed and compared with the original before a finding may carry it.
+Each fixer declares the exact change it expects, and any other difference withdraws the edit:
+
+| Declared change | What the comparison proves |
+| --- | --- |
+| Layout | The tree is unchanged once text whitespace collapses |
+| Glyph swap | The tree keeps its shape and every visible word |
+| List Promotion | One paragraph becomes the declared lead-in and list, and nothing else moves |
+
+Visible words are text, code, alt text and URLs, without joining conjunctions or enumeration markers.
+A glyph swap or promotion that loses a word is a fixer defect, so it raises an error instead of being withdrawn.
+A fixer offers no edit when its input is ambiguous, and the finding stays for a human.
+One policy's edits are also verified together; when only the batch fails, the first edit lands and the next round reports the rest.
 
 ## Upstream recommended rules
 

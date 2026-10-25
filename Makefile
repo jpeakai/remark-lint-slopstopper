@@ -1,6 +1,6 @@
 .PHONY: fix ci
 
-# The okf-yaml generator vendored from the adr skill (SLOP-0001). It runs
+# The bundle's own okf-yaml generator (SLOP-0001). It runs
 # without a Python project, so this bun repo carries no pyproject.toml.
 RENDER := uv run --no-project --with PyYAML --with Jinja2 --with jsonschema adrs/okf_render.py
 

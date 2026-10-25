@@ -158,10 +158,10 @@ export const assemble = (
 
 // Why a plan was offered, in words a reader checks against the target: the
 // size the complexity rules measured the diagram at, the split target, and
-// which of the two measures is over (MJL-0039). A diagram over on its score
+// which of the two measures is over (SLOP-0035). A diagram over on its score
 // alone may be over only for the rows it draws; its plan then says so, and
 // that dropping the rows from the overview meets the target. Nothing folds
-// then, or only closed aggregates, which the plan says (MJL-0040).
+// then, or only closed aggregates, which the plan says (SLOP-0035).
 
 const overOn = (nodes: boolean, score: boolean): string =>
   nodes && score

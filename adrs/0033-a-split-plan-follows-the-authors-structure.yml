@@ -1,0 +1,46 @@
+id: SLOP-0033
+slug: a-split-plan-follows-the-authors-structure
+plan_id: null
+title: A split plan folds the author's own structure first and refuses what it cannot draw faithfully
+description: Author regions, decision regions, aggregates, echoing regions and twin lanes fold whole, and concurrency is refused
+status: accepted
+accepted_on: 2026-10-25
+last_changed_on: 2026-10-25
+tags: [mermaid, complexity, split]
+
+enforced_in:
+  - src/mermaid/splitting/index.ts, which refuses sequence diagrams, unsupported families and concurrent state regions, and tries author-region ladders first
+  - src/mermaid/splitting/strategies/regions.ts, which folds an author region whole and folds echoing regions in one step
+  - src/mermaid/splitting/graph/flow-regions.ts, which finds single-entry single-exit decision regions from Stately's dominator tree
+  - src/mermaid/splitting/graph/ownership.ts and strategies/entities.ts, which group erDiagram entities by identifying parent and keep junctions out of either side
+  - src/mermaid/splitting/strategies/patterns.ts, which folds twin chains whole first and in runs of lanes only inside a detail split again
+  - src/mermaid/splitting/planning/search.ts, MAX_DEPTH, which lets a detail split once more
+
+relates_to:
+  - relation: tested_by
+    target: SLOP-0032
+    note: the contract refuses a plan that moves a marker, hides a region or merges an edge
+  - relation: see_also
+    target: SLOP-0034
+    note: a diagram with no structure to fold gets a list or matrix
+  - relation: see_also
+    target: SLOP-0035
+    note: how far a plan folds once it follows the author's structure
+  - relation: see_also
+    target: SLOP-0036
+    note: label families are the author's grouping too
+
+decision:
+  given: an oversized diagram can be folded many ways, and some folds say something the original does not
+  we_prefer: folding the author's own structure first and whole, over folding by graph communities alone. That structure means subgraphs, a decision with its region up to where its branches rejoin, and an erDiagram aggregate under its identifying root. Echoing regions fold to the same depth, and twin chains fold as one group
+  because: a reader trusts the author's boundaries first. A structure folded whole keeps a decision's branches, a composite's markers and an aggregate's ownership together without inventing a path
+  unless: the structure cannot be drawn faithfully, as with sequence diagrams whose graph drops message order or composites with concurrent regions, which get no plan
+
+consequences:
+  pros:
+    - A diagram with subgraphs is split along them, as its author would split it.
+    - Decision-heavy flows fold into named checks without adding reachable pairs.
+  cons:
+    - Sequence diagrams and concurrent state diagrams never get a split plan.
+    - An author region holding most of a diagram makes an overview dominated by one group, its detail split again.
+    - Recursion stops at two levels, so a very large region may get no plan.

@@ -30,7 +30,7 @@ import type { QEdge } from "../projection/quotient.ts";
 // what; a bundle of sibling leaves is the case of twins with one neighbour.
 // A chain of single-in single-out nodes folds in stages sized to the target,
 // never a long chain into one node. A stage may join prefix families: an
-// extract and the bronze table it lands in fold as one lane (MJL-0035).
+// extract and the bronze table it lands in fold as one lane (SLOP-0033).
 
 const end = (e: QEdge, other: string, self: string): string =>
   [
@@ -122,7 +122,7 @@ const isLanes = (ctx: CandidateContext, keys: readonly string[]): boolean => {
 };
 
 // Twin chains folded whole, never cut into runs, since no label sorts lanes
-// (MJL-0038): split again when the walk lets a detail be, else only when the
+// (SLOP-0033): split again when the walk lets a detail be, else only when the
 // detail fits.
 const wholeLanes = (ctx: CandidateContext, keys: string[]): Candidate[] => {
   if (ctx.lanes) ctx.lanes.encountered = true;
@@ -263,7 +263,7 @@ const placeOf = (
 
 // Every stage of one chain folds in one step, so the chain is cut evenly. On
 // a walk folding twin chains whole, every stage of twin chains folds in one
-// step, so each lane folds alike (MJL-0038). In a detail split again, twin
+// step, so each lane folds alike (SLOP-0033). In a detail split again, twin
 // chains too many to fold whole fold in runs of lanes instead (laneRuns).
 export const proposeChains = (ctx: CandidateContext): Candidate[] => {
   const adj = adjacencyOf(ctx.qedges);
@@ -294,7 +294,7 @@ export const MIN_LANES = 2;
 // A reader then opens a few details, each named by its lanes' stages
 // (laneLabel), rather than one per lane. A lane left over, in no run, folds
 // alone. Null on any other walk, for lanes that fit whole (wholeLanes then
-// folds them as one group), or when no two lanes fit together (MJL-0042).
+// folds them as one group), or when no two lanes fit together (SLOP-0033).
 const laneRuns = (
   ctx: CandidateContext,
   lanes: string[][],

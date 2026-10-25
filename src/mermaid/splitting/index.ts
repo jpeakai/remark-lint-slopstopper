@@ -22,7 +22,7 @@ import { checkContract } from "./validation/contract.ts";
 // Split plans: for a diagram over its density target, an overview where some
 // node sets fold into group nodes, plus one detail diagram per group, offered
 // only when contract.ts proves the pair recovers the original. Nothing is
-// applied; a plan is a recommendation (MJL-0004).
+// applied; a plan is a recommendation (SLOP-0031).
 
 export type { SplitOutcome, SplitPlan } from "./planning/state.ts";
 
@@ -33,7 +33,7 @@ const refuse = (reason: string, violations: string[] = []): SplitOutcome => ({
 });
 
 // A refusal because a list or a table reads better, with that list or table
-// built from the whole diagram (MJL-0034).
+// built from the whole diagram (SLOP-0035).
 const refuseFor = (graph: DiagramGraph, reason: string): SplitOutcome => ({
   ...refuse(reason),
   alternative: reason === STAR ? starList(graph) : meshMatrix(graph),

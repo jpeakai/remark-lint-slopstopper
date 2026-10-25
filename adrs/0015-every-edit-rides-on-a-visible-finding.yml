@@ -1,0 +1,37 @@
+id: SLOP-0015
+slug: every-edit-rides-on-a-visible-finding
+plan_id: null
+title: An edit is applied only through a visible finding of a fixable policy
+description: A fix travels on the diagnostic its check reports, so a passing or suppressed passage is never rewritten
+status: accepted
+accepted_on: 2026-10-25
+last_changed_on: 2026-10-25
+tags: [fixing, verification]
+
+enforced_in:
+  - src/types.ts, where TextEdit is an optional fix field on Diagnostic
+  - src/remark/plugin.ts, whose visibleEdits takes edits only from findings still visible after remark-message-control, and only from fixable policies
+  - src/prose/rules/sentence-one-per-line.ts, which reports both a soft wrap and several sentences on one line, the two shapes its fixer rewrites
+  - src/remark/plugin.test.ts, which requires suppressed findings to expose no edit
+
+relates_to:
+  - relation: extends
+    target: SLOP-0014
+    note: beyond a verified edit, no edit touches a passage the check passed
+  - relation: see_also
+    target: SLOP-0021
+    note: that check reports runs its fixer refuses, the other half of keeping check and fix in step
+
+decision:
+  given: a check decides what fails and a fixer decides what to rewrite, and native lint comments can hide a finding
+  we_prefer: carrying each edit on the diagnostic its check reports, over a separate fix pass that finds its own targets. Only the edits of visible findings are applied
+  because: a file that passes the check is then a fixed point of fix mode, and suppressing a finding also suppresses its edit
+  unless: a fixer refuses a case the check reports, such as a hard break or a blockquote, which leaves the finding for a human
+
+consequences:
+  pros:
+    - A passing file is never rewritten by fix mode.
+    - Agents that pack sentences onto one line get a finding, not a silent pass.
+  cons:
+    - The check inherits every sentence-boundary misreading of Compromise, so a wrong boundary is both reported and rewritten.
+    - A policy gains automatic edits only by an explicit adapter change, because returning a fix alone is ignored.

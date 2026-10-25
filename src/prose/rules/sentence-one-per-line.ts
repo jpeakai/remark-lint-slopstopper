@@ -5,6 +5,7 @@ import {
   type ParagraphContext,
   unsafeLayout,
 } from "../../document/context.ts";
+import { interpunctRun, isStacked } from "../../document/interpunct-runs.ts";
 import type { Diagnostic } from "../../types.ts";
 
 interface Layout {
@@ -93,7 +94,11 @@ export async function checkSentenceOnePerLine(
     boundaries: new Set(
       sentences.slice(1).map((sentence) => view.offsets[sentence.start - 1]),
     ),
-    unsafe: unsafeLayout(paragraph),
+    // Interpunct runs stacked on several lines are a nested list; joining
+    // the lines would destroy that structure, so they are never reflowed.
+    unsafe:
+      unsafeLayout(paragraph) ||
+      interpunctRun(document, paragraph).some(isStacked),
     indent: " ".repeat((node.position?.start.column ?? 1) - 1),
   };
   return [

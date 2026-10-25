@@ -1,0 +1,38 @@
+id: SLOP-0017
+slug: budget-findings-are-never-autofixed
+plan_id: null
+title: Sentence and paragraph budget findings are reported and never autofixed
+description: The word and sentence budget policies have no fixer, because shortening or breaking prose is a decision about meaning
+status: accepted
+accepted_on: 2026-10-25
+last_changed_on: 2026-10-25
+tags: [rules, scope]
+
+enforced_in:
+  - src/prose/rules/sentence-word-budget-exceeded.ts and src/prose/rules/paragraph-sentence-budget-exceeded.ts, which return diagnostics with no fix
+  - src/rules.ts, where FIXABLE_RULE names sentence-one-per-line alone
+  - RULES.md, whose policy table lists no automatic edit for either budget
+
+relates_to:
+  - relation: depends_on
+    target: SLOP-0014
+    note: verification forbids the word changes a length fix would need
+  - relation: extended_by
+    target: SLOP-0018
+    note: the sentence finding estimates clauses to guide a split
+  - relation: extended_by
+    target: SLOP-0019
+    note: the paragraph finding suggests where to break
+
+decision:
+  given: a sentence exceeds its word budget or a paragraph exceeds its sentence budget
+  we_prefer: reporting the finding with guidance for a human or an agent to rewrite, over any mechanical split, trim or paragraph break
+  because: every shortening changes words and every break decides which sentences belong together, and both are choices about meaning
+  unless: never
+
+consequences:
+  pros:
+    - Fix mode never rewrites meaning.
+  cons:
+    - A fix run can finish with findings left, so the run still fails until someone edits.
+    - The quality of the rewrite depends entirely on how well the finding's message guides it.

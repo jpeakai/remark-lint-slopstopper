@@ -24,6 +24,8 @@ flowchart LR
     CON["Concepts File"]:::info
     DIG["Diagnostic"]:::info
     SPL["Split Plan"]:::info
+    IPR["Interpunct Run"]:::info
+    LPR["List Promotion"]:::info
 
     MNT -- states --> REQ
     REQ -- binds --> AGT
@@ -35,6 +37,8 @@ flowchart LR
     DOC -- serves --> POL
     POL -- reports --> DIG
     DIG -- may carry --> SPL
+    DOC -- derives --> IPR
+    DIG -- may carry --> LPR
 
     linkStyle default color:#0f172a
 
@@ -89,6 +93,18 @@ It is created by [`createDocument`](src/document/context.ts).
 ## Generated File
 
 A file rendered from a source by `make fix`, and never edited by hand.
+
+## Interpunct Run
+
+A running paragraph whose prose joins items with interpuncts.
+On one source line it is a flat list; stacked over several lines it is a two-level structure.
+It is derived in [`interpunct-runs.ts`](src/document/interpunct-runs.ts).
+
+## List Promotion
+
+The automatic edit that turns a list hidden in running prose into a lead-in line and a real Markdown list.
+Item text is sliced from the source, and the edit is verified against the list it declares.
+It is built in [`promotion.ts`](src/prose/promotion.ts).
 
 ## Maintainer
 

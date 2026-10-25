@@ -44,7 +44,7 @@ export interface Candidate extends Merge {
   // not one stage of it.
   also?: Merge[];
   // Whether the group may fold whatever its detail's size, the detail split
-  // again: twin chains folded whole (MJL-0038).
+  // again: twin chains folded whole (SLOP-0033).
   splits?: true;
 }
 
@@ -253,7 +253,7 @@ export const chunksThatFit = (
 // by an edge between them, by an author region the group folds whole holding
 // both, or by a neighbour they share when both name one prefix family (one
 // stage of a pipeline) or both are leaves (sibling leaves of one node), as T5
-// and T6 merge them and no other way (MJL-0032).
+// and T6 merge them and no other way (SLOP-0036).
 export const joined = (
   work: WorkGraph,
   g: { members: readonly string[]; regions: readonly string[] },

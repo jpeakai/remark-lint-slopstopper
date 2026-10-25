@@ -1,0 +1,36 @@
+id: SLOP-0039
+slug: plain-word-runs-and-min-items
+plan_id: null
+title: A long plain-word run is a hidden list, and every run rule takes a minItems option
+description: list-comma-plain-run reports plain series from five items, and minItems sets each run rule's threshold
+status: accepted
+accepted_on: 2026-10-25
+last_changed_on: 2026-10-25
+tags: [rules, list, fixing, configuration]
+
+enforced_in:
+  - src/prose/rules/list-comma-plain-run.ts, whose default threshold is five items
+  - src/prose/promotion.ts, where minItemsOf rejects any value that is not a whole number of at least 2
+  - RULES.md, which documents each run rule's minItems default
+
+relates_to:
+  - relation: extends
+    target: SLOP-0021
+    note: plain-word series get their own rule, and minItems tunes the code-run threshold too
+  - relation: see_also
+    target: SLOP-0006
+    note: minItems is set like any other rule option
+
+decision:
+  given: a short plain-word series is ordinary English, while a long one is almost always a list
+  we_prefer: a plain-word run rule that reports from five items by default, over a fixed threshold shared by all run rules. Every run rule also takes a minItems option
+  because: length is what tells a list from a series, and where that line sits is each project's call
+  unless: a project needs a different threshold per file, which plugin options alone cannot express
+
+consequences:
+  pros:
+    - A long list of service names or channels without backticks is reported.
+    - A project can tune each run rule up or down without switching it off.
+  cons:
+    - Without a colon lead-in the first item is never counted, so a run can be reported one item late.
+    - Raising the flat interpunct rule's minItems hands shorter runs to punctuation-interpunct-in-prose, so list findings become glyph findings.

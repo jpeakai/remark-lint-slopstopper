@@ -2,9 +2,79 @@
   "elements": [
     {
       "data": {
+        "id": "group-architecture",
+        "label": "architecture",
+        "colour": "#6366f1"
+      }
+    },
+    {
+      "data": {
+        "id": "group-config",
+        "label": "config",
+        "colour": "#0891b2"
+      }
+    },
+    {
+      "data": {
+        "id": "group-fixing",
+        "label": "fixing",
+        "colour": "#059669"
+      }
+    },
+    {
+      "data": {
+        "id": "group-mermaid",
+        "label": "mermaid",
+        "colour": "#d97706"
+      }
+    },
+    {
+      "data": {
+        "id": "group-model",
+        "label": "model",
+        "colour": "#db2777"
+      }
+    },
+    {
+      "data": {
+        "id": "group-parsing",
+        "label": "parsing",
+        "colour": "#7c3aed"
+      }
+    },
+    {
+      "data": {
+        "id": "group-policy",
+        "label": "policy",
+        "colour": "#0284c7"
+      }
+    },
+    {
+      "data": {
+        "id": "group-quality",
+        "label": "quality",
+        "colour": "#65a30d"
+      }
+    },
+    {
+      "data": {
+        "id": "group-rules",
+        "label": "rules",
+        "colour": "#6366f1"
+      }
+    },
+    {
+      "data": {
+        "id": "group-testing",
+        "label": "testing",
+        "colour": "#0891b2"
+      }
+    },
+    {
+      "data": {
         "id": "group-tooling",
         "label": "tooling",
-        "colour": "#6366f1"
+        "colour": "#059669"
       }
     },
     {
@@ -12,12 +82,1386 @@
         "id": "SLOP-0001",
         "label": "0001",
         "parent": "group-tooling",
-        "colour": "#6366f1",
+        "colour": "#059669",
         "file": "0001-vendor-the-generator-into-the-bundle.md",
         "title": "The bundle carries its own copy of the okf-yaml generator, schema and templates",
         "description": "The adr skill's renderer is vendored into adrs/ and run by uv, so the bundle renders from a clone alone",
         "status": "accepted",
         "tags": "tooling, okf-yaml"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0002",
+        "label": "0002",
+        "parent": "group-parsing",
+        "colour": "#7c3aed",
+        "file": "0002-host-tree-is-the-document.md",
+        "title": "Every policy reads the mdast tree the remark host already parsed",
+        "description": "The adapter hands the host's own tree to createDocument, and only string callers parse, once, with the shared parser",
+        "status": "accepted",
+        "tags": "parsing, architecture"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0003",
+        "label": "0003",
+        "parent": "group-architecture",
+        "colour": "#6366f1",
+        "file": "0003-shared-document-context-per-round.md",
+        "title": "Whole-document data is derived once per round on a shared DocumentContext",
+        "description": "Every enabled policy in a reporting round reads one DocumentContext, so derived data is computed once and agrees",
+        "status": "accepted",
+        "tags": "architecture, rules"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0004",
+        "label": "0004",
+        "parent": "group-model",
+        "colour": "#db2777",
+        "file": "0004-lazy-language-view-on-nodes.md",
+        "title": "Paragraph and text nodes carry a language view that analyses on first read",
+        "description": "node.data.language exposes projected text at once and one memoised sentence Promise only when a rule asks for it",
+        "status": "accepted",
+        "tags": "model, language"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0005",
+        "label": "0005",
+        "parent": "group-model",
+        "colour": "#db2777",
+        "file": "0005-concepts-file-is-project-vocabulary.md",
+        "title": "A project's CONCEPTS.md supplies the term names the language view tags as nouns",
+        "description": "Each defined heading in CONCEPTS.md in the working directory becomes a literal noun phrase for that context's sentences",
+        "status": "accepted",
+        "tags": "model, language, concepts"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0006",
+        "label": "0006",
+        "parent": "group-config",
+        "colour": "#0891b2",
+        "file": "0006-configuration-is-remark-plugin-options.md",
+        "title": "Configuration is remark plugin options, and a disabled policy never runs",
+        "description": "Policies are switched and tuned through the plugin's options in the host's remark config, with no config file of its own",
+        "status": "accepted",
+        "tags": "config, rules"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0007",
+        "label": "0007",
+        "parent": "group-policy",
+        "colour": "#0284c7",
+        "file": "0007-a-finding-fails-or-the-policy-is-off.md",
+        "title": "A custom policy's finding is a fatal error, or the policy is off",
+        "description": "Custom severities accept only error or off, and a Mermaid diagram that cannot be evaluated is an error too",
+        "status": "accepted",
+        "tags": "policy, severity, mermaid"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0008",
+        "label": "0008",
+        "parent": "group-rules",
+        "colour": "#6366f1",
+        "file": "0008-rule-id-is-subsystem-category-and-short-name.md",
+        "title": "A policy identifier is its subsystem, then a category word and a short name",
+        "description": "Identifiers read subsystem/category-short-name, such as prose/sentence-one-per-line, never a number",
+        "status": "accepted",
+        "tags": "rules, naming, layout"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0009",
+        "label": "0009",
+        "parent": "group-architecture",
+        "colour": "#6366f1",
+        "file": "0009-one-module-per-rule.md",
+        "title": "Each policy lives in its own module named by its short name",
+        "description": "A prose policy is one file under src/prose/rules that returns diagnostics with any edit, listed in one registry",
+        "status": "accepted",
+        "tags": "architecture, layout"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0010",
+        "label": "0010",
+        "parent": "group-architecture",
+        "colour": "#6366f1",
+        "file": "0010-shared-code-groups-by-the-data-it-takes.md",
+        "title": "Shared code sits in the layer whose data it takes, and layers import downwards",
+        "description": "src/document takes source and trees and imports no policy, and policies import the document layer, never the reverse",
+        "status": "accepted",
+        "tags": "architecture"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0011",
+        "label": "0011",
+        "parent": "group-quality",
+        "colour": "#65a30d",
+        "file": "0011-code-complexity-is-gated-by-biome.md",
+        "title": "Code complexity is gated by Biome rules that fail the build",
+        "description": "Every Biome complexity rule runs at error, with cognitive complexity capped at 10, and bun run check fails past it",
+        "status": "accepted",
+        "tags": "quality, tooling"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0012",
+        "label": "0012",
+        "parent": "group-fixing",
+        "colour": "#059669",
+        "file": "0012-edits-splice-source-never-stringify.md",
+        "title": "Fixes splice source ranges and the adapter never stringifies the tree",
+        "description": "An edit replaces a source range, the compiler returns the edited source, and rounds repeat until no edit remains",
+        "status": "accepted",
+        "tags": "fixing, architecture"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0013",
+        "label": "0013",
+        "parent": "group-fixing",
+        "colour": "#059669",
+        "file": "0013-a-fixer-refuses-when-unsure.md",
+        "title": "A fixer offers no edit whenever the input is ambiguous",
+        "description": "An unfixable case leaves the source untouched and the finding reported, never a best guess",
+        "status": "accepted",
+        "tags": "fixing, safety"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0014",
+        "label": "0014",
+        "parent": "group-fixing",
+        "colour": "#059669",
+        "file": "0014-every-edit-is-verified-before-it-is-exposed.md",
+        "title": "Every edit is reparsed and compared with the original before a finding may carry it",
+        "description": "An edit that changes visible words or structure beyond its declared change is withdrawn, alone and as a batch",
+        "status": "accepted",
+        "tags": "fixing, safety, verification"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0015",
+        "label": "0015",
+        "parent": "group-fixing",
+        "colour": "#059669",
+        "file": "0015-every-edit-rides-on-a-visible-finding.md",
+        "title": "An edit is applied only through a visible finding of a fixable policy",
+        "description": "A fix travels on the diagnostic its check reports, so a passing or suppressed passage is never rewritten",
+        "status": "accepted",
+        "tags": "fixing, verification"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0016",
+        "label": "0016",
+        "parent": "group-testing",
+        "colour": "#0891b2",
+        "file": "0016-fix-behaviour-is-tested-on-real-inputs.md",
+        "title": "Fix behaviour is proven by real-input tests of edits, refusals and stability",
+        "description": "A fixer change is tested for its edit, untouched bytes, refusals, recheck and idempotence, with no mocks",
+        "status": "accepted",
+        "tags": "testing, fixing"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0017",
+        "label": "0017",
+        "parent": "group-rules",
+        "colour": "#6366f1",
+        "file": "0017-budget-findings-are-never-autofixed.md",
+        "title": "Sentence and paragraph budget findings are reported and never autofixed",
+        "description": "The word and sentence budget policies have no fixer, because shortening or breaking prose is a decision about meaning",
+        "status": "accepted",
+        "tags": "rules, scope"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0018",
+        "label": "0018",
+        "parent": "group-rules",
+        "colour": "#6366f1",
+        "file": "0018-sentence-budget-finding-estimates-clauses.md",
+        "title": "A sentence budget finding estimates clauses to guide a split",
+        "description": "The clause count is the larger of marker words and Compromise verbs, and the message names a target sentence count",
+        "status": "accepted",
+        "tags": "rules, messages, language"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0019",
+        "label": "0019",
+        "parent": "group-rules",
+        "colour": "#6366f1",
+        "file": "0019-paragraph-budget-finding-suggests-breaks.md",
+        "title": "A paragraph budget finding suggests breaks from lexical cohesion",
+        "description": "Paragraphs over the sentence budget report topic groups, break points and content terms per sentence",
+        "status": "accepted",
+        "tags": "rules, messages, language"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0020",
+        "label": "0020",
+        "parent": "group-rules",
+        "colour": "#6366f1",
+        "file": "0020-em-dash-becomes-parentheses-or-colon.md",
+        "title": "An em-dash pair becomes parentheses and a lone em-dash becomes a colon",
+        "description": "punctuation-em-dash-in-prose rewrites only the two dash shapes whose replacement punctuation is unambiguous",
+        "status": "accepted",
+        "tags": "rules, fixing, punctuation"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0021",
+        "label": "0021",
+        "parent": "group-rules",
+        "colour": "#6366f1",
+        "file": "0021-comma-run-of-code-spans-is-a-hidden-list.md",
+        "title": "A comma-joined run of three or more inline code spans is a hidden list",
+        "description": "list-comma-code-run flags the run anywhere, and its fix promotes it only when it closes a sentence after a lead-in",
+        "status": "accepted",
+        "tags": "rules, list, fixing"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0022",
+        "label": "0022",
+        "parent": "group-mermaid",
+        "colour": "#d97706",
+        "file": "0022-diagrams-are-measured-by-mermaids-own-parsers.md",
+        "title": "Every diagram is read through Mermaid's own parsers, never by scanning its text",
+        "description": "Mermaid policies take nodes, edges, styles and shapes from Mermaid core and @mermaid-js/parser results",
+        "status": "accepted",
+        "tags": "mermaid, parsing"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0023",
+        "label": "0023",
+        "parent": "group-mermaid",
+        "colour": "#d97706",
+        "file": "0023-a-diagram-is-a-mermaid-code-node-of-the-host-tree.md",
+        "title": "A diagram is a mermaid code node of the host's tree, mapped back to the source by line",
+        "description": "Fences come from the mdast tree the remark host supplies, and findings map to absolute Markdown offsets",
+        "status": "accepted",
+        "tags": "mermaid, markdown, parsing"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0024",
+        "label": "0024",
+        "parent": "group-mermaid",
+        "colour": "#d97706",
+        "file": "0024-gaps-in-mermaids-parsers-get-the-narrowest-workaround.md",
+        "title": "Where Mermaid exposes nothing, the narrowest workaround is used and refuses when it would guess",
+        "description": "Source alignment, the zenuml detector and declaration reading are small workarounds that place only what is certain",
+        "status": "accepted",
+        "tags": "mermaid, parsing, dependencies"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0025",
+        "label": "0025",
+        "parent": "group-mermaid",
+        "colour": "#d97706",
+        "file": "0025-colour-and-contrast-come-from-colorjs.md",
+        "title": "Colour parsing, compositing and WCAG contrast come only from colorjs.io",
+        "description": "No hand-written colour parser, luminance formula, alpha blend or contrast ratio",
+        "status": "accepted",
+        "tags": "mermaid, contrast, dependencies"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0026",
+        "label": "0026",
+        "parent": "group-mermaid",
+        "colour": "#d97706",
+        "file": "0026-theme-colours-come-from-mermaids-theme-engine.md",
+        "title": "Theme colours come from Mermaid's own theme engine on a pinned Mermaid version",
+        "description": "Both light and dark theme variables are resolved by Mermaid itself, never copied into the package",
+        "status": "accepted",
+        "tags": "mermaid, contrast, accessibility"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0027",
+        "label": "0027",
+        "parent": "group-mermaid",
+        "colour": "#d97706",
+        "file": "0027-the-page-canvas-is-a-rule-option-that-defaults-to-github.md",
+        "title": "The page canvas is a contrast rule option that defaults to GitHub's light and dark pages",
+        "description": "Page-backed surfaces are scored on an opaque canvas.light and canvas.dark the host may set",
+        "status": "accepted",
+        "tags": "mermaid, contrast, configuration"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0028",
+        "label": "0028",
+        "parent": "group-mermaid",
+        "colour": "#d97706",
+        "file": "0028-unmodelled-styling-is-an-error-never-a-guess.md",
+        "title": "Styling the contrast audit cannot model is reported as an error, never scored by a guess",
+        "description": "Custom themeCSS, unsupported modes and unmodelled surfaces report unauditable instead of passing silently",
+        "status": "accepted",
+        "tags": "mermaid, contrast, accessibility"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0029",
+        "label": "0029",
+        "parent": "group-mermaid",
+        "colour": "#d97706",
+        "file": "0029-thresholds-are-rule-options-not-environment.md",
+        "title": "Complexity thresholds are remark rule options, never environment variables",
+        "description": "A density preset and numeric overrides come only from the plugin options a remark configuration commits",
+        "status": "accepted",
+        "tags": "mermaid, complexity, configuration"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0030",
+        "label": "0030",
+        "parent": "group-mermaid",
+        "colour": "#d97706",
+        "file": "0030-the-score-counts-what-a-reader-must-read.md",
+        "title": "The visual complexity score counts what a reader must read, not every record the parser keeps",
+        "description": "Markers, notes and control lines are left out, and boxes, blocks and attribute rows are counted",
+        "status": "accepted",
+        "tags": "mermaid, complexity, parsing"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0031",
+        "label": "0031",
+        "parent": "group-mermaid",
+        "colour": "#d97706",
+        "file": "0031-mermaid-policies-report-and-never-edit-a-diagram.md",
+        "title": "Mermaid policies report findings with guidance and never edit a diagram",
+        "description": "Contrast and complexity expose no fix, and a split plan is a recommendation a human applies",
+        "status": "accepted",
+        "tags": "mermaid, fixing, safety"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0032",
+        "label": "0032",
+        "parent": "group-mermaid",
+        "colour": "#d97706",
+        "file": "0032-a-split-plan-is-verified-independently-and-by-reparse.md",
+        "title": "A split plan is offered only after an independent contract and a reparse of every emitted source",
+        "description": "The verifier recomputes the expected facts and parses each overview and detail again with Mermaid's parsers",
+        "status": "accepted",
+        "tags": "mermaid, complexity, verification"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0033",
+        "label": "0033",
+        "parent": "group-mermaid",
+        "colour": "#d97706",
+        "file": "0033-a-split-plan-follows-the-authors-structure.md",
+        "title": "A split plan folds the author's own structure first and refuses what it cannot draw faithfully",
+        "description": "Author regions, decision regions, aggregates, echoing regions and twin lanes fold whole, and concurrency is refused",
+        "status": "accepted",
+        "tags": "mermaid, complexity, split"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0034",
+        "label": "0034",
+        "parent": "group-mermaid",
+        "colour": "#d97706",
+        "file": "0034-a-refused-plan-offers-the-list-or-matrix-that-reads-better.md",
+        "title": "A dense mesh or an unsorted star gets no plan, and the finding offers the matrix or list that reads better",
+        "description": "Shapes no fold can summarise are refused with a reason and a list or matrix built from the whole graph",
+        "status": "accepted",
+        "tags": "mermaid, complexity, split"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0035",
+        "label": "0035",
+        "parent": "group-mermaid",
+        "colour": "#d97706",
+        "file": "0035-a-plan-makes-the-fewest-folds-and-says-why-it-was-flagged.md",
+        "title": "A split plan makes the fewest folds that meet its target, keeps groups even, and says why it was flagged",
+        "description": "Rows drop before nodes fold, overviews stay above an even floor, and each plan states its measured size and target",
+        "status": "accepted",
+        "tags": "mermaid, complexity, split"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0036",
+        "label": "0036",
+        "parent": "group-mermaid",
+        "colour": "#d97706",
+        "file": "0036-author-families-keep-groups-apart.md",
+        "title": "Label families the author wrote keep a suggested group to one family under the strict rules",
+        "description": "Dotted namespaces, id prefixes and shared status stems are read as the author's grouping and are not mixed first",
+        "status": "accepted",
+        "tags": "mermaid, complexity, split"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0037",
+        "label": "0037",
+        "parent": "group-mermaid",
+        "colour": "#d97706",
+        "file": "0037-a-group-is-named-by-what-it-holds.md",
+        "title": "A split plan names each group by what it holds, never by one arbitrary member",
+        "description": "Regions, heads, families, lanes, ranges, fans, spans and member lists name a group before any single member does",
+        "status": "accepted",
+        "tags": "mermaid, complexity, split, labels"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0038",
+        "label": "0038",
+        "parent": "group-mermaid",
+        "colour": "#d97706",
+        "file": "0038-a-stub-names-exactly-one-thing-and-draws-each-edge-once.md",
+        "title": "A detail's stub text has exactly one reading, and each edge it stands for is drawn once",
+        "description": "Stubs name their group as the overview shows it, share a box in flowcharts, and never repeat an edge",
+        "status": "accepted",
+        "tags": "mermaid, complexity, split, labels"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0039",
+        "label": "0039",
+        "parent": "group-rules",
+        "colour": "#6366f1",
+        "file": "0039-plain-word-runs-and-min-items.md",
+        "title": "A long plain-word run is a hidden list, and every run rule takes a minItems option",
+        "description": "list-comma-plain-run reports plain series from five items, and minItems sets each run rule's threshold",
+        "status": "accepted",
+        "tags": "rules, list, fixing, configuration"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0002-depended_on_by-SLOP-0012",
+        "source": "SLOP-0002",
+        "target": "SLOP-0012",
+        "label": "depended on by",
+        "relation": "depended_on_by",
+        "note": "an edit addresses source through the offsets the tree carries"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0002-depended_on_by-SLOP-0003",
+        "source": "SLOP-0002",
+        "target": "SLOP-0003",
+        "label": "depended on by",
+        "relation": "depended_on_by",
+        "note": "the shared context wraps the one tree of the round"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0003-depends_on-SLOP-0002",
+        "source": "SLOP-0003",
+        "target": "SLOP-0002",
+        "label": "depends on",
+        "relation": "depends_on",
+        "note": "the context wraps the host tree of the round"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0003-extended_by-SLOP-0004",
+        "source": "SLOP-0003",
+        "target": "SLOP-0004",
+        "label": "extended by",
+        "relation": "extended_by",
+        "note": "language analysis is the costliest data the context shares"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0003-see_also-SLOP-0010",
+        "source": "SLOP-0003",
+        "target": "SLOP-0010",
+        "label": "see also",
+        "relation": "see_also",
+        "note": "the context says what a rule is handed, and that record says where code reading it lives"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0004-extends-SLOP-0003",
+        "source": "SLOP-0004",
+        "target": "SLOP-0003",
+        "label": "extends",
+        "relation": "extends",
+        "note": "the view is the language data the context shares"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0004-depended_on_by-SLOP-0018",
+        "source": "SLOP-0004",
+        "target": "SLOP-0018",
+        "label": "depended on by",
+        "relation": "depended_on_by",
+        "note": "the clause count reads each sentence from the view"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0004-depended_on_by-SLOP-0019",
+        "source": "SLOP-0004",
+        "target": "SLOP-0019",
+        "label": "depended on by",
+        "relation": "depended_on_by",
+        "note": "the break plan reads sentences and their terms from the view"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0004-extended_by-SLOP-0005",
+        "source": "SLOP-0004",
+        "target": "SLOP-0005",
+        "label": "extended by",
+        "relation": "extended_by",
+        "note": "the view tags project terms before it builds sentences"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0005-extends-SLOP-0004",
+        "source": "SLOP-0005",
+        "target": "SLOP-0004",
+        "label": "extends",
+        "relation": "extends",
+        "note": "the view tags project terms before it builds sentences"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0006-see_also-SLOP-0039",
+        "source": "SLOP-0006",
+        "target": "SLOP-0039",
+        "label": "see also",
+        "relation": "see_also",
+        "note": "minItems is set like any other rule option"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0006-depends_on-SLOP-0008",
+        "source": "SLOP-0006",
+        "target": "SLOP-0008",
+        "label": "depends on",
+        "relation": "depends_on",
+        "note": "a per-rule setting is keyed by the short name after the slash"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0007-depended_on_by-SLOP-0028",
+        "source": "SLOP-0007",
+        "target": "SLOP-0028",
+        "label": "depended on by",
+        "relation": "depended_on_by",
+        "note": "an unauditable surface is a failing finding, not an advisory note"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0008-extends-SLOP-0009",
+        "source": "SLOP-0008",
+        "target": "SLOP-0009",
+        "label": "extends",
+        "relation": "extends",
+        "note": "a policy file is named by the short name after the slash"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0008-depended_on_by-SLOP-0006",
+        "source": "SLOP-0008",
+        "target": "SLOP-0006",
+        "label": "depended on by",
+        "relation": "depended_on_by",
+        "note": "configuration names a policy by its short name"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0009-extended_by-SLOP-0008",
+        "source": "SLOP-0009",
+        "target": "SLOP-0008",
+        "label": "extended by",
+        "relation": "extended_by",
+        "note": "the short name a file is named by starts with the policy's category"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0009-depended_on_by-SLOP-0010",
+        "source": "SLOP-0009",
+        "target": "SLOP-0010",
+        "label": "depended on by",
+        "relation": "depended_on_by",
+        "note": "a helper leaves its policy module only once a second policy needs it"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0010-depends_on-SLOP-0009",
+        "source": "SLOP-0010",
+        "target": "SLOP-0009",
+        "label": "depends on",
+        "relation": "depends_on",
+        "note": "a helper leaves its policy module only once a second policy needs it"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0010-see_also-SLOP-0003",
+        "source": "SLOP-0010",
+        "target": "SLOP-0003",
+        "label": "see also",
+        "relation": "see_also",
+        "note": "the context says what a policy is handed, and this says where code reading it lives"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0010-depended_on_by-SLOP-0011",
+        "source": "SLOP-0010",
+        "target": "SLOP-0011",
+        "label": "depended on by",
+        "relation": "depended_on_by",
+        "note": "a function split for the complexity limits places its helpers by this rule"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0011-depends_on-SLOP-0010",
+        "source": "SLOP-0011",
+        "target": "SLOP-0010",
+        "label": "depends on",
+        "relation": "depends_on",
+        "note": "a long function splits into helpers that sit in the layer whose data they read"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0012-depends_on-SLOP-0002",
+        "source": "SLOP-0012",
+        "target": "SLOP-0002",
+        "label": "depends on",
+        "relation": "depends_on",
+        "note": "ranges are addressed through the offsets the parsed tree supplies"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0012-depended_on_by-SLOP-0014",
+        "source": "SLOP-0012",
+        "target": "SLOP-0014",
+        "label": "depended on by",
+        "relation": "depended_on_by",
+        "note": "one spliced range is cheap to verify"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0013-extended_by-SLOP-0014",
+        "source": "SLOP-0013",
+        "target": "SLOP-0014",
+        "label": "extended by",
+        "relation": "extended_by",
+        "note": "verification withdraws an edit on behalf of a fixer that did not refuse"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0013-tested_by-SLOP-0016",
+        "source": "SLOP-0013",
+        "target": "SLOP-0016",
+        "label": "tested by",
+        "relation": "tested_by",
+        "note": "each refusal is pinned by a test whose output equals its input"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0013-depended_on_by-SLOP-0020",
+        "source": "SLOP-0013",
+        "target": "SLOP-0020",
+        "label": "depended on by",
+        "relation": "depended_on_by",
+        "note": "the em-dash fixer refuses every shape outside two"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0013-depended_on_by-SLOP-0021",
+        "source": "SLOP-0013",
+        "target": "SLOP-0021",
+        "label": "depended on by",
+        "relation": "depended_on_by",
+        "note": "the fixer refuses a run mid-sentence, without a lead-in, or opening inside markup"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0014-depends_on-SLOP-0012",
+        "source": "SLOP-0014",
+        "target": "SLOP-0012",
+        "label": "depends on",
+        "relation": "depends_on",
+        "note": "verification is cheap because an edit is a single spliced range"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0014-extends-SLOP-0013",
+        "source": "SLOP-0014",
+        "target": "SLOP-0013",
+        "label": "extends",
+        "relation": "extends",
+        "note": "verification withdraws an edit on behalf of a fixer that did not refuse"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0014-tested_by-SLOP-0016",
+        "source": "SLOP-0014",
+        "target": "SLOP-0016",
+        "label": "tested by",
+        "relation": "tested_by",
+        "note": "tests assert the words, structure and surrounding bytes an edit must keep"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0014-depended_on_by-SLOP-0017",
+        "source": "SLOP-0014",
+        "target": "SLOP-0017",
+        "label": "depended on by",
+        "relation": "depended_on_by",
+        "note": "shortening text changes the words verification protects"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0014-extended_by-SLOP-0015",
+        "source": "SLOP-0014",
+        "target": "SLOP-0015",
+        "label": "extended by",
+        "relation": "extended_by",
+        "note": "a verified edit is applied only through a finding that is still visible"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0015-extends-SLOP-0014",
+        "source": "SLOP-0015",
+        "target": "SLOP-0014",
+        "label": "extends",
+        "relation": "extends",
+        "note": "beyond a verified edit, no edit touches a passage the check passed"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0015-see_also-SLOP-0021",
+        "source": "SLOP-0015",
+        "target": "SLOP-0021",
+        "label": "see also",
+        "relation": "see_also",
+        "note": "that check reports runs its fixer refuses, the other half of keeping check and fix in step"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0016-tests-SLOP-0013",
+        "source": "SLOP-0016",
+        "target": "SLOP-0013",
+        "label": "tests",
+        "relation": "tests",
+        "note": "each refusal is pinned by a test whose output equals its input"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0016-tests-SLOP-0014",
+        "source": "SLOP-0016",
+        "target": "SLOP-0014",
+        "label": "tests",
+        "relation": "tests",
+        "note": "tests assert the words, structure and surrounding bytes an edit must keep"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0017-depends_on-SLOP-0014",
+        "source": "SLOP-0017",
+        "target": "SLOP-0014",
+        "label": "depends on",
+        "relation": "depends_on",
+        "note": "verification forbids the word changes a length fix would need"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0017-extended_by-SLOP-0018",
+        "source": "SLOP-0017",
+        "target": "SLOP-0018",
+        "label": "extended by",
+        "relation": "extended_by",
+        "note": "the sentence finding estimates clauses to guide a split"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0017-extended_by-SLOP-0019",
+        "source": "SLOP-0017",
+        "target": "SLOP-0019",
+        "label": "extended by",
+        "relation": "extended_by",
+        "note": "the paragraph finding suggests where to break"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0018-extends-SLOP-0017",
+        "source": "SLOP-0018",
+        "target": "SLOP-0017",
+        "label": "extends",
+        "relation": "extends",
+        "note": "the rule stays report-only, and its message carries the guidance a rewrite needs"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0018-depends_on-SLOP-0004",
+        "source": "SLOP-0018",
+        "target": "SLOP-0004",
+        "label": "depends on",
+        "relation": "depends_on",
+        "note": "the rule reads each sentence and its clause count from the language view"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0019-extends-SLOP-0017",
+        "source": "SLOP-0019",
+        "target": "SLOP-0017",
+        "label": "extends",
+        "relation": "extends",
+        "note": "like a long sentence, a long paragraph is reported and never moved by a fixer"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0019-depends_on-SLOP-0004",
+        "source": "SLOP-0019",
+        "target": "SLOP-0004",
+        "label": "depends on",
+        "relation": "depends_on",
+        "note": "the plan reads sentences and their terms from the paragraph's view"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0020-depends_on-SLOP-0013",
+        "source": "SLOP-0020",
+        "target": "SLOP-0013",
+        "label": "depends on",
+        "relation": "depends_on",
+        "note": "every pattern outside the two shapes is reported without an edit"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0021-extended_by-SLOP-0039",
+        "source": "SLOP-0021",
+        "target": "SLOP-0039",
+        "label": "extended by",
+        "relation": "extended_by",
+        "note": "plain-word series get their own rule, and minItems tunes this rule's threshold"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0021-depends_on-SLOP-0013",
+        "source": "SLOP-0021",
+        "target": "SLOP-0013",
+        "label": "depends on",
+        "relation": "depends_on",
+        "note": "a run mid-sentence, without a lead-in, or opening inside a link or emphasis gets no edit"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0021-see_also-SLOP-0015",
+        "source": "SLOP-0021",
+        "target": "SLOP-0015",
+        "label": "see also",
+        "relation": "see_also",
+        "note": "the check reports runs the fix refuses, so a refused run stays reported rather than silently passing"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0022-excepted_by-SLOP-0024",
+        "source": "SLOP-0022",
+        "target": "SLOP-0024",
+        "label": "excepted by",
+        "relation": "excepted_by",
+        "note": "the few places Mermaid exposes nothing, each with one narrow workaround"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0022-see_also-SLOP-0023",
+        "source": "SLOP-0022",
+        "target": "SLOP-0023",
+        "label": "see also",
+        "relation": "see_also",
+        "note": "the fence a diagram comes from is read from the host tree"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0022-depended_on_by-SLOP-0032",
+        "source": "SLOP-0022",
+        "target": "SLOP-0032",
+        "label": "depended on by",
+        "relation": "depended_on_by",
+        "note": "emitted sources are checked by parsing them again with the same parsers"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0023-see_also-SLOP-0022",
+        "source": "SLOP-0023",
+        "target": "SLOP-0022",
+        "label": "see also",
+        "relation": "see_also",
+        "note": "the fence's text is then read only through Mermaid's parsers"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0024-excepts-SLOP-0022",
+        "source": "SLOP-0024",
+        "target": "SLOP-0022",
+        "label": "excepts",
+        "relation": "excepts",
+        "note": "the only places the package does not take a fact straight from Mermaid's result"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0025-see_also-SLOP-0026",
+        "source": "SLOP-0025",
+        "target": "SLOP-0026",
+        "label": "see also",
+        "relation": "see_also",
+        "note": "Mermaid resolves the colours, and colorjs.io scores them"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0026-see_also-SLOP-0025",
+        "source": "SLOP-0026",
+        "target": "SLOP-0025",
+        "label": "see also",
+        "relation": "see_also",
+        "note": "Mermaid resolves the colours, and colorjs.io scores them"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0026-see_also-SLOP-0027",
+        "source": "SLOP-0026",
+        "target": "SLOP-0027",
+        "label": "see also",
+        "relation": "see_also",
+        "note": "page-backed surfaces are scored on the canvas"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0026-depended_on_by-SLOP-0028",
+        "source": "SLOP-0026",
+        "target": "SLOP-0028",
+        "label": "depended on by",
+        "relation": "depended_on_by",
+        "note": "what the theme engine cannot resolve is reported, not assumed"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0027-see_also-SLOP-0026",
+        "source": "SLOP-0027",
+        "target": "SLOP-0026",
+        "label": "see also",
+        "relation": "see_also",
+        "note": "page-backed surfaces are scored on the canvas"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0027-see_also-SLOP-0028",
+        "source": "SLOP-0027",
+        "target": "SLOP-0028",
+        "label": "see also",
+        "relation": "see_also",
+        "note": "a canvas that cannot be read is a usage error, as unmodelled styling is a finding"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0028-depends_on-SLOP-0026",
+        "source": "SLOP-0028",
+        "target": "SLOP-0026",
+        "label": "depends on",
+        "relation": "depends_on",
+        "note": "what the theme engine cannot resolve is reported, not assumed"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0028-see_also-SLOP-0027",
+        "source": "SLOP-0028",
+        "target": "SLOP-0027",
+        "label": "see also",
+        "relation": "see_also",
+        "note": "a canvas that cannot be read is a usage error, as unmodelled styling is a finding"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0028-depends_on-SLOP-0007",
+        "source": "SLOP-0028",
+        "target": "SLOP-0007",
+        "label": "depends on",
+        "relation": "depends_on",
+        "note": "an unauditable surface is a failing finding, not an advisory note"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0029-see_also-SLOP-0030",
+        "source": "SLOP-0029",
+        "target": "SLOP-0030",
+        "label": "see also",
+        "relation": "see_also",
+        "note": "the thresholds are compared against this score"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0030-see_also-SLOP-0029",
+        "source": "SLOP-0030",
+        "target": "SLOP-0029",
+        "label": "see also",
+        "relation": "see_also",
+        "note": "the thresholds are compared against this score"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0030-see_also-SLOP-0035",
+        "source": "SLOP-0030",
+        "target": "SLOP-0035",
+        "label": "see also",
+        "relation": "see_also",
+        "note": "a plan's overview and details are measured by this score"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0031-extended_by-SLOP-0032",
+        "source": "SLOP-0031",
+        "target": "SLOP-0032",
+        "label": "extended by",
+        "relation": "extended_by",
+        "note": "the plan a finding carries is checked before it is offered, and still never applied"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0031-extended_by-SLOP-0034",
+        "source": "SLOP-0031",
+        "target": "SLOP-0034",
+        "label": "extended by",
+        "relation": "extended_by",
+        "note": "where no plan fits, the finding carries a list or matrix instead"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0032-extends-SLOP-0031",
+        "source": "SLOP-0032",
+        "target": "SLOP-0031",
+        "label": "extends",
+        "relation": "extends",
+        "note": "the plan a finding carries is checked before it is offered, and still never applied"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0032-depends_on-SLOP-0022",
+        "source": "SLOP-0032",
+        "target": "SLOP-0022",
+        "label": "depends on",
+        "relation": "depends_on",
+        "note": "emitted sources are checked by parsing them again with the same parsers"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0032-tests-SLOP-0033",
+        "source": "SLOP-0032",
+        "target": "SLOP-0033",
+        "label": "tests",
+        "relation": "tests",
+        "note": "the contract refuses a plan that moves a marker, hides a region or merges an edge"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0032-tests-SLOP-0037",
+        "source": "SLOP-0032",
+        "target": "SLOP-0037",
+        "label": "tests",
+        "relation": "tests",
+        "note": "every group label is accepted only as recomputed from its members"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0032-tests-SLOP-0038",
+        "source": "SLOP-0032",
+        "target": "SLOP-0038",
+        "label": "tests",
+        "relation": "tests",
+        "note": "stub texts must have one reading, and half edges are read as a set"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0033-tested_by-SLOP-0032",
+        "source": "SLOP-0033",
+        "target": "SLOP-0032",
+        "label": "tested by",
+        "relation": "tested_by",
+        "note": "the contract refuses a plan that moves a marker, hides a region or merges an edge"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0033-see_also-SLOP-0034",
+        "source": "SLOP-0033",
+        "target": "SLOP-0034",
+        "label": "see also",
+        "relation": "see_also",
+        "note": "a diagram with no structure to fold gets a list or matrix"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0033-see_also-SLOP-0035",
+        "source": "SLOP-0033",
+        "target": "SLOP-0035",
+        "label": "see also",
+        "relation": "see_also",
+        "note": "how far a plan folds once it follows the author's structure"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0033-see_also-SLOP-0036",
+        "source": "SLOP-0033",
+        "target": "SLOP-0036",
+        "label": "see also",
+        "relation": "see_also",
+        "note": "label families are the author's grouping too"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0034-extends-SLOP-0031",
+        "source": "SLOP-0034",
+        "target": "SLOP-0031",
+        "label": "extends",
+        "relation": "extends",
+        "note": "where no plan fits, the finding carries a list or matrix instead"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0034-see_also-SLOP-0033",
+        "source": "SLOP-0034",
+        "target": "SLOP-0033",
+        "label": "see also",
+        "relation": "see_also",
+        "note": "a diagram with no structure to fold gets a list or matrix"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0035-see_also-SLOP-0030",
+        "source": "SLOP-0035",
+        "target": "SLOP-0030",
+        "label": "see also",
+        "relation": "see_also",
+        "note": "a plan's overview and details are measured by this score"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0035-see_also-SLOP-0033",
+        "source": "SLOP-0035",
+        "target": "SLOP-0033",
+        "label": "see also",
+        "relation": "see_also",
+        "note": "how far a plan folds once it follows the author's structure"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0036-see_also-SLOP-0033",
+        "source": "SLOP-0036",
+        "target": "SLOP-0033",
+        "label": "see also",
+        "relation": "see_also",
+        "note": "label families are the author's grouping too"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0036-see_also-SLOP-0037",
+        "source": "SLOP-0036",
+        "target": "SLOP-0037",
+        "label": "see also",
+        "relation": "see_also",
+        "note": "a group holding a whole dotted family is named by it"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0037-tested_by-SLOP-0032",
+        "source": "SLOP-0037",
+        "target": "SLOP-0032",
+        "label": "tested by",
+        "relation": "tested_by",
+        "note": "every group label is accepted only as recomputed from its members"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0037-see_also-SLOP-0036",
+        "source": "SLOP-0037",
+        "target": "SLOP-0036",
+        "label": "see also",
+        "relation": "see_also",
+        "note": "a group holding a whole dotted family is named by it"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0037-see_also-SLOP-0038",
+        "source": "SLOP-0037",
+        "target": "SLOP-0038",
+        "label": "see also",
+        "relation": "see_also",
+        "note": "a stub finds its group by the label the overview shows"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0038-tested_by-SLOP-0032",
+        "source": "SLOP-0038",
+        "target": "SLOP-0032",
+        "label": "tested by",
+        "relation": "tested_by",
+        "note": "stub texts must have one reading, and half edges are read as a set"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0038-see_also-SLOP-0037",
+        "source": "SLOP-0038",
+        "target": "SLOP-0037",
+        "label": "see also",
+        "relation": "see_also",
+        "note": "a stub finds its group by the label the overview shows"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0039-extends-SLOP-0021",
+        "source": "SLOP-0039",
+        "target": "SLOP-0021",
+        "label": "extends",
+        "relation": "extends",
+        "note": "plain-word series get their own rule, and minItems tunes the code-run threshold too"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0039-see_also-SLOP-0006",
+        "source": "SLOP-0039",
+        "target": "SLOP-0006",
+        "label": "see also",
+        "relation": "see_also",
+        "note": "minItems is set like any other rule option"
       }
     }
   ],

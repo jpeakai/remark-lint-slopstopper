@@ -10,7 +10,6 @@ accepted_on: {{ rec.accepted_on }}
 {% if rec.plan_id %}
 plan_id: {{ rec.plan_id }}
 {% endif %}
-provenance: {{ rec.provenance | yamlq }}
 enforced_in:
 {% for item in rec.enforced_in %}
   - {{ item | yamlq }}

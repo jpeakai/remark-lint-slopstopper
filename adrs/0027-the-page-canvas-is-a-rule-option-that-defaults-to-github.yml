@@ -1,0 +1,37 @@
+id: SLOP-0027
+slug: the-page-canvas-is-a-rule-option-that-defaults-to-github
+plan_id: null
+title: The page canvas is a contrast rule option that defaults to GitHub's light and dark pages
+description: Page-backed surfaces are scored on an opaque canvas.light and canvas.dark the host may set
+status: accepted
+accepted_on: 2026-10-25
+last_changed_on: 2026-10-25
+tags: [mermaid, contrast, configuration]
+
+enforced_in:
+  - src/mermaid/contrast/theme.ts, GITHUB_CANVAS and canvasColourProblem
+  - src/mermaid/contrast/policy.ts, resolvedCanvas, which merges the canvas option over GitHub's and throws on a bad colour
+  - src/types.ts, the canvas field of RuleOptions
+  - RULES.md, Mermaid text contrast
+
+relates_to:
+  - relation: see_also
+    target: SLOP-0026
+    note: page-backed surfaces are scored on the canvas
+  - relation: see_also
+    target: SLOP-0028
+    note: a canvas that cannot be read is a usage error, as unmodelled styling is a finding
+
+decision:
+  given: translucent fills, edge label backgrounds, diagram titles and page-backed sequence elements are read against the page. A host other than GitHub draws its own page
+  we_prefer: a canvas of opaque light and dark colours set through the mermaid/contrast-text-below-aa rule options, defaulting to GitHub's white and #0d1117, over fixed GitHub colours or a profile per host
+  because: the page is the one rendering assumption a host may change, and one option covers every page-backed surface without modelling each host's theme
+  unless: a canvas colour is not a CSS colour or is translucent, which throws a TypeError before any diagram is scored. A canvas that cannot be read would report passes it never affected
+
+consequences:
+  pros:
+    - A host with its own page colours scores diagrams as its readers see them.
+    - A configuration that sets no canvas scores exactly what GitHub shows.
+  cons:
+    - The canvas models the page only, so a host that also restyles Mermaid's own surfaces with CSS is not modelled.
+    - One configuration holds one canvas, so documents rendered on different pages need separate remark configurations.

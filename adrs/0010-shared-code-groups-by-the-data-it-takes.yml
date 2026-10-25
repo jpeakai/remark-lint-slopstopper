@@ -1,0 +1,40 @@
+id: SLOP-0010
+slug: shared-code-groups-by-the-data-it-takes
+plan_id: null
+title: Shared code sits in the layer whose data it takes, and layers import downwards
+description: src/document takes source and trees and imports no policy, and policies import the document layer, never the reverse
+status: accepted
+accepted_on: 2026-10-25
+last_changed_on: 2026-10-25
+tags: [architecture]
+
+enforced_in:
+  - src/document/, which takes source, trees and nodes and imports only src/types.ts from the rest of the package
+  - src/prose/paragraph-plan.ts, which holds the policy-specific grouping the document layer must not own
+  - CONTRIBUTING.md, which keeps policy decisions in the rule and reusable projections and language models in src/document
+  - ARCHITECTURE.md, which states the document language model never depends on prose policy
+
+relates_to:
+  - relation: depends_on
+    target: SLOP-0009
+    note: a helper leaves its policy module only once a second policy needs it
+  - relation: see_also
+    target: SLOP-0003
+    note: the context says what a policy is handed, and this says where code reading it lives
+  - relation: depended_on_by
+    target: SLOP-0011
+    note: a function split for the complexity limits places its helpers by this rule
+
+decision:
+  given: shared code has to live somewhere a reader can predict
+  we_prefer: placing a function in the layer whose data it takes, over grouping helpers by which policy calls them. Imports flow from policies down to the document layer
+  because: the arguments are visible in the signature while the callers are not. A downward import graph keeps the document model reusable by plugins and direct callers
+  unless: a derivation has its own vocabulary, which earns it a named module of its own
+
+consequences:
+  pros:
+    - remark-lint-slopstopper/document and /language-view export a layer that carries no policy.
+    - A module's placement is checkable from the signatures inside it.
+  cons:
+    - Sharing a helper costs an import edge where duplication cost none.
+    - A policy-specific derivation, such as paragraph planning, sits beside its policy rather than with the language model it extends.

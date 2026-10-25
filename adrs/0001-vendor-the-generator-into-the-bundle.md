@@ -5,7 +5,6 @@ description: The adr skill's renderer is vendored into adrs/ and run by uv, so t
 tags: [tooling, okf-yaml]
 status: accepted
 accepted_on: 2026-10-24
-provenance: This package is installed and read from its own repository, so its decisions must render from a clone alone, and the adr skill ships okf_render.py with a golden fixture that a verbatim copy inherits
 enforced_in:
   - adrs/okf_render.py, adrs/templates/ and adrs/record.schema.json
   - the fix target in the Makefile, which renders the bundle against the vendored schema

@@ -101,7 +101,7 @@ export interface Scored {
   // least one a group: what a reader sees as parallel lines.
   parallel: number;
   // The members of the largest group the fold leaves, so at an equal saving
-  // the fold keeping groups even goes first (MJL-0037).
+  // the fold keeping groups even goes first (SLOP-0038).
   largest: number;
 }
 
@@ -159,7 +159,7 @@ const parallelOf = (qedges: readonly QEdge[]): number => {
 // beside another that the original draws between other ends, adding no new
 // reachable pair where the step or the candidate asks, and where the step
 // holds folds to the overview before it, taking away an overview edge per
-// node hidden and adding no new reachable pair (MJL-0034).
+// node hidden and adding no new reachable pair (SLOP-0035).
 const admits = (
   ctx: CandidateContext,
   cand: Candidate,
@@ -271,12 +271,12 @@ export interface Step {
   floor?: number;
   // The overview before the step, when a fold must take away at least one
   // overview edge for each node it hides, and add no new reachable pair
-  // (MJL-0034).
+  // (SLOP-0035).
   before?: { edges: number; loss: number };
   // Whether a fold may add no new reachable pair.
   lossless?: boolean;
   // Whether twin chains fold whole, and whether their detail may be split
-  // again (MJL-0038).
+  // again (SLOP-0033).
   lanes?: LaneSearch;
 }
 

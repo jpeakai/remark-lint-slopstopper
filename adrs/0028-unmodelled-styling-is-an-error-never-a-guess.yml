@@ -1,0 +1,39 @@
+id: SLOP-0028
+slug: unmodelled-styling-is-an-error-never-a-guess
+plan_id: null
+title: Styling the contrast audit cannot model is reported as an error, never scored by a guess
+description: Custom themeCSS, unsupported modes and unmodelled surfaces report unauditable instead of passing silently
+status: accepted
+accepted_on: 2026-10-25
+last_changed_on: 2026-10-25
+tags: [mermaid, contrast, accessibility]
+
+enforced_in:
+  - src/mermaid/contrast/policy.ts, which reports "Contrast cannot be audited" for themeCSS and every skipped surface
+  - src/mermaid/contrast/surfaces.ts and src/mermaid/contrast/surfaces/, which return a reason for a surface they cannot resolve
+  - src/mermaid/contrast/sequence.test.ts and surfaces.test.ts, which hold unauditable cases to an error
+
+relates_to:
+  - relation: depends_on
+    target: SLOP-0026
+    note: what the theme engine cannot resolve is reported, not assumed
+  - relation: see_also
+    target: SLOP-0027
+    note: a canvas that cannot be read is a usage error, as unmodelled styling is a finding
+  - relation: depends_on
+    target: SLOP-0007
+    note: an unauditable surface is a failing finding, not an advisory note
+
+decision:
+  given: a diagram uses styling whose rendered text colour or background the audit cannot derive. Examples are custom themeCSS, an unsupported rendering mode or a surface with no model
+  we_prefer: reporting a mermaid/contrast-text-below-aa error that names the selector and the reason, over skipping the surface or scoring an assumed colour
+  because: a skipped or guessed surface reads as a pass the audit never earned. The reader who cannot see the text is the one the rule exists for
+  unless: never
+
+consequences:
+  pros:
+    - A clean contrast run means every text surface was actually scored in both themes.
+    - The message tells the author which styling to replace with supported Mermaid colours.
+  cons:
+    - A diagram whose custom CSS is readable still fails until the CSS is replaced or the rule is suppressed.
+    - Each newly supported diagram family needs a surface model before its styled diagrams can pass.

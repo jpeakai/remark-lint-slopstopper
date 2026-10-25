@@ -1,0 +1,34 @@
+id: SLOP-0011
+slug: code-complexity-is-gated-by-biome
+plan_id: null
+title: Code complexity is gated by Biome rules that fail the build
+description: Every Biome complexity rule runs at error, with cognitive complexity capped at 10, and bun run check fails past it
+status: accepted
+accepted_on: 2026-10-25
+last_changed_on: 2026-10-25
+tags: [quality, tooling]
+
+enforced_in:
+  - biome.json, which enables the complexity group at error and sets maxAllowedComplexity to 10
+  - package.json, whose lint script runs biome check --error-on-warnings inside bun run check
+  - .github/workflows/check.yml, which runs bun run check on every push to main and every pull request
+  - CODING_STANDARDS.md, whose TypeScript table points at the Biome config
+
+relates_to:
+  - relation: depends_on
+    target: SLOP-0010
+    note: a long function splits into helpers that sit in the layer whose data they read
+
+decision:
+  given: every function in the package is linted by bun run check
+  we_prefer: Biome complexity rules at error level, over warnings or a separate complexity tool
+  because: Biome already gates the build, and an error is the only level this repo keeps
+  unless: a rule produces findings that no refactor can fix without hiding the logic, which calls for a new record
+
+consequences:
+  pros:
+    - A long fixer is split into steps a reviewer can check one at a time.
+    - The limits live in the one linter the repo already runs, with no new dependency.
+  cons:
+    - Extracting helpers adds functions and names to the larger modules.
+    - The limits are numbers, so a function near one may be split where a human would not.

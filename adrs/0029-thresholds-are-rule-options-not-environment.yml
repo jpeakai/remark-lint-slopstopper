@@ -1,0 +1,33 @@
+id: SLOP-0029
+slug: thresholds-are-rule-options-not-environment
+plan_id: null
+title: Complexity thresholds are remark rule options, never environment variables
+description: A density preset and numeric overrides come only from the plugin options a remark configuration commits
+status: accepted
+accepted_on: 2026-10-25
+last_changed_on: 2026-10-25
+tags: [mermaid, complexity, configuration]
+
+enforced_in:
+  - src/mermaid/complexity/metrics.ts, whose thresholdsFrom reads only the preset and numeric option fields it is given
+  - src/mermaid/complexity/policy.ts, which passes the rule's complexity options or its shared options to thresholdsFrom
+  - src/remark/plugin.ts, which merges shared options under each rule's own options
+  - the absence of process.env reads anywhere under src/
+
+relates_to:
+  - relation: see_also
+    target: SLOP-0030
+    note: the thresholds are compared against this score
+
+decision:
+  given: a project needs different density limits for its diagrams
+  we_prefer: setting a preset such as low-density or numeric threshold overrides in the remark plugin options, over environment variables
+  because: the remark configuration is committed and reviewed, so a verdict is a function of the repository and its configuration alone
+  unless: never
+
+consequences:
+  pros:
+    - The same commit gives the same verdict on every machine and in CI.
+    - Overriding any threshold marks the preset as custom in the message, so the reader knows the limits moved.
+  cons:
+    - A one-off stricter run needs another remark configuration file, passed with --rc-path.

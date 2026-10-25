@@ -1,0 +1,47 @@
+id: SLOP-0014
+slug: every-edit-is-verified-before-it-is-exposed
+plan_id: null
+title: Every edit is reparsed and compared with the original before a finding may carry it
+description: An edit that changes visible words or structure beyond its declared change is withdrawn, alone and as a batch
+status: accepted
+accepted_on: 2026-10-25
+last_changed_on: 2026-10-25
+tags: [fixing, safety, verification]
+
+enforced_in:
+  - src/document/context.ts, whose safeEdit compares the reparsed structure and visible words with the original for one edit
+  - src/document/context.ts, whose validateBatch strips every edit when the combined result fails the same comparison
+  - src/prose/analyze.ts, which validates the batch of every prose round before returning it
+  - CONTRIBUTING.md, under Add an automatic edit deliberately
+
+relates_to:
+  - relation: depends_on
+    target: SLOP-0012
+    note: verification is cheap because an edit is a single spliced range
+  - relation: extends
+    target: SLOP-0013
+    note: verification withdraws an edit on behalf of a fixer that did not refuse
+  - relation: tested_by
+    target: SLOP-0016
+    note: tests assert the words, structure and surrounding bytes an edit must keep
+  - relation: depended_on_by
+    target: SLOP-0017
+    note: shortening text changes the words verification protects
+  - relation: extended_by
+    target: SLOP-0015
+    note: a verified edit is applied only through a finding that is still visible
+
+decision:
+  given: a fixer has proposed an edit and a finding is about to carry it to the adapter
+  we_prefer: reparsing the edited source and comparing its structure and visible words with the original, alone and as a batch, over trusting the fixer's own logic
+  because: a change the fixer did not declare is either a fixer bug or a case it did not foresee, and neither may reach the file
+  unless: never; a fixer whose change alters punctuation or structure on purpose declares the exact change it expects, and anything beyond it is withdrawn
+
+consequences:
+  pros:
+    - A fixer bug shows up as a finding left without an edit, never as a silent content change.
+    - Two edits that are each safe but unsafe together never land in one round. The first is kept and the rest wait for the next.
+  cons:
+    - Every candidate edit costs a reparse of the whole document.
+    - A withdrawn edit is silent, so a fixer bug reads as a refusal unless a test expects the fix.
+    - A fixer that changes punctuation or structure must state its expected change, which the whitespace-only comparison alone cannot express.

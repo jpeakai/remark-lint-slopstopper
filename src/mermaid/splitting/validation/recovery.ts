@@ -205,7 +205,7 @@ const fromHolds = (
 
 type Detail = SplitPlan["details"][number];
 
-// A box of stubs (MJL-0037) and the stubs inside it, read by their form. A
+// A box of stubs (SLOP-0038) and the stubs inside it, read by their form. A
 // box shows the label exactly one group shows, sits at the top level, and
 // stands for the region that group stands for whole, else for the group,
 // when it draws no edge. A stub inside it shows the own label of exactly one

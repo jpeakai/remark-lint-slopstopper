@@ -10,7 +10,7 @@ import { createDocument, type DocumentContext } from "../document/context.ts";
 import { applyEdits } from "../document/edits.ts";
 import { pointAt } from "../document/positions.ts";
 import { analyzeProse } from "../prose/analyze.ts";
-import { FIXABLE_RULE, PROSE_RULES, RULES } from "../rules.ts";
+import { FIX_ORDER, PROSE_RULES, RULES } from "../rules.ts";
 import type {
   Diagnostic,
   PolicyRuleId,
@@ -74,9 +74,22 @@ function configuredRules(
 async function diagnostics(
   document: DocumentContext,
   config: RuleConfiguration,
+  settings: readonly RuleConfiguration[],
   defaults: RuleOptions = {},
 ): Promise<Diagnostic[]> {
-  const options = { ...defaults, ...config.options, rules: [config.ruleId] };
+  // Every enabled policy's options, so a policy can defer to another one.
+  const policies = Object.fromEntries(
+    settings.map((setting) => [
+      setting.ruleId,
+      { ...defaults, ...setting.options },
+    ]),
+  );
+  const options = {
+    ...defaults,
+    ...config.options,
+    rules: [config.ruleId],
+    policies,
+  };
   const findings = PROSE_RULES.includes(config.ruleId)
     ? await analyzeProse(document, options)
     : await (await import("../mermaid/analyze.ts")).analyzeMermaid(
@@ -121,7 +134,7 @@ function reporter(options: RemarkSlopstopperOptions): ReportDiagnostics {
       emitDiagnostics(
         file,
         config,
-        await diagnostics(document, config, options.options),
+        await diagnostics(document, config, settings, options.options),
         emitted,
       );
     // Native suppression controls both messages and the source edits they expose.
@@ -133,17 +146,27 @@ function reporter(options: RemarkSlopstopperOptions): ReportDiagnostics {
   };
 }
 
-function visibleEdits({ emitted, visible }: Report): TextEdit[] {
-  return visible.flatMap((message) => {
+// One policy's edits land per round, in fix order; the next round reparses
+// and reports again, so later policies see the settled source.
+function visibleEdits(
+  { emitted, visible }: Report,
+  source: string,
+): TextEdit[] {
+  const fixes = visible.flatMap((message) => {
     const diagnostic = emitted.get(message);
-    return diagnostic?.ruleId === FIXABLE_RULE && diagnostic.fix
-      ? [diagnostic.fix]
+    const fix = diagnostic?.fix;
+    return fix && source.slice(fix.start, fix.end) !== fix.text
+      ? [{ ruleId: diagnostic.ruleId, fix }]
       : [];
   });
+  const ruleId = FIX_ORDER.find((id) =>
+    fixes.some((item) => item.ruleId === id),
+  );
+  return fixes.flatMap((item) => (item.ruleId === ruleId ? [item.fix] : []));
 }
 
 function applyRound(file: VFile, report: Report): TextEdit[] | null {
-  const edits = visibleEdits(report);
+  const edits = visibleEdits(report, String(file));
   if (!edits.length) return null;
   const next = applyEdits(String(file), edits);
   if (next === String(file)) return null;
@@ -180,7 +203,7 @@ function transformer(
   };
 }
 
-/** Native remark/VFile diagnostics, with opt-in source-preserving whitespace fixes. */
+/** Native remark/VFile diagnostics, with opt-in verified source edits. */
 export default function remarkSlopstopper(
   this: Processor,
   options: RemarkSlopstopperOptions = {},

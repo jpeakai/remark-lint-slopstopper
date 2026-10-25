@@ -7,7 +7,7 @@ import { isMap, isScalar, LineCounter, parseDocument } from "yaml";
 // Align Mermaid's preprocessed text and YAML keys with authored source.
 
 // The diagram's YAML frontmatter as mdast reads it, or null when it has none.
-// micromark finds the block, per MJL-0023.
+// micromark finds the block, per SLOP-0023.
 const frontmatterOf = (source: string): Yaml | null => {
   const tree = fromMarkdown(source, {
     extensions: [frontmatter(["yaml"])],
@@ -141,7 +141,7 @@ const onlyBetween = (
 
 // The source line of a key in the diagram's YAML frontmatter, by its path from
 // the document root, or null when the frontmatter does not set it. The
-// frontmatter is found by mdast and read by yaml, per MJL-0023.
+// frontmatter is found by mdast and read by yaml, per SLOP-0023.
 export const frontmatterLine = (
   source: string,
   path: string[],

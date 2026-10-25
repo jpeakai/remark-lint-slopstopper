@@ -88,7 +88,7 @@ interface Walk {
   // diagram whose details fit only when more of it folds.
   density: Density;
   // Folds an author region only when that adds no new reachable pair.
-  // How twin chains fold (MJL-0038).
+  // How twin chains fold (SLOP-0033).
   lanes?: LaneSearch;
 }
 
@@ -285,7 +285,7 @@ const loosen = (start: Measure): Measure => {
 // Whether an aggregate is closed: one member holds every relationship that
 // crosses the group's edge and the others relate to nothing outside it, so
 // folded it draws every relationship it had at the entity that holds it, and
-// hides only the ones inside (MJL-0040).
+// hides only the ones inside (SLOP-0035).
 const closed = (work: WorkGraph, g: Group): boolean => {
   const inside = new Set(g.members);
   const faces = new Set(
@@ -301,7 +301,7 @@ const closed = (work: WorkGraph, g: Group): boolean => {
 // each named by every member, so the overview loses density and no name,
 // and draws every relationship it keeps at its own entity. An aggregate
 // whose other members relate outside it stays in view, as do other
-// diagrams, at T1 (MJL-0040, superseding MJL-0039's rows-dropped stop).
+// diagrams, at T1 (SLOP-0035).
 const closedAggregates = (
   start: Measure,
   snapshots: Snapshot[],
@@ -329,7 +329,7 @@ const closedAggregates = (
 // How a walk climbs one tier: held to details that fit but for author regions
 // and aggregates on a walk letting them fold whatever their size, and in T3
 // adding no new reachable pair when the walk asks. T2 folds twin chains as the
-// walk asks (MJL-0038).
+// walk asks (SLOP-0033).
 const stepOf = (strategy: Strategy, walk: Walk): Step => {
   const { tier } = strategy;
   const capped = !strategy.recursiveDetails || walk.details !== "recursive";
@@ -343,7 +343,7 @@ const stepOf = (strategy: Strategy, walk: Walk): Step => {
 
 // Folds tier by tier until the overview meets the target, or returns why not.
 // A diagram whose rows alone put it over the target meets it at T1, rows
-// dropped, and folds only its closed aggregates (MJL-0040).
+// dropped, and folds only its closed aggregates (SLOP-0035).
 const finishFold = (measure: Measure, step: Step, walk: Walk): Measure => {
   const folded = tidy(foldEvenly(measure, step, walk.density === "compact"));
   return walk.density === "compact" ? folded : loosen(folded);

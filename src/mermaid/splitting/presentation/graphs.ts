@@ -231,7 +231,7 @@ const detailPseudo = (
   return { nodes, edges: [] };
 };
 
-// A box of stubs (MJL-0037): in a flowchart detail, the stubs for two or more
+// A box of stubs (SLOP-0038): in a flowchart detail, the stubs for two or more
 // members of one other group, drawn inside one subgraph showing the label
 // that group shows, each stub showing its member's own label. A group standing
 // for one author region whole (soleRegion) is boxed as that region, so an

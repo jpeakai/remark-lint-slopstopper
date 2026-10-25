@@ -108,7 +108,7 @@ const isCssColour = (value: string): boolean => Color.try(value) !== null;
 // package does not ship. Mermaid's API for an external diagram registers its
 // detector alone, so mermaid's own detection names a zenuml diagram, as the
 // add-on's detector does, and loading it fails with the reason. Mermaid core
-// has no zenuml detector of its own, a gap MJL-0027 records.
+// has no zenuml detector of its own, a gap SLOP-0024 records.
 const ZENUML = {
   id: "zenuml",
   detector: (text: string): boolean => /^\s*zenuml/.test(text),

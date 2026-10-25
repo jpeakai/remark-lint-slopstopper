@@ -37,5 +37,5 @@ A rule a tool enforces is a pointer to that tool's config here, never restated p
 
 Dead code and unused exports are rejected by Knip in both its default and `--production --strict` modes, configured in `config/knip.json` and run by `bun run lint:dead-code`.
 `bun run check` runs every gate above that has a tool, and `.github/workflows/check.yml` runs it on every push and pull request.
-Biome skips `adrs/`, whose files are generated or vendored from the adr skill.
+Biome skips `adrs/`, which holds generated files and the bundle's own generator.
 Keep tests beside the implementation and assert observable behaviour, including failures and disabled policies.

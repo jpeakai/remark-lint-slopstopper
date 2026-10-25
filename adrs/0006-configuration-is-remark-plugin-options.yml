@@ -1,0 +1,38 @@
+id: SLOP-0006
+slug: configuration-is-remark-plugin-options
+plan_id: null
+title: Configuration is remark plugin options, and a disabled policy never runs
+description: Policies are switched and tuned through the plugin's options in the host's remark config, with no config file of its own
+status: accepted
+accepted_on: 2026-10-25
+last_changed_on: 2026-10-25
+tags: [config, rules]
+
+enforced_in:
+  - src/remark/plugin.ts, where RemarkSlopstopperOptions holds fix, shared options and per-rule settings keyed by short name
+  - src/types.ts, where RuleOptions declares the typed shared options
+  - src/prose/analyze.ts and src/mermaid/analyze.ts, which evaluate only enabled policies
+  - README.md and examples/remark.config.mjs, which show the options in a remark config
+
+relates_to:
+  - relation: see_also
+    target: SLOP-0039
+    note: minItems is set like any other rule option
+  - relation: depends_on
+    target: SLOP-0008
+    note: a per-rule setting is keyed by the short name after the slash
+
+decision:
+  given: a project wants to disable a policy, tune its budget or enable fixes, and already configures remark
+  we_prefer: plugin options in the host's remark config, over a config file and loader of the package's own. Shared options are overridden per rule, and severity is limited to error or off
+  because: the host already finds, loads and merges configuration, and one more file would duplicate that and drift from it
+  unless: a setting must be shared by tools that are not remark hosts, which calls for a new record
+
+consequences:
+  pros:
+    - Configuration lives where every other remark plugin's does, including remark-cli's rc files.
+    - A disabled policy is never evaluated, so a prose-only setup never loads Mermaid.
+  cons:
+    - An unknown short name in a JavaScript config is silently ignored, because only TypeScript checks the keys.
+    - An invalid budget fails only when its policy first runs, not when the config loads.
+    - Every enabled policy is an error, so a team cannot downgrade one to a warning.

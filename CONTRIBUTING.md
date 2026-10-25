@@ -8,7 +8,7 @@ Adding a custom policy does not automatically enable it in the root preset.
 
 1. Add its identifier to `PolicyRuleId` in [`src/types.ts`](src/types.ts) and `PROSE_RULES` in [`src/rules.ts`](src/rules.ts).
 2. Implement the check under `src/prose/rules/` and colocate its behaviour tests.
-3. Register the check in [`src/prose/analyze.ts`](src/prose/analyze.ts), which selects enabled rules and supplies the shared context.
+3. Register the check in [`src/prose/analyze.ts`](src/prose/analyze.ts), which selects enabled rules and supplies the shared context and every enabled policy's options.
 4. Return `Diagnostic[]` with the full identifier, a useful message and absolute UTF-16 source ranges.
 5. Document the rule and verified examples in [RULES.md](RULES.md), and update [README](README.md) for configuration or default changes.
 
@@ -107,11 +107,19 @@ Consult the [Mermaid README](src/mermaid/README.md) and [split planner README](s
 
 ## Add an automatic edit deliberately
 
-Only `sentence-one-per-line` is currently fixable.
-Returning a `fix` from a new policy is insufficient: the adapter explicitly selects `FIXABLE_RULE`.
-Changing that contract requires an explicit edit-safety design, adapter changes and tests.
+A diagnostic carries a `fix` only after `document.safeEdit(edit, expectation)` accepts it.
+Declare the exact change the edit makes:
 
-Use `document.safeEdit(edit)` to verify structure and visible words, and preserve `validateBatch` checks in the prose orchestrator.
+| Expectation | Edit |
+| --- | --- |
+| `same-tree` | Whitespace only |
+| `same-shape` | A glyph swap |
+| `replace-paragraph` | A List Promotion |
+
+Offer no edit when the input is ambiguous, and leave the finding for a human.
+Add the policy to `FIX_ORDER` in [`src/rules.ts`](src/rules.ts); the adapter applies one policy's visible edits per round in that order.
+Preserve the `validateBatch` check in the prose orchestrator, which verifies each policy's edits together.
+
 Source ranges must not overlap.
 Suppression must run before edit selection, then the adapter reparses and reports until stable.
 Do not serialise unrelated Markdown or rewrite Mermaid fences through a generic Markdown serializer.

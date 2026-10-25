@@ -149,7 +149,7 @@ const halfOf = (
 // The group whose detail draws exactly every edge between two groups that
 // edges join both ways: the one whose detail is split again when the other's
 // is not, since a stub in a nested overview standing for a whole group hides
-// which member a reader is sent to two levels away (MJL-0035); then the one
+// which member a reader is sent to two levels away (SLOP-0033); then the one
 // needing stubs for fewer of the other's members, then the first by key. The
 // other group's detail draws one stub for the whole group, with every edge
 // each way drawn once for those alike, so no detail draws a group whole beside
@@ -202,8 +202,8 @@ const outsideOf = (work: WorkGraph, part: Partition, key: string): number =>
   ).size;
 
 // Whether the target of edges joining group a to group b one way only asks
-// to draw them exactly (MJL-0037): the source's detail is not split again
-// (MJL-0035), and the target needs stubs for fewer of the source's members
+// to draw them exactly (SLOP-0038): the source's detail is not split again
+// (SLOP-0033), and the target needs stubs for fewer of the source's members
 // than the source needs of the target's, or for as many, two or more, when
 // the target's detail meets fewer outside nodes than the source's, so stubs
 // spread evenly. A single edge is drawn exactly by its source, as before.

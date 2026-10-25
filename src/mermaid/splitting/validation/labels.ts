@@ -38,8 +38,8 @@ const qualifiedLabels = (work: WorkGraph, g: SplitGroup): string[] =>
 
 // 4. A group label is an author label (a folded region's label, alone or,
 // never cut, qualified by the region around it), a member's label, the range of its
-// members' labels, or the family or lane label of its members (label.ts), shown cut by the
-// one rule in label.ts, then " (+N)", N counting the members it does not
+// members' labels, or the family or lane label of its members (text.ts), shown cut by the
+// one rule in text.ts, then " (+N)", N counting the members it does not
 // name, and the group's id when the label is taken. No two groups show one
 // label, and no group shows a node's label.
 // Where a group's base label may come from, each recomputed from the data.
@@ -104,7 +104,7 @@ const groupLabelViolations = (build: Build, g: SplitGroup): Violations => {
   return out;
 };
 
-// A pair or list label (label.ts listedOthers): a group of two or three
+// A pair or list label (text.ts listedOthers): a group of two or three
 // members, or a group of leaves hanging from one overview node within
 // FAN_LISTED, named after one whole and showing the others' labels,
 // recomputed from the members, in place of the count, N being 0.
@@ -126,7 +126,7 @@ const pairViolations = (build: Build, g: SplitGroup): Violations => {
     : [`4: group ${g.id} pair label "${g.label}" is not its members'`];
 };
 
-// The span label a group may show (label.ts spanLabel), recomputed from the
+// The span label a group may show (text.ts spanLabel), recomputed from the
 // members' entry and exit, for a group with no markdown member.
 const spanName = (work: WorkGraph, g: SplitGroup): string | null => {
   const ends = spanOf(work, g);
@@ -149,7 +149,7 @@ const fanAt = (
   return group ? fanOf(build.work, part, group) : null;
 };
 
-// The fan label a group of leaves may show (label.ts fanLabel), from the name
+// The fan label a group of leaves may show (text.ts fanLabel), from the name
 // the node they hang from shows: a kept node's label, or a group's base.
 const fanName = (build: Build, g: SplitGroup): string | null => {
   const fan = fanAt(build, g);

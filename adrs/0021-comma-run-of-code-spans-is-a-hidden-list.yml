@@ -1,0 +1,40 @@
+id: SLOP-0021
+slug: comma-run-of-code-spans-is-a-hidden-list
+plan_id: null
+title: A comma-joined run of three or more inline code spans is a hidden list
+description: list-comma-code-run flags the run anywhere, and its fix promotes it only when it closes a sentence after a lead-in
+status: accepted
+accepted_on: 2026-10-25
+last_changed_on: 2026-10-25
+tags: [rules, list, fixing]
+
+enforced_in:
+  - src/prose/rules/list-comma-code-run.ts, which counts the run in projected prose, where each code span is one CODE token
+  - the rule's colocated tests, which pin what fires, what does not, and each refusal
+  - RULES.md, which documents the run, the minItems option and the fixer limits
+
+relates_to:
+  - relation: extended_by
+    target: SLOP-0039
+    note: plain-word series get their own rule, and minItems tunes this rule's threshold
+  - relation: depends_on
+    target: SLOP-0013
+    note: a run mid-sentence, without a lead-in, or opening inside a link or emphasis gets no edit
+  - relation: see_also
+    target: SLOP-0015
+    note: the check reports runs the fix refuses, so a refused run stays reported rather than silently passing
+
+decision:
+  given: comma-joined items that are each only an inline code span, with an optional and or or before the last
+  we_prefer: a list rule whose items are only code spans, from three items by default, over one rule that counts any comma series of plain words
+  because: a series of bare code spans, such as file names, flags or keys, is almost always a real list. A short series of plain words is ordinary English
+  unless: a plain-word list can be told from a series by its words alone, which calls for its own rule with a stricter threshold
+
+consequences:
+  pros:
+    - A run of file names, flags or keys becomes a list a reader can scan.
+    - A code span followed by content is no bare item, so labelled runs stay with their own rule.
+  cons:
+    - A bare list of plain words, such as service names without backticks, passes this rule.
+    - A run mid-sentence is reported with no fix, so the author rewrites it by hand.
+    - Promotion changes block structure, so verification must accept the declared list shape.

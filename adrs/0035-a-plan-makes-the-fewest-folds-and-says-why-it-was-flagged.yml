@@ -1,0 +1,37 @@
+id: SLOP-0035
+slug: a-plan-makes-the-fewest-folds-and-says-why-it-was-flagged
+plan_id: null
+title: A split plan makes the fewest folds that meet its target, keeps groups even, and says why it was flagged
+description: Rows drop before nodes fold, overviews stay above an even floor, and each plan states its measured size and target
+status: accepted
+accepted_on: 2026-10-25
+last_changed_on: 2026-10-25
+tags: [mermaid, complexity, split]
+
+enforced_in:
+  - src/mermaid/splitting/planning/search.ts, EVEN_SHARE, evenFloorOf, tangled, closed and closedAggregates
+  - src/mermaid/splitting/planning/selection.ts, which prefers the near-best fold leaving the fewest parallel overview edges
+  - src/mermaid/splitting/planning/candidates.ts, which admits a trimmed aggregate only when it adds no new reachable pair
+  - src/mermaid/splitting/presentation/assemble.ts, flaggedText, carried as the plan's flagged field into the finding
+
+relates_to:
+  - relation: see_also
+    target: SLOP-0030
+    note: a plan's overview and details are measured by this score
+  - relation: see_also
+    target: SLOP-0033
+    note: how far a plan folds once it follows the author's structure
+
+decision:
+  given: a plan can fold more than its node and score targets ask, hiding names for no reason a reader can see. It can also fold so little that one group holds most of the diagram
+  we_prefer: the fewest changes that meet the target, over the smallest overview the folds can reach. A diagram that fits with its attribute rows dropped folds only its closed aggregates. An overview walked below 60 percent of node_target gives back a group. Every plan states the size it was flagged at, its target and which measure is over
+  because: every fold hides a name or makes pairs reachable, so a fold the target did not ask for is pure loss. Groups of even size read as parts of one story. The flagged text tells the reader when rows alone are the problem
+  unless: a tangled erDiagram, whose independent cycles reach a quarter of its nodes, keeps folding its aggregates evenly past the target. A tree-like overview reads as it is, and a tangled one does not
+
+consequences:
+  pros:
+    - A schema over its target only for its rows keeps every entity's name in view.
+    - The reader sees why a diagram within its node target was flagged at all.
+  cons:
+    - A plan near node_target can keep more nodes in its overview than a smaller fold would.
+    - The 60 percent floor and the tangled threshold are judgements, not measured values.

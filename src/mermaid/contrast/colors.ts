@@ -24,7 +24,7 @@ const inSrgb = (color: string): Color =>
 // Simple alpha-over in gamma-encoded sRGB, the model browsers use for opacity.
 // A translucent fill has no contrast of its own until the backdrop behind it is
 // known, so this resolves it to the box a reader sees. colorjs.io blends it, per
-// MJL-0024: a premultiplied mix in sRGB from the backdrop to the opaque
+// SLOP-0025: a premultiplied mix in sRGB from the backdrop to the opaque
 // foreground, by the foreground's alpha, is alpha-over exactly, its alpha
 // fa + ba(1 - fa). Each colour is clipped to sRGB before the blend.
 export const compositeOver = (fg: string, bg: string): string => {

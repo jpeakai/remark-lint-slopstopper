@@ -59,7 +59,7 @@ export interface LabelParts {
   // The other member's label a pair label shows in place of the count.
   pair?: string;
   // Whether the label names the member a flowchart group's flow enters at and
-  // the one it leaves from (label.ts spanLabel).
+  // the one it leaves from (text.ts spanLabel).
   span?: true;
 }
 
@@ -117,7 +117,7 @@ const regionChoices = (work: WorkGraph, g: Group): LabelParts[] => {
 
 // How a group may be named beyond its region, head and members: a range of
 // its members' labels, its members taken by label, and a label naming a whole
-// dotted family or twin chains by their stages (label.ts familyLabel and
+// dotted family or twin chains by their stages (text.ts familyLabel and
 // laneLabel), each null when it does not apply.
 export interface Naming {
   range: string | null;
@@ -126,7 +126,7 @@ export interface Naming {
   lane?: string | null;
   fan?: string | null;
   // Whether the group is a group of leaves hanging from one overview node
-  // (fanOf), whose list label may name every member (label.ts FAN_LISTED).
+  // (fanOf), whose list label may name every member (text.ts FAN_LISTED).
   fanList?: boolean;
 }
 
@@ -176,8 +176,8 @@ export const labelChoices = (
     b ? [{ base: b, n: g.members.length }] : [],
   );
   // A run a range or a whole family or lane names reads as that run, so a
-  // group of three takes a list label only when none applies (MJL-0039).
-  // A group of leaves takes its list first, since it names every member (MJL-0040).
+  // group of three takes a list label only when none applies (SLOP-0035).
+  // A group of leaves takes its list first, since it names every member (SLOP-0035).
   const run =
     g.members.length > 2 &&
     (range !== null || whole.length > 0) &&
@@ -202,10 +202,10 @@ export const labelChoices = (
 
 // The pair label a group of two members may take: named after the first of
 // its members in the order given, the other's label in place of the count
-// (label.ts pairLabel). None for any other group or a markdown member.
+// (text.ts pairLabel). None for any other group or a markdown member.
 // A group of three takes the list label the same way, the other two in
-// natural order (label.ts listedOthers, MJL-0039), and a group of leaves
-// within FAN_LISTED however many it holds (MJL-0040).
+// natural order (text.ts listedOthers, SLOP-0035), and a group of leaves
+// within FAN_LISTED however many it holds (SLOP-0035).
 const pairChoices = (
   work: WorkGraph,
   g: Group,
@@ -229,7 +229,7 @@ const pairChoices = (
 // reaches, else its one member no edge reaches; and the member every edge to
 // outside the group leaves, else its one member no edge leaves. Null for
 // fewer than three members, a group folding a region, or when either is not
-// one member, or both are one (MJL-0039).
+// one member, or both are one (SLOP-0035).
 export const spanOf = (
   work: WorkGraph,
   g: Pick<Group, "members" | "regions">,
@@ -263,7 +263,7 @@ export const spanOf = (
     : null;
 };
 
-// The span label a group with no head may take (label.ts spanLabel),
+// The span label a group with no head may take (text.ts spanLabel),
 // counting the members it does not name.
 const spanChoice = (work: WorkGraph, g: Group): LabelParts[] => {
   const ends = g.head === undefined ? spanOf(work, g) : null;
@@ -279,7 +279,7 @@ const spanChoice = (work: WorkGraph, g: Group): LabelParts[] => {
 // the way the leaves' edges run (true when out of that node), when the group
 // holds every leaf hanging from it that way: two members or more, each with
 // one directed edge, no start or end transition, in a flowchart or
-// stateDiagram, and that node no group of leaves itself (label.ts fanLabel).
+// stateDiagram, and that node no group of leaves itself (text.ts fanLabel).
 const edgesAtNodes = (work: WorkGraph): Map<string, GraphEdge[]> => {
   const edges = new Map<string, GraphEdge[]>();
   for (const edge of work.edges.filter((item) => item.source !== item.target)) {

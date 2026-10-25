@@ -19,6 +19,17 @@ const graph =
   "flowchart LR\n" +
   Array.from({ length: 25 }, (_, i) => `N${i}-->N${i + 1}`).join("\n") +
   "\nstyle N0 fill:#fff,color:#fff";
+const listsAndGlyphs = [
+  "## Docs · API",
+  "Needs: a tag; a log; a build.",
+  "Stack: Bun · Node · biome",
+  "Steps: (1) parse (2) emit.",
+  "Targets: `fmt` formats, `vet` inspects, `race` detects.",
+  "Files: `a`, `b` and `c`.",
+  "Tags: alpha, beta, rc, next, canary.",
+  "Runtime: Bun · Node\nTools: biome · tsc",
+  "One rule matters — speed.",
+].join("\n\n");
 const fixture =
   "# Probe #\n\nThe worker reads the queue because it needs a task and then it starts the next job. The worker logs its result. The scheduler starts another worker.\n\n```mermaid\n" +
   graph +
@@ -61,8 +72,8 @@ function processor(fix = false, rules?: RemarkSlopstopperOptions["rules"]) {
     .use(remarkSlopstopper, { fix, options, rules });
 }
 
-test("all five policies report native remark errors by default", async () => {
-  const file = await processor().process(fixture);
+test("every policy reports native remark errors by default", async () => {
+  const file = await processor().process(`${fixture}\n${listsAndGlyphs}\n`);
   assert.deepEqual(
     [...new Set(file.messages.map((message) => message.ruleId))].sort(),
     RULES.map((id) => id.split("/")[1]).sort(),

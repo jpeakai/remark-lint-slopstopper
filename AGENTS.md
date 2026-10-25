@@ -29,7 +29,12 @@ When a new domain term enters the code or the conversation, add it to the glossa
 ## Never
 
 - Never edit a generated file.
-  Everything in `adrs/` except the `.yml` records, `record.schema.json`, `okf_render.py` and `templates/` is generated.
+  Everything in `adrs/` is generated except these sources:
+
+  - the `.yml` records
+  - `record.schema.json`
+  - `okf_render.py`
+  - `templates/`
 
 ## More
 

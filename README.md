@@ -1,6 +1,8 @@
 # remark-lint-slopstopper
 
-Remark preset and plugin for Markdown linting, concise prose, and Mermaid diagram analysis. It provides the upstream recommended remark-lint preset plus five opt-in policies for prose layout, sentence and paragraph budgets, Mermaid contrast, and visual complexity.
+Remark preset and plugin for Markdown linting, concise prose, and Mermaid diagram analysis.
+It provides the upstream recommended remark-lint preset plus opt-in custom policies.
+They cover prose layout, sentence and paragraph budgets, hidden lists, punctuation, Mermaid contrast and visual complexity.
 
 Requires Node.js 24 or newer, or Bun 1.3 or newer.
 
@@ -22,7 +24,7 @@ export default { plugins: [slopstopper] };
 
 ## Enable custom policies
 
-Import the remark plugin to enable the five custom policies:
+Import the remark plugin to enable the custom policies:
 
 ```js
 import slopstopper from "remark-lint-slopstopper/remark";
@@ -30,12 +32,19 @@ import slopstopper from "remark-lint-slopstopper/remark";
 export default {
   plugins: [[slopstopper, {
     options: { maxWords: 25, maxSentences: 5 },
-    rules: { "sentence-word-budget-exceeded": { maxWords: 20 } }
+    rules: {
+      "sentence-word-budget-exceeded": { maxWords: 20 },
+      "list-comma-plain-run": { minItems: 4 }
+    }
   }]]
 };
 ```
 
-Every enabled custom policy reports an error. Only `sentence-one-per-line` supports automatic edits with `{fix: true}`. See [RULES.md](RULES.md) for policy behaviour and fixer limits.
+Every enabled custom policy reports an error.
+Sentence layout, list promotion and punctuation policies offer automatic edits with `{fix: true}`.
+Each edit is verified by reparsing before it is applied.
+The list run policies take a per-rule `minItems` threshold.
+See [RULES.md](RULES.md) for policy behaviour, defaults and fixer limits.
 
 ## Run with bunx
 

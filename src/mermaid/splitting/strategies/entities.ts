@@ -23,7 +23,7 @@ import { foldedParallels, quotientEdges } from "../projection/quotient.ts";
 // cardinality and label as its own overview edge, so an aggregate folds only
 // where it draws no two relationships side by side that the original draws
 // between other ends (plan.ts), and a root's aggregate that would is offered
-// trimmed too, adding no new reachable pair (MJL-0034).
+// trimmed too, adding no new reachable pair (SLOP-0035).
 
 // The aggregate folded whole, or trimmed, or null when it holds a stub, an
 // earlier group straddles it, it is already one group, or, held to fit, its
@@ -57,7 +57,7 @@ const candidateOf = (
 // with the members left. Folded whole, the aggregate would draw two
 // relationships between its group and that neighbour, as an address chain
 // folded with a STORE it locates draws CUSTOMER twice; trimmed, the chain
-// folds alone and the part stays in view (MJL-0034).
+// folds alone and the part stays in view (SLOP-0035).
 const trimmed = (ctx: CandidateContext, head: string): string[] => {
   const { work } = ctx;
   const owners = ownersOf(work);

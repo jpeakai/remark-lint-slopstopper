@@ -5,7 +5,11 @@ import remarkParse from "remark-parse";
 import { unified } from "unified";
 import type { Diagnostic, TextEdit } from "../types.ts";
 import { conceptVocabulary } from "./concepts.ts";
-import { applyEdits } from "./edits.ts";
+import {
+  type DeclaredEdit,
+  type EditExpectation,
+  verifyEdits,
+} from "./edits.ts";
 import { createLanguageView, type LanguageView } from "./language-view.ts";
 
 declare module "mdast" {
@@ -36,7 +40,7 @@ export interface DocumentContext {
   readonly eol: string;
   projection(node: Paragraph | Text): Projection;
   language(node: Paragraph | Text): LanguageView;
-  safeEdit(edit: TextEdit): boolean;
+  safeEdit(edit: TextEdit, expect?: EditExpectation): boolean;
   validateBatch(diagnostics: Diagnostic[]): void;
 }
 
@@ -110,23 +114,6 @@ function textOffsets(
   append(raw.slice(cursor), cursor, true);
   return value === expected ? offsets : mappedLines(value, expected, offsets);
 }
-function semanticValue(key: string, value: unknown, node: Nodes): unknown {
-  if (key === "children" && "children" in node)
-    return node.children.map(semanticTree);
-  if (key === "value" && node.type === "text")
-    return node.value?.replace(/\s+/g, " ");
-  return value;
-}
-// Compare structure and visible words before exposing any edit.
-function semanticTree(node: Nodes): Record<string, unknown> {
-  const out: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(node)) {
-    if (key !== "position") out[key] = semanticValue(key, value, node);
-  }
-  return out;
-}
-const semanticOf = (source: string): string =>
-  JSON.stringify(semanticTree(parser.parse(source)));
 function mappedEnd(mapped: number[], index: number, fallback: number): number {
   const start = mapped[index] ?? fallback;
   const next = mapped[index + 1] ?? fallback;
@@ -233,6 +220,21 @@ function nodeIndex(tree: Root): {
   return { paragraphs, textNodes };
 }
 
+const SAME_TREE: EditExpectation = { kind: "same-tree" };
+
+// Fixable diagnostics per rule: one rule's edits never overlap, so each
+// group can be applied and reparsed as one batch.
+const fixGroups = (diagnostics: readonly Diagnostic[]): Diagnostic[][] => {
+  const groups = new Map<string, Diagnostic[]>();
+  for (const diagnostic of diagnostics) {
+    if (!diagnostic.fix) continue;
+    const group = groups.get(diagnostic.ruleId) ?? [];
+    group.push(diagnostic);
+    groups.set(diagnostic.ruleId, group);
+  }
+  return [...groups.values()];
+};
+
 export function createDocument(
   source: string,
   options: { tree?: Root; cwd?: string } = {},
@@ -241,8 +243,17 @@ export function createDocument(
   const vocabulary = conceptVocabulary(options.cwd ?? process.cwd());
   const projections = new WeakMap<Paragraph | Text, Projection>();
   const languages = new WeakMap<Paragraph | Text, LanguageView>();
-  let semantic: string | undefined;
-  const baseline = (): string => (semantic ??= semanticOf(source));
+  let original: Root | undefined;
+  const declared = new WeakMap<TextEdit, EditExpectation>();
+  const verify = (edits: readonly DeclaredEdit[]): boolean => {
+    original ??= parser.parse(source);
+    return verifyEdits({
+      parse: (text) => parser.parse(text),
+      source,
+      before: original,
+      edits,
+    });
+  };
   const document: DocumentContext = {
     source,
     tree,
@@ -268,18 +279,20 @@ export function createDocument(
       }
       return view;
     },
-    safeEdit(edit) {
-      return (
-        semanticOf(
-          source.slice(0, edit.start) + edit.text + source.slice(edit.end),
-        ) === baseline()
-      );
+    safeEdit(edit, expect = SAME_TREE) {
+      const accepted = verify([{ edit, expect }]);
+      if (accepted) declared.set(edit, expect);
+      return accepted;
     },
     validateBatch(diagnostics) {
-      const edits = diagnostics.flatMap((item) => (item.fix ? [item.fix] : []));
-      if (!edits.length) return;
-      if (semanticOf(applyEdits(source, edits)) !== baseline()) {
-        for (const diagnostic of diagnostics) delete diagnostic.fix;
+      for (const group of fixGroups(diagnostics)) {
+        const edits = group.flatMap(({ fix }) =>
+          fix ? [{ edit: fix, expect: declared.get(fix) ?? SAME_TREE }] : [],
+        );
+        // Each edit was verified alone; when the batch is not, the first
+        // still lands and the next round reports the rest again.
+        if (edits.length < 2 || verify(edits)) continue;
+        for (const diagnostic of group.slice(1)) delete diagnostic.fix;
       }
     },
   };

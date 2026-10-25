@@ -78,7 +78,7 @@ export interface WorkGraph {
   // The stubs of a detail diagram that is split again: never folded.
   stubs: Set<string>;
   // The size the complexity rules measured the diagram at, rows aside, which
-  // the plan's flagged text reports (MJL-0039).
+  // the plan's flagged text reports (SLOP-0035).
   measured: Measured;
 }
 

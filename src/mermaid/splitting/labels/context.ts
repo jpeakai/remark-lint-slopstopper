@@ -7,10 +7,10 @@ import { MARKUP, rangeEnds, spanEnds } from "./text.ts";
 
 // Whether a stub for a member of a group shows its own label alone: the
 // group shows every member's label in a pair or list label, the member is
-// the entry or the exit a span label names (MJL-0039), or the first or the
-// last a range label names (MJL-0041), or the member is the one the group is
+// the entry or the exit a span label names (SLOP-0035), or the first or the
+// last a range label names (SLOP-0038), or the member is the one the group is
 // named after, so the group's shown label leads with the member's own label,
-// uncut (MJL-0038).
+// uncut (SLOP-0033).
 export const ownSuffices = (
   g: {
     label: string;

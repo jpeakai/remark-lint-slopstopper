@@ -1,0 +1,46 @@
+id: SLOP-0032
+slug: a-split-plan-is-verified-independently-and-by-reparse
+plan_id: null
+title: A split plan is offered only after an independent contract and a reparse of every emitted source
+description: The verifier recomputes the expected facts and parses each overview and detail again with Mermaid's parsers
+status: accepted
+accepted_on: 2026-10-25
+last_changed_on: 2026-10-25
+tags: [mermaid, complexity, verification]
+
+enforced_in:
+  - src/mermaid/splitting/validation/contract.ts, checkContract, which gathers every violation for a build and its nested builds
+  - src/mermaid/splitting/validation/round-trip.ts, which reparses each emitted source and compares its graph with the plan
+  - src/mermaid/splitting/validation/recovery.ts, labels.ts and overview.ts, which check recovery, labels, partition, edges and rows
+  - src/mermaid/splitting/index.ts, firstPassing, which offers only a build with no violations
+
+relates_to:
+  - relation: extends
+    target: SLOP-0031
+    note: the plan a finding carries is checked before it is offered, and still never applied
+  - relation: depends_on
+    target: SLOP-0022
+    note: emitted sources are checked by parsing them again with the same parsers
+  - relation: tests
+    target: SLOP-0033
+    note: the contract refuses a plan that moves a marker, hides a region or merges an edge
+  - relation: tests
+    target: SLOP-0037
+    note: every group label is accepted only as recomputed from its members
+  - relation: tests
+    target: SLOP-0038
+    note: stub texts must have one reading, and half edges are read as a set
+
+decision:
+  given: a planner has produced an overview and detail sources for an oversized diagram. A plausible plan can still lose a node, an edge, a row or a marker
+  we_prefer: deriving the expected membership and facts from the original graph apart from the producer's reductions, over trusting the planner's own bookkeeping. Every emitted source is also reparsed with Mermaid's parsers, and declared loss is recounted
+  because: the official parsers are the authority on what emitted text says, and a check that reuses the producer's reasoning repeats the producer's mistakes
+  unless: no candidate ladder passes, when no plan is offered and the finding gives the refusal reason and any contract violations
+
+consequences:
+  pros:
+    - An offered plan never loses a node or relationship across its overview and details.
+    - Declared loss, such as new reachable pairs or dropped rows, is a recount, not a claim.
+  cons:
+    - Planning an oversized diagram parses Mermaid again for every emitted source, which slows the complexity policy.
+    - Every new label or stub form must be taught to the verifier as well as the producer.

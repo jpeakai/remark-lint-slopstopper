@@ -78,7 +78,15 @@ sequenceDiagram
 
 The search tries whole lanes before staged lanes, then relaxes structural protections only when earlier attempts fail.
 Author regions are preferred where present.
-Other strategies preserve decision regions, entity ownership, chain stages, twins, sibling leaves or connected communities.
+Other strategies each preserve one of these structures:
+
+- decision regions
+- entity ownership
+- chain stages
+- twins
+- sibling leaves
+- connected communities
+
 Ranking and identifier ordering are deterministic.
 Details may split once more; `MAX_DEPTH = 2` bounds recursive planning.
 The first candidate ladder passing structural eligibility and the independent contract is offered.
@@ -131,7 +139,17 @@ sequenceDiagram
 ```
 
 Expected facts must be derived independently from the producer's reductions.
-Checks cover partition membership, labels, edge attributes, protected regions, boundary stubs, rows, marker transitions and emitted-source round trips.
+Checks cover these facts:
+
+- partition membership
+- labels
+- edge attributes
+- protected regions
+- boundary stubs
+- rows
+- marker transitions
+- emitted-source round trips
+
 Nested detail builds carry their own evidence and are checked with the outer result.
 `loss` explicitly records additional reachable pairs, dropped rows, merged markers, reversed overview edges and per-tier reachability changes.
 Overview folding can imply new paths, but details must retain the original facts required by the contract.

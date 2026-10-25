@@ -1,0 +1,33 @@
+id: SLOP-0007
+slug: a-finding-fails-or-the-policy-is-off
+plan_id: null
+title: A custom policy's finding is a fatal error, or the policy is off
+description: Custom severities accept only error or off, and a Mermaid diagram that cannot be evaluated is an error too
+status: accepted
+accepted_on: 2026-10-25
+last_changed_on: 2026-10-25
+tags: [policy, severity, mermaid]
+
+enforced_in:
+  - src/remark/plugin.ts, whose Severity type admits only boolean, 0, 2, off and error, and which marks every emitted message fatal
+  - src/mermaid/analyze.ts, which reports a parse failure as mermaid/parse-diagram-unparseable for the selected policy
+  - RULES.md, Entry points and severity
+
+relates_to:
+  - relation: depended_on_by
+    target: SLOP-0028
+    note: an unauditable surface is a failing finding, not an advisory note
+
+decision:
+  given: a check is uncertain enough that failing on it seems harsh, or a diagram cannot be parsed so no policy can evaluate it
+  we_prefer: a fatal VFile error for every finding of an enabled custom policy, over a warning level or an advisory that does not fail. A parse failure is reported as an error attributed to the selected Mermaid policy
+  because: a run that exits 0 should have nothing to report, and a diagram nobody could evaluate has not passed
+  unless: the policy is switched off, which also skips its parse checks
+
+consequences:
+  pros:
+    - The exit code and the reported findings always agree.
+    - A broken diagram never passes a contrast or complexity gate by being unreadable.
+  cons:
+    - A borderline heuristic must be fixed, removed or switched off rather than softened.
+    - A parse failure is reported once per enabled Mermaid policy rather than as its own configurable rule.

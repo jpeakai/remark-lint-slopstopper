@@ -1,0 +1,36 @@
+id: SLOP-0009
+slug: one-module-per-rule
+plan_id: null
+title: Each policy lives in its own module named by its short name
+description: A prose policy is one file under src/prose/rules that returns diagnostics with any edit, listed in one registry
+status: accepted
+accepted_on: 2026-10-25
+last_changed_on: 2026-10-25
+tags: [architecture, layout]
+
+enforced_in:
+  - src/prose/rules/, where each file is named by a policy's short name
+  - src/rules.ts, the registry of policy identifiers, and src/prose/analyze.ts, which maps each identifier to its check
+  - src/document/, which holds only machinery shared by more than one policy
+  - CONTRIBUTING.md, under Add a prose rule
+
+relates_to:
+  - relation: extended_by
+    target: SLOP-0008
+    note: the short name a file is named by starts with the policy's category
+  - relation: depended_on_by
+    target: SLOP-0010
+    note: a helper leaves its policy module only once a second policy needs it
+
+decision:
+  given: the package holds independent policies, and some gain a fixer
+  we_prefer: one module per policy, over grouping policies by theme in larger files. Each module is named by the policy's short name and holds its check and any edit it proposes. Shared machinery lives in src/document
+  because: the identifier is how findings, configuration, suppression comments and tests name a policy, so the file tree mirrors it
+  unless: two policies share a detector, in which case the detector moves to its own module
+
+consequences:
+  pros:
+    - A policy and its tests can be read without the rest of the package.
+  cons:
+    - Adding a policy touches three places, the type union, the registry and the orchestrator.
+    - Which policies may fix lives in the adapter and the registry, away from the policies themselves.

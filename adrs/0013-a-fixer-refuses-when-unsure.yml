@@ -1,0 +1,42 @@
+id: SLOP-0013
+slug: a-fixer-refuses-when-unsure
+plan_id: null
+title: A fixer offers no edit whenever the input is ambiguous
+description: An unfixable case leaves the source untouched and the finding reported, never a best guess
+status: accepted
+accepted_on: 2026-10-25
+last_changed_on: 2026-10-25
+tags: [fixing, safety]
+
+enforced_in:
+  - src/prose/rules/sentence-one-per-line.ts, which attaches no edit inside a blockquote, beside a hard break or at an encoded space
+  - every fix in src/prose/rules, which returns a finding without an edit for a shape it cannot rewrite with certainty
+  - src/prose/analyze.test.ts, which requires blockquotes, hard breaks and a split that would create a list to stay lint-only
+  - RULES.md, which documents each policy's fixer limits
+
+relates_to:
+  - relation: extended_by
+    target: SLOP-0014
+    note: verification withdraws an edit on behalf of a fixer that did not refuse
+  - relation: tested_by
+    target: SLOP-0016
+    note: each refusal is pinned by a test whose output equals its input
+  - relation: depended_on_by
+    target: SLOP-0020
+    note: the em-dash fixer refuses every shape outside two
+  - relation: depended_on_by
+    target: SLOP-0021
+    note: the fixer refuses a run mid-sentence, without a lead-in, or opening inside markup
+
+decision:
+  given: a fixer cannot be sure its rewrite keeps the author's meaning
+  we_prefer: reporting the finding without an edit, over applying the most likely rewrite
+  because: the finding still fails the run, so a human sees the case, while a wrong fix hides it permanently
+  unless: never
+
+consequences:
+  pros:
+    - An applied fix can be trusted without reading the diff line by line.
+  cons:
+    - Some fixable prose stays reported until a human edits it.
+    - Each fixer carries a list of refusal conditions that grows with every hostile case found.

@@ -7,7 +7,7 @@
   "additionalProperties": false,
   "required": [
     "id", "slug", "title", "description", "status", "accepted_on",
-    "last_changed_on", "tags", "provenance", "enforced_in", "relates_to",
+    "last_changed_on", "tags", "enforced_in", "relates_to",
     "decision", "consequences"
   ],
   "properties": {
@@ -38,10 +38,6 @@
     "tags": {
       "type": "array", "minItems": 1, "uniqueItems": true,
       "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" }
-    },
-    "provenance": {
-      "type": "string", "minLength": 10,
-      "description": "The evidence the decision rests on."
     },
     "enforced_in": {
       "type": "array", "minItems": 1,

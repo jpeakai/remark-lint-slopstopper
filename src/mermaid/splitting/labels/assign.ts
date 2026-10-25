@@ -54,9 +54,9 @@ const optionsOf = (
 
 // Groups of two or three members folded alike, by tier and reason, take pair
 // or list labels only when every one of them can, so groups folded alike read
-// alike (MJL-0038, MJL-0039): the choice is dropped from all of them, and from
+// alike (SLOP-0033, SLOP-0035): the choice is dropped from all of them, and from
 // a larger group of leaves folded alike that could list its members
-// (MJL-0040), otherwise.
+// (SLOP-0035), otherwise.
 const alikePairs = (
   part: Partition,
   choices: LabelParts[][],
@@ -80,7 +80,7 @@ const alikePairs = (
 };
 
 // The label a group of leaves hanging from one overview node may take from
-// the label that node shows, once every other group is named (MJL-0038).
+// the label that node shows, once every other group is named (SLOP-0033).
 const fanChoices = (
   work: WorkGraph,
   part: Partition,

@@ -301,7 +301,7 @@ const idFamilies = (ctx: CandidateContext): Candidate[] => {
 // Two overview nodes no edge joins whose members share an original neighbour:
 // the same stage of a pipeline, as silver.payments and silver.sessions both
 // fed by one quality suite. Offered with no edge between them, so only a pair
-// of one prefix family is taken (MJL-0032), and a group so made is connected
+// of one prefix family is taken (SLOP-0036), and a group so made is connected
 // through the neighbours its members share, as contract.ts joined reads it.
 const stagePairs = (
   ctx: CandidateContext,

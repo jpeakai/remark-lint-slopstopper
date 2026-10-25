@@ -1,0 +1,37 @@
+id: SLOP-0016
+slug: fix-behaviour-is-tested-on-real-inputs
+plan_id: null
+title: Fix behaviour is proven by real-input tests of edits, refusals and stability
+description: A fixer change is tested for its edit, untouched bytes, refusals, recheck and idempotence, with no mocks
+status: accepted
+accepted_on: 2026-10-25
+last_changed_on: 2026-10-25
+tags: [testing, fixing]
+
+enforced_in:
+  - CONTRIBUTING.md, under Add an automatic edit deliberately
+  - CODING_STANDARDS.md, whose tenets forbid mocks and tautological tests
+  - src/remark/plugin.test.ts, which runs fixes through a real remark processor and checks stable output
+  - bunfig.toml, whose coverageThreshold fails bun run test below 90 percent per file
+
+relates_to:
+  - relation: tests
+    target: SLOP-0013
+    note: each refusal is pinned by a test whose output equals its input
+  - relation: tests
+    target: SLOP-0014
+    note: tests assert the words, structure and surrounding bytes an edit must keep
+
+decision:
+  given: a change touches how any policy fixes prose
+  we_prefer: tests that run the real remark processor on real and hostile inputs, over example tests of the happy path alone. They assert the targeted edit, the untouched bytes, each refusal, the recheck and a second run that changes nothing
+  because: a fixer's worst bug is a meaning change on input nobody wrote a fixture for, and each hostile case found becomes a named test
+  unless: never
+
+consequences:
+  pros:
+    - A regression in a fixer fails a named test before it reaches a document.
+    - Tests exercise remark, the adapter and suppression together, as a consumer runs them.
+  cons:
+    - Running a real processor makes the suite slower than unit tests of the fix function alone.
+    - Hostile inputs are only as good as the cases someone thinks of, since no generated inputs explore the rest.

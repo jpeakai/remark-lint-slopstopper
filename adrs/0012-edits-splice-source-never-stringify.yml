@@ -1,0 +1,37 @@
+id: SLOP-0012
+slug: edits-splice-source-never-stringify
+plan_id: null
+title: Fixes splice source ranges and the adapter never stringifies the tree
+description: An edit replaces a source range, the compiler returns the edited source, and rounds repeat until no edit remains
+status: accepted
+accepted_on: 2026-10-25
+last_changed_on: 2026-10-25
+tags: [fixing, architecture]
+
+enforced_in:
+  - src/document/edits.ts, whose applyEdits rejects overlapping ranges and splices from the end of the source
+  - src/remark/plugin.ts, which reparses after each changed round and replaces the compiler with one that returns the edited source
+  - src/remark/plugin.test.ts, which requires headings, code, CRLF, frontmatter offsets and untouched bytes to survive fixes
+
+relates_to:
+  - relation: depends_on
+    target: SLOP-0002
+    note: ranges are addressed through the offsets the parsed tree supplies
+  - relation: depended_on_by
+    target: SLOP-0014
+    note: one spliced range is cheap to verify
+
+decision:
+  given: a policy wants to change a small part of a document inside a remark host whose default output path stringifies the tree
+  we_prefer: splicing replacement text built from source slices into the original string and compiling that string, over editing the tree and serialising it with remark-stringify
+  because: every byte outside an edit is preserved by construction, so the diff is exactly the fix and the package coexists with any formatter
+  unless: no source slice can express the change, in which case the policy offers no edit rather than generating markup
+
+consequences:
+  pros:
+    - Fix diffs are minimal and reviewable.
+    - Mermaid fences and unrelated Markdown are never rewritten by a generic serializer.
+  cons:
+    - Each fixer reasons about offsets, escapes, indentation and line endings itself.
+    - Overlapping edits cannot combine in one round and wait for the reparse.
+    - Replacing the compiler in fix mode overrides any serializer the host configured.

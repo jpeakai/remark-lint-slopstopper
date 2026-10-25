@@ -1,0 +1,36 @@
+id: SLOP-0002
+slug: host-tree-is-the-document
+plan_id: null
+title: Every policy reads the mdast tree the remark host already parsed
+description: The adapter hands the host's own tree to createDocument, and only string callers parse, once, with the shared parser
+status: accepted
+accepted_on: 2026-10-25
+last_changed_on: 2026-10-25
+tags: [parsing, architecture]
+
+enforced_in:
+  - src/remark/plugin.ts, whose reporter passes the host tree and VFile source to createDocument
+  - src/document/context.ts, whose createDocument parses with remark-parse, GFM and frontmatter only when no tree is given
+  - src/remark/plugin.test.ts, which requires fresh diagnostics for identical source in different host trees
+
+relates_to:
+  - relation: depended_on_by
+    target: SLOP-0012
+    note: an edit addresses source through the offsets the tree carries
+  - relation: depended_on_by
+    target: SLOP-0003
+    note: the shared context wraps the one tree of the round
+
+decision:
+  given: several policies need to know which bytes are prose and which are structure, and the remark host has already parsed the file
+  we_prefer: reading the host's actual mdast tree through one DocumentContext, over each policy reparsing the source or scanning raw lines
+  because: the tree carries any edits earlier plugins made, and node types give every policy the same exemptions for code, tables and frontmatter
+  unless: a policy needs bytes the tree loses, such as original spacing or escapes. It then reads the source through node offsets and the projection
+
+consequences:
+  pros:
+    - Exemptions are consistent across every policy, because they come from node types rather than heuristics.
+    - A plugin earlier in the remark chain changes what every policy sees, with no second parse.
+  cons:
+    - The package depends on the unified parser family and its tree types.
+    - A policy must map tree positions back to source offsets before it can propose an edit.

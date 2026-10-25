@@ -106,7 +106,7 @@ export const familyLabel = (
 // two members or more. A stage is named by the dotted namespace every label
 // at that place leads with, else by the first word every one of them leads
 // with, else by the two first words they lead with between them, in natural
-// order and joined by a slash, as "Extract/Ingest" (MJL-0038), else shown as
+// order and joined by a slash, as "Extract/Ingest" (SLOP-0033), else shown as
 // an ellipsis. At least one stage is named, and the label counts every member.
 export const LANE_SEPARATOR = " → ";
 
@@ -157,7 +157,7 @@ export const laneLabel = (
 // A fan label names a group holding every leaf one overview node leads to,
 // or every leaf leading to it, by that node's name and an ellipsis, as
 // "Order service → …" for the external APIs an order service calls
-// (MJL-0038), when their list label does not fit (MJL-0040). The name holds
+// (SLOP-0033), when their list label does not fit (SLOP-0035). The name holds
 // no markup and the label at most LABEL_CAP characters; it counts every
 // member.
 export const fanLabel = (name: string, out: boolean): string | null => {
@@ -168,7 +168,7 @@ export const fanLabel = (name: string, out: boolean): string | null => {
 
 // A span label names a flowchart group the flow enters at one member and
 // leaves at another by those two members' labels, joined by LANE_SEPARATOR,
-// as "git push to main → tsc --noEmit" for a run of setup steps (MJL-0039).
+// as "git push to main → tsc --noEmit" for a run of setup steps (SLOP-0035).
 // Neither label holds markup, an arrow or an ellipsis, and the label holds at
 // most LABEL_CAP characters. It counts the members it does not name, two
 // fewer than the group holds.
@@ -187,7 +187,7 @@ export const spanLabel = (entry: string, exit: string): string | null => {
 
 // A pair label names a group of two members by both, the one it is named
 // after and then, in place of the count, the other's label after a plus, as
-// "ROOM (+BUILDING)", so the overview hides no name (MJL-0038). Neither label
+// "ROOM (+BUILDING)", so the overview hides no name (SLOP-0033). Neither label
 // holds markup or a bracket, the other is not a number, which the count
 // would read as, and the whole label holds at most LABEL_CAP characters.
 const NOT_PAIRED = /[()[\]<&*`#]|^\d+$/;
@@ -208,7 +208,7 @@ export const pairLabel = (
 // The most members a group names one by one in place of its count: a group
 // of three shows the label it is named after, then " (+", the other two
 // labels in natural order joined by LIST_SEPARATOR, and ")", as
-// "ADDRESS (+CITY, COUNTRY)" (MJL-0039). Neither other label holds a comma,
+// "ADDRESS (+CITY, COUNTRY)" (SLOP-0035). Neither other label holds a comma,
 // which would read as two names, and each meets the pair rules.
 export const MAX_LISTED = 3;
 export const LIST_SEPARATOR = ", ";
@@ -217,7 +217,7 @@ export const LIST_SEPARATOR = ", ";
 // leaves hanging from one overview node (group-naming.ts fanOf) holds nothing but
 // those leaves, so its list names every member however many, within twice
 // LABEL_CAP, as "Carrier quote API (+ECB rates feed, Payment provider API,
-// SMTP relay)" (MJL-0040).
+// SMTP relay)" (SLOP-0035).
 export interface ListLimits {
   most: number;
   cap: number;

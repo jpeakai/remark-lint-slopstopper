@@ -7,7 +7,7 @@ import { UNDIRECTED_KINDS } from "../projection/quotient.ts";
 // graph alone and printed in the plan's place: a star as a markdown list of
 // its hub and every leaf, and a dense mesh as a markdown adjacency matrix.
 // Each draws every counted node and edge, each edge's way, label and
-// connector, so a reader loses nothing the diagram says (MJL-0034).
+// connector, so a reader loses nothing the diagram says (SLOP-0035).
 
 // Markdown that would read as markup, written as itself: emphasis, code,
 // links, html, table cells and strikethrough marks anywhere, and a heading,

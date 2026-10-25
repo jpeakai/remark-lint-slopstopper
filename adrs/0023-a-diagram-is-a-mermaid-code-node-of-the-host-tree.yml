@@ -1,0 +1,33 @@
+id: SLOP-0023
+slug: a-diagram-is-a-mermaid-code-node-of-the-host-tree
+plan_id: null
+title: A diagram is a mermaid code node of the host's tree, mapped back to the source by line
+description: Fences come from the mdast tree the remark host supplies, and findings map to absolute Markdown offsets
+status: accepted
+accepted_on: 2026-10-25
+last_changed_on: 2026-10-25
+tags: [mermaid, markdown, parsing]
+
+enforced_in:
+  - src/mermaid/markdown.ts, whose fences visits code nodes with lang mermaid and whose sourceLocation maps a diagram line to Markdown offsets
+  - src/mermaid/analyze.ts, which evaluates each fence independently in document order
+  - src/mermaid/corpus.test.ts and examples/multiple-diagrams.md, which exercise many fences in one document
+
+relates_to:
+  - relation: see_also
+    target: SLOP-0022
+    note: the fence's text is then read only through Mermaid's parsers
+
+decision:
+  given: a Mermaid policy needs the diagrams of a document and a position for each finding
+  we_prefer: taking every code node whose language is mermaid from the host's actual mdast tree, over scanning the Markdown for fence lines. A diagram-relative line maps back to the Markdown source
+  because: the tree gives exactly the fences the renderer draws, including ones inside lists and quotes. It never mistakes Markdown-looking text inside another code block for a diagram
+  unless: the parser omits a fence's position, which throws rather than reporting at a guessed offset
+
+consequences:
+  pros:
+    - Every diagram a GFM renderer would draw is checked, and nothing else is.
+    - A finding points at the line inside the fence, in the file the host is linting.
+  cons:
+    - A fence tagged mermaid with extra info-string words is still read as a diagram.
+    - A finding inside a fence can only be placed as precisely as Mermaid's own line numbers allow.

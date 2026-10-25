@@ -11,7 +11,7 @@ Lines marked *(defaulted)* come from the `standard` flavour rather than from wha
 - **Glossary:** `GLOSSARY.md` at root, one H2 per Title Case term in alphabetical order under one relationship diagram, new terms added in the same change
 - **ADR layout:** `okf-yaml`, with records authored in `adrs/NNNN-slug.yml` and markdown generated from them
 - **Record ids:** prefixed `SLOP-`, enforced by the id pattern in `adrs/record.schema.json`
-- **Generated paths:** `adrs/*.md`, `adrs/index.md`, `adrs/graph.md`, `adrs/graph.json`, `adrs/graph.html`
+- **Generated paths:** `adrs/*.md` and `adrs/graph.*`
 - **Regenerate:** `make fix`, and `make ci` asserts the tree is clean afterwards
 - **Agent files:** `AGENTS.md` at root is canonical, and `CLAUDE.md` beside it holds only `@AGENTS.md`; no nested agent files
 - **Ticketing:** GitHub Issues, per `TICKETING.md`
@@ -34,7 +34,7 @@ Lines marked *(defaulted)* come from the `standard` flavour rather than from wha
 | `src/**/README.md` | Architecture of the subsystem in that directory | Contributors | That subsystem's design changes |
 | `examples/` | Runnable remark configs and sample markdown fixtures | Consumers | An entry point or option changes |
 | `adrs/*.yml` | Immutable accepted decisions, authored as data | Both | A binding decision is made |
-| `adrs/record.schema.json`, `adrs/okf_render.py`, `adrs/templates/` | The bundle's schema and the generator vendored from the adr skill | Contributors | The generator is re-vendored |
+| `adrs/record.schema.json`, `adrs/okf_render.py`, `adrs/templates/` | The bundle's schema, templates and generator | Contributors | The record shape or rendering changes |
 | `adrs/*.md`, `adrs/graph.*` | Generated reading surface for those records | Both | Never edited, only regenerated |
 | `docs/CONVENTIONS.md` | This dialect declaration | Both | A documentation convention changes |
 | `CHANGELOG.md` | Missing: release notes, required at the first external consumer | Consumers | A version is released |

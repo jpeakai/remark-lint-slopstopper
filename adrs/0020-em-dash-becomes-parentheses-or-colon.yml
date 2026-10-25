@@ -1,0 +1,33 @@
+id: SLOP-0020
+slug: em-dash-becomes-parentheses-or-colon
+plan_id: null
+title: An em-dash pair becomes parentheses and a lone em-dash becomes a colon
+description: punctuation-em-dash-in-prose rewrites only the two dash shapes whose replacement punctuation is unambiguous
+status: accepted
+accepted_on: 2026-10-25
+last_changed_on: 2026-10-25
+tags: [rules, fixing, punctuation]
+
+enforced_in:
+  - src/prose/rules/punctuation-em-dash-in-prose.ts, which reads only text nodes and offers an edit for the two shapes alone
+  - the rule's colocated tests, which pin each refusal condition
+  - RULES.md, which documents the two rewrites and the refusals
+
+relates_to:
+  - relation: depends_on
+    target: SLOP-0013
+    note: every pattern outside the two shapes is reported without an edit
+
+decision:
+  given: a sentence in running prose contains an em-dash
+  we_prefer: replacing a pair around an aside with parentheses and a single dash with a colon, over reporting every dash for a manual rewrite
+  because: those two shapes have one reading each, so the replacement keeps the meaning
+  unless: the dash touches punctuation, sits between digits, shares a sentence with a colon, or brackets an aside that looks like an enumeration marker
+
+consequences:
+  pros:
+    - The most common glyph finding clears without a human.
+    - Code is exempt by construction, because only text nodes are read.
+  cons:
+    - The rule carries a growing list of refusal conditions.
+    - The edit changes punctuation, so verification must accept the declared swap rather than demand identical text.
