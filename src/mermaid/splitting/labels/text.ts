@@ -21,13 +21,21 @@ const TAIL = 12;
 // both its start and its end still show. Markup is never cut, since half a
 // tag or half a markdown span reads back as other text.
 export const shorten = (label: string, markdown?: true): string => {
-  if (markdown || MARKUP.test(label)) return label;
+  if (markdown || MARKUP.test(label)) {
+    return label;
+  }
+
   const chars = [...graphemes.segment(label)].map((s) => s.segment);
-  if (chars.length <= LABEL_CAP) return label;
+
+  if (chars.length <= LABEL_CAP) {
+    return label;
+  }
+
   const head = chars
     .slice(0, LABEL_CAP - TAIL - 1)
     .join("")
     .trimEnd();
+
   return `${head}…${chars.slice(-TAIL).join("").trimStart()}`;
 };
 
@@ -44,24 +52,24 @@ export const RANGE_SEPARATOR = " … ";
 
 export const MARKUP = /[<&*_`#]/;
 
-export const rangeLabel = (
-  labels: readonly string[],
-  hidden: readonly string[] = [],
-): string | null => {
+export const rangeLabel = (labels: readonly string[], hidden: readonly string[] = []): string | null => {
   const order = [...labels].sort(byNatural);
   const [first, last] = [order[0], order.at(-1)];
-  if (
-    labels.length < 3 ||
-    first === undefined ||
-    last === undefined ||
-    first === last
-  )
+
+  if (labels.length < 3 || first === undefined || last === undefined || first === last) {
     return null;
-  if (order.some((l) => MARKUP.test(l) || l.includes(RANGE_SEPARATOR)))
+  }
+
+  if (order.some((l) => MARKUP.test(l) || l.includes(RANGE_SEPARATOR))) {
     return null;
-  if (hidden.some((l) => byNatural(first, l) <= 0 && byNatural(l, last) <= 0))
+  }
+
+  if (hidden.some((l) => byNatural(first, l) <= 0 && byNatural(l, last) <= 0)) {
     return null;
+  }
+
   const base = `${first}${RANGE_SEPARATOR}${last}`;
+
   return [...graphemes.segment(base)].length <= LABEL_CAP ? base : null;
 };
 
@@ -73,8 +81,7 @@ export const ID_LEAD = /^[A-Za-z]{0,5}[-_]?\d{2,}(?=$|[\s:._-])/;
 // letters, digits and dashes from a letter, then a dot and a word character.
 export const DOTTED = /^([A-Za-z][A-Za-z0-9-]*)\.[A-Za-z0-9_]/;
 
-export const dottedFamily = (label: string): string | null =>
-  DOTTED.exec(label.trim())?.[1] ?? null;
+export const dottedFamily = (label: string): string | null => DOTTED.exec(label.trim())?.[1] ?? null;
 
 // A family label names a group holding a whole dotted family: three members or
 // more, every one's label leading with one namespace, as gold.daily_revenue
@@ -82,22 +89,15 @@ export const dottedFamily = (label: string): string | null =>
 // reads as the namespace and ".*", as "gold.*", and counts every member.
 export const FAMILY_SUFFIX = ".*";
 
-export const familyLabel = (
-  labels: readonly string[],
-  outside: readonly string[],
-): string | null => {
+export const familyLabel = (labels: readonly string[], outside: readonly string[]): string | null => {
   const families = new Set(labels.map(dottedFamily));
   const [family] = [...families];
-  if (
-    labels.length < 3 ||
-    families.size !== 1 ||
-    family === undefined ||
-    family === null
-  )
+
+  if (labels.length < 3 || families.size !== 1 || family === undefined || family === null) {
     return null;
-  return outside.some((l) => dottedFamily(l) === family)
-    ? null
-    : `${family}${FAMILY_SUFFIX}`;
+  }
+
+  return outside.some((l) => dottedFamily(l) === family) ? null : `${family}${FAMILY_SUFFIX}`;
 };
 
 // A lane label names twin chains by their stages, as "Extract → bronze" for
@@ -120,7 +120,11 @@ export const WORD_SEPARATOR = "/";
 // word and they lead with exactly two.
 const twoWords = (words: Array<string | null>): string | null => {
   const set = [...new Set(words)];
-  if (set.length !== 2 || set.some((w) => w === null)) return null;
+
+  if (set.length !== 2 || set.some((w) => w === null)) {
+    return null;
+  }
+
   return (set as string[]).sort(byNatural).join(WORD_SEPARATOR);
 };
 
@@ -129,28 +133,33 @@ const twoWords = (words: Array<string | null>): string | null => {
 export const stageWord = (label: string): string | null =>
   dottedFamily(label) ?? FIRST_WORD.exec(label.trim())?.[1] ?? null;
 
-export const laneLabel = (
-  chains: readonly (readonly string[])[],
-): string | null => {
+export const laneLabel = (chains: readonly (readonly string[])[]): string | null => {
   const length = chains[0]?.length ?? 0;
-  if (
-    chains.length < 2 ||
-    length < 2 ||
-    chains.some((c) => c.length !== length)
-  )
+
+  if (chains.length < 2 || length < 2 || chains.some((c) => c.length !== length)) {
     return null;
+  }
+
   const one = (xs: Array<string | null>): string | null => {
     const set = new Set(xs);
     const [x] = [...set];
+
     return set.size === 1 && x !== undefined ? x : null;
   };
+
   const stages = Array.from({ length }, (_, i) => {
     const labels = chains.map((c) => (c[i] ?? "").trim());
     const words = labels.map((l) => FIRST_WORD.exec(l)?.[1] ?? null);
+
     return one(labels.map(dottedFamily)) ?? one(words) ?? twoWords(words);
   });
-  if (stages.every((s) => s === null)) return null;
+
+  if (stages.every((s) => s === null)) {
+    return null;
+  }
+
   const base = stages.map((s) => s ?? "…").join(LANE_SEPARATOR);
+
   return [...graphemes.segment(base)].length <= LABEL_CAP ? base : null;
 };
 
@@ -161,8 +170,12 @@ export const laneLabel = (
 // no markup and the label at most LABEL_CAP characters; it counts every
 // member.
 export const fanLabel = (name: string, out: boolean): string | null => {
-  if (name.trim() === "" || MARKUP.test(name)) return null;
+  if (name.trim() === "" || MARKUP.test(name)) {
+    return null;
+  }
+
   const base = out ? `${name}${LANE_SEPARATOR}…` : `…${LANE_SEPARATOR}${name}`;
+
   return [...graphemes.segment(base)].length <= LABEL_CAP ? base : null;
 };
 
@@ -173,15 +186,16 @@ export const fanLabel = (name: string, out: boolean): string | null => {
 // most LABEL_CAP characters. It counts the members it does not name, two
 // fewer than the group holds.
 export const spanLabel = (entry: string, exit: string): string | null => {
-  if (entry === exit) return null;
-  if (
-    [entry, exit].some(
-      (l) =>
-        l.trim() === "" || l !== l.trim() || MARKUP.test(l) || /[→…]/.test(l),
-    )
-  )
+  if (entry === exit) {
     return null;
+  }
+
+  if ([entry, exit].some((l) => l.trim() === "" || l !== l.trim() || MARKUP.test(l) || /[→…]/.test(l))) {
+    return null;
+  }
+
   const base = `${entry}${LANE_SEPARATOR}${exit}`;
+
   return [...graphemes.segment(base)].length <= LABEL_CAP ? base : null;
 };
 
@@ -192,16 +206,17 @@ export const spanLabel = (entry: string, exit: string): string | null => {
 // would read as, and the whole label holds at most LABEL_CAP characters.
 const NOT_PAIRED = /[()[\]<&*`#]|^\d+$/;
 
-export const pairLabel = (
-  named: string,
-  other: string,
-  cap = LABEL_CAP,
-): string | null => {
-  if (named === other || named.trim() === "" || other.trim() === "")
+export const pairLabel = (named: string, other: string, cap = LABEL_CAP): string | null => {
+  if (named === other || named.trim() === "" || other.trim() === "") {
     return null;
-  if ([named, other].some((l) => NOT_PAIRED.test(l) || l !== l.trim()))
+  }
+
+  if ([named, other].some((l) => NOT_PAIRED.test(l) || l !== l.trim())) {
     return null;
+  }
+
   const label = `${named} (+${other})`;
+
   return [...graphemes.segment(label)].length <= cap ? label : null;
 };
 
@@ -234,23 +249,21 @@ export const FAN_LISTED: ListLimits = {
 // natural order joined by LIST_SEPARATOR for a larger group. Null when the
 // group holds more members than the limits allow, or a label breaks the pair
 // rules or, in a list, holds a comma.
-export const listedOthers = (
-  named: string,
-  labels: readonly string[],
-  limits = LISTED,
-): string | null => {
+export const listedOthers = (named: string, labels: readonly string[], limits = LISTED): string | null => {
   const at = labels.indexOf(named);
   const others = labels.filter((_, i) => i !== at);
-  if (
-    at < 0 ||
-    labels.length < 2 ||
-    labels.length > limits.most ||
-    new Set(labels).size !== labels.length
-  )
+
+  if (at < 0 || labels.length < 2 || labels.length > limits.most || new Set(labels).size !== labels.length) {
     return null;
-  if (others.length > 1 && others.some((l) => l.includes(","))) return null;
+  }
+
+  if (others.length > 1 && others.some((l) => l.includes(","))) {
+    return null;
+  }
+
   const text = [...others].sort(byNatural).join(LIST_SEPARATOR);
   const fits = (l: string): boolean => pairLabel(named, l, limits.cap) !== null;
+
   return others.every(fits) && fits(text) ? text : null;
 };
 
@@ -271,23 +284,27 @@ export const groupLabels = (
   },
   id: string,
 ): string[] => {
-  if (pair !== undefined) return [`${base} (+${pair})`];
+  if (pair !== undefined) {
+    return [`${base} (+${pair})`];
+  }
+
   const cut = `${shorten(base, markdown)} (+${n})`;
+
   return [...new Set([cut, `${base} (+${n})`, `${cut} [${id}]`])];
 };
 
 // The two labels a range label's base names, the first's then the last's.
 export const rangeEnds = (base: string): string[] => {
   const parts = base.split(RANGE_SEPARATOR);
+
   return parts.length === 2 ? parts : [];
 };
 
 // The two labels a span label's base names, the entry's then the exit's.
 export const spanEnds = (base: string): string[] => {
   const at = base.indexOf(LANE_SEPARATOR);
-  return at < 0
-    ? []
-    : [base.slice(0, at), base.slice(at + LANE_SEPARATOR.length)];
+
+  return at < 0 ? [] : [base.slice(0, at), base.slice(at + LANE_SEPARATOR.length)];
 };
 
 // Mermaid source for an overview or a detail diagram, in the diagram's own
@@ -304,22 +321,18 @@ export const spanEnds = (base: string): string[] => {
 // "<" or ">" that opens no tag as &lt; or &gt;, and writes it so again when it
 // reads the bare sign, so the bare sign goes back: a state or class line ends
 // at the ";" of the entity otherwise.
-const lineText = (label: string): string =>
-  sourceEntities(label).replaceAll("&lt;", "<").replaceAll("&gt;", ">");
+const lineText = (label: string): string => sourceEntities(label).replaceAll("&lt;", "<").replaceAll("&gt;", ">");
 
-const oneLine = (s: string): string =>
-  s.replaceAll("\r\n", "<br>").replaceAll("\n", "<br>");
+const oneLine = (s: string): string => s.replaceAll("\r\n", "<br>").replaceAll("\n", "<br>");
 
 // A label inside double quotes keeps an HTML entity as it is: the sanitizer
 // reads &lt;tag&gt; back as itself, where a bare <tag> would open a tag and be
 // dropped.
-export const quoteLabel = (label: string): string =>
-  oneLine(sourceEntities(label).replaceAll('"', "#quot;"));
+export const quoteLabel = (label: string): string => oneLine(sourceEntities(label).replaceAll('"', "#quot;"));
 
 // A label inside double quotes; a markdown label keeps its lines in backticks.
 export const quoted = (label: string, markdown: true | undefined): string =>
   markdown ? `"\`${sourceEntities(label)}\`"` : `"${quoteLabel(label)}"`;
 
 // A label at the end of a line, after a colon, where a quote is plain text.
-export const tail = (label: string | undefined): string =>
-  label ? ` : ${oneLine(lineText(label))}` : "";
+export const tail = (label: string | undefined): string => (label ? ` : ${oneLine(lineText(label))}` : "");

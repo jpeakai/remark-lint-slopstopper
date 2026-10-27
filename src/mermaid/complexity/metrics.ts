@@ -114,17 +114,18 @@ export const PRESET_NAMES = Object.keys(PRESETS);
 export const canonicalPreset = (name: string): string | null => {
   const lower = name.toLowerCase();
   const canonical = PRESET_ALIASES[lower] ?? lower;
+
   return canonical in PRESETS ? canonical : null;
 };
 
 export const configFromPreset = (name: string): ThresholdConfig => {
   const canonical = canonicalPreset(name);
   const preset = canonical ? PRESETS[canonical] : undefined;
+
   if (!(canonical && preset)) {
-    throw new Error(
-      `Unknown preset '${name}'. Valid: ${PRESET_NAMES.join(", ")}`,
-    );
+    throw new Error(`Unknown preset '${name}'. Valid: ${PRESET_NAMES.join(", ")}`);
   }
+
   return {
     ...preset,
     edge_weight: VCS_WEIGHTS.edge,
@@ -137,21 +138,24 @@ export const configFromPreset = (name: string): ThresholdConfig => {
 
 // A rule's options as thresholds: the preset first, then every numeric
 // override. A run with any override is named custom.
-export const thresholdsFrom = (
-  options: Readonly<Record<string, unknown>>,
-): ThresholdConfig => {
-  const preset =
-    typeof options.preset === "string" ? options.preset : DEFAULT_PRESET;
+export const thresholdsFrom = (options: Readonly<Record<string, unknown>>): ThresholdConfig => {
+  const preset = typeof options.preset === "string" ? options.preset : DEFAULT_PRESET;
   const config = configFromPreset(preset);
   let customized = false;
+
   for (const [option, field] of Object.entries(THRESHOLD_OPTIONS)) {
     const value = options[option];
+
     if (typeof value === "number") {
       config[field] = value;
       customized = true;
     }
   }
-  if (customized) config.preset_name = "custom";
+
+  if (customized) {
+    config.preset_name = "custom";
+  }
+
   return config;
 };
 
@@ -174,21 +178,15 @@ const round4 = (x: number): number => Math.round(x * 10000) / 10000;
 // score, and the score of those types is unchanged from when tree depth was
 // counted as nesting. Only complexity-subgraph-nesting-too-deep ignores it,
 // because its remedy (flatten subgraphs) cannot apply to a tree.
-export const calculateComplexity = (
-  stats: DiagramStats,
-  config: ThresholdConfig,
-): ComplexityMetrics => {
+export const calculateComplexity = (stats: DiagramStats, config: ThresholdConfig): ComplexityMetrics => {
   const n = stats.nodes;
   const e = stats.edges;
   const s = stats.subgraphs;
   const d = Math.max(stats.max_subgraph_depth, stats.max_tree_depth);
-  const base =
-    n +
-    e * config.edge_weight +
-    stats.rows * config.row_weight +
-    s * config.subgraph_weight;
+  const base = n + e * config.edge_weight + stats.rows * config.row_weight + s * config.subgraph_weight;
   const vcs = base * (1 + d * config.depth_weight);
   const maxEdges = n > 1 ? n * (n - 1) : 0;
+
   return {
     visual_complexity_score: round2(vcs),
     edge_density: round4(maxEdges > 0 ? e / maxEdges : 0),

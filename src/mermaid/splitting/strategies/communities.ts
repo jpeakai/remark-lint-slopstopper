@@ -1,12 +1,6 @@
 import { cliqueGroups } from "../graph/directed.ts";
 import { byNatural, byText, sorted } from "../graph/order.ts";
-import {
-  crossesStages,
-  labelBag,
-  oneFamily,
-  STATUS_MARK,
-  similarity,
-} from "../labels/stems.ts";
+import { crossesStages, labelBag, oneFamily, STATUS_MARK, similarity } from "../labels/stems.ts";
 import { ID_LEAD } from "../labels/text.ts";
 import {
   adjacencyOf,
@@ -24,13 +18,7 @@ import {
   neighboursOf,
   together,
 } from "../planning/candidates.ts";
-import {
-  isGroupKey,
-  membersOfKey,
-  over,
-  overviewKeys,
-  parentOfKey,
-} from "../planning/state.ts";
+import { isGroupKey, membersOfKey, over, overviewKeys, parentOfKey } from "../planning/state.ts";
 import { evenRuns } from "./patterns.ts";
 
 // T6, suggested grouping: greedy modularity agglomeration in the style of
@@ -47,27 +35,29 @@ const pairKey = (a: string, b: string): string => `${a}\u0002${b}`;
 // Original edges between two overview nodes, both directions, keyed a < b.
 const weights = (ctx: CandidateContext): Map<string, number> => {
   const w = new Map<string, number>();
+
   for (const e of ctx.qedges) {
-    if (e.source === e.target) continue;
+    if (e.source === e.target) {
+      continue;
+    }
+
     const [a, b] = [e.source, e.target].sort(byText) as [string, string];
+
     w.set(pairKey(a, b), (w.get(pairKey(a, b)) ?? 0) + e.covers.length);
   }
+
   return w;
 };
 
-const labelSimilarity = (
-  ctx: CandidateContext,
-  bags: Map<string, Set<string>>,
-  a: string,
-  b: string,
-): number => {
+const labelSimilarity = (ctx: CandidateContext, bags: Map<string, Set<string>>, a: string, b: string): number => {
   let best = 0;
-  for (const x of membersOfKey(ctx.part, a))
-    for (const y of membersOfKey(ctx.part, b))
-      best = Math.max(
-        best,
-        similarity(bags.get(x) ?? new Set(), bags.get(y) ?? new Set()),
-      );
+
+  for (const x of membersOfKey(ctx.part, a)) {
+    for (const y of membersOfKey(ctx.part, b)) {
+      best = Math.max(best, similarity(bags.get(x) ?? new Set(), bags.get(y) ?? new Set()));
+    }
+  }
+
   return best;
 };
 
@@ -90,19 +80,21 @@ const cliques = (
 ): Candidate[] => {
   const keys = overviewKeys(ctx.work, ctx.part);
   const pairs = new Set([...w.keys()]);
-  if (
-    keys.length < 4 ||
-    pairs.size < DENSE * ((keys.length * (keys.length - 1)) / 2)
-  )
+
+  if (keys.length < 4 || pairs.size < DENSE * ((keys.length * (keys.length - 1)) / 2)) {
     return [];
-  const joined = (a: string, b: string): boolean =>
-    pairs.has(pairKey(...([a, b].sort(byText) as [string, string])));
+  }
+
+  const joined = (a: string, b: string): boolean => pairs.has(pairKey(...([a, b].sort(byText) as [string, string])));
   const open = keys.filter((k) => !isGroupKey(k) && foldable(ctx, k));
   const byParent = new Map<string, string[]>();
+
   for (const k of open) {
     const p = parentOfKey(ctx.work, ctx.part, k) ?? "";
+
     byParent.set(p, [...(byParent.get(p) ?? []), k]);
   }
+
   // Accepted tradeoff: native clustering gives disjoint clique candidates,
   // omitting overlapping alternatives that could yield a better plan.
   // TODO: consider a maintained maximal-clique enumerator if broader candidate
@@ -120,11 +112,7 @@ const cliques = (
       .filter((c) => keepsBranches(ctx, c.keys) && keepsFamilies(ctx, c.keys))
       .map((c) => ({
         ...c,
-        priority: c.keys.reduce(
-          (s, a, i) =>
-            s + c.keys.slice(i + 1).reduce((t, b) => t + gain(a, b), 0),
-          0,
-        ),
+        priority: c.keys.reduce((s, a, i) => s + c.keys.slice(i + 1).reduce((t, b) => t + gain(a, b), 0), 0),
         tie: 0,
       })),
   );
@@ -132,45 +120,41 @@ const cliques = (
 
 export const communities = (ctx: CandidateContext): Candidate[] => {
   const { work, part } = ctx;
-  const bags = new Map(
-    work.ids.map((id) => [id, labelBag(work.nodes.get(id)?.label ?? id, id)]),
-  );
+  const bags = new Map(work.ids.map((id) => [id, labelBag(work.nodes.get(id)?.label ?? id, id)]));
   const w = weights(ctx);
   const m = work.edges.length;
-  const degree = (k: string): number =>
-    membersOfKey(part, k).reduce((s, x) => s + (work.degree.get(x) ?? 0), 0);
+  const degree = (k: string): number => membersOfKey(part, k).reduce((s, x) => s + (work.degree.get(x) ?? 0), 0);
   const gain = (a: string, b: string): number => {
     const [x, y] = [a, b].sort(byText) as [string, string];
-    return (
-      (w.get(pairKey(x, y)) ?? 0) / m - (degree(a) * degree(b)) / (2 * m * m)
-    );
+
+    return (w.get(pairKey(x, y)) ?? 0) / m - (degree(a) * degree(b)) / (2 * m * m);
   };
+
   const stagesOf = (k: string): Array<string | null> => familiesOf(ctx, [k]);
-  const groupableKeys = new Set(
-    overviewKeys(work, part).filter((k) => foldable(ctx, k)),
-  );
+  const groupableKeys = new Set(overviewKeys(work, part).filter((k) => foldable(ctx, k)));
   const align = aligner(ctx);
   const out: Candidate[] = [...idFamilies(ctx), ...cliques(ctx, w, gain)];
-  const pairs = [...w].map(
-    ([pair, wab]) =>
-      [...(pair.split("\u0002") as [string, string]), wab] as const,
-  );
+  const pairs = [...w].map(([pair, wab]) => [...(pair.split("\u0002") as [string, string]), wab] as const);
   const eligible = ([a, b]: readonly [string, string, number]): boolean =>
     groupableKeys.has(a) &&
     groupableKeys.has(b) &&
     parentOfKey(work, part, a) === parentOfKey(work, part, b) &&
     keepsBranches(ctx, [a, b]) &&
     keepsFamilies(ctx, [a, b]);
+
   for (const [a, b, wab] of [...pairs, ...stagePairs(ctx, w)]
     .sort((x, y) => byText(x[0], y[0]) || byText(x[1], y[1]))
     .filter(eligible)) {
     const parent = parentOfKey(work, part, a);
     const kin = oneFamily(stagesOf(a), stagesOf(b)) ? 1 : 0;
-    if (wab === 0 && kin === 0) continue;
+
+    if (wab === 0 && kin === 0) {
+      continue;
+    }
+
     const priority = wab / m - (degree(a) * degree(b)) / (2 * m * m);
-    const tie =
-      labelSimilarity(ctx, bags, a, b) -
-      (crossesStages(stagesOf(a), stagesOf(b)) ? STAGE_PENALTY : 0);
+    const tie = labelSimilarity(ctx, bags, a, b) - (crossesStages(stagesOf(a), stagesOf(b)) ? STAGE_PENALTY : 0);
+
     out.push({
       keys: [a, b],
       parent,
@@ -182,44 +166,40 @@ export const communities = (ctx: CandidateContext): Candidate[] => {
       align: align(a, b, kin),
     });
   }
+
   return out;
 };
 
 // The share of two overview nodes' neighbours, each other left out, that
 // both have: one when every neighbour is shared.
-const overlap = (
-  na: ReadonlySet<string>,
-  nb: ReadonlySet<string>,
-  a: string,
-  b: string,
-): number => {
+const overlap = (na: ReadonlySet<string>, nb: ReadonlySet<string>, a: string, b: string): number => {
   const union = new Set([...na, ...nb].filter((k) => k !== a && k !== b));
   const shared = [...union].filter((k) => na.has(k) && nb.has(k)).length;
+
   return union.size === 0 ? 0 : shared / union.size;
 };
 
 // A pair's alignment: for a pair of one prefix family, the share of their
 // overview neighbours they share, else none.
-const aligner = (
-  ctx: CandidateContext,
-): ((a: string, b: string, kin: number) => number) => {
+const aligner = (ctx: CandidateContext): ((a: string, b: string, kin: number) => number) => {
   const adj = adjacencyOf(ctx.qedges);
-  return (a, b, kin) =>
-    kin === 1 ? overlap(neighboursOf(adj, a), neighboursOf(adj, b), a, b) : 0;
+
+  return (a, b, kin) => (kin === 1 ? overlap(neighboursOf(adj, a), neighboursOf(adj, b), a, b) : 0);
 };
 
 // Runs cut from a family, one more when the runs leave a key out, so that
 // evened they cover the whole family.
-const spread = (
-  ctx: CandidateContext,
-  keys: string[],
-  runs: Candidate[],
-): Candidate[] => {
+const spread = (ctx: CandidateContext, keys: string[], runs: Candidate[]): Candidate[] => {
   const [first] = runs;
   const covered = runs.reduce((n, r) => n + r.keys.length, 0);
-  if (!first || covered === keys.length) return runs;
+
+  if (!first || covered === keys.length) {
+    return runs;
+  }
+
   const count = runs.length + 1;
   const cut = evenSlices(keys, count).map((keys) => ({ ...first, keys }));
+
   return cut.every((r) => r.keys.length >= 2 && mergeFits(ctx, r)) ? cut : runs;
 };
 
@@ -234,11 +214,8 @@ export const ID_FAMILY_KIN = 2;
 const allIdFamilies = (ctx: CandidateContext): boolean =>
   ctx.work.ids.every((id) => {
     const family = familyOf(ctx.work, id);
-    return (
-      family !== null &&
-      !family.startsWith(STATUS_MARK) &&
-      ID_LEAD.test(ctx.work.nodes.get(id)?.label ?? "")
-    );
+
+    return family !== null && !family.startsWith(STATUS_MARK) && ID_LEAD.test(ctx.work.nodes.get(id)?.label ?? "");
   });
 
 // In a diagram whose every label leads with an id naming a family, each
@@ -249,29 +226,36 @@ const allIdFamilies = (ctx: CandidateContext): boolean =>
 // grouping, and a hub inside a family shows through its group's edges.
 const idFamilies = (ctx: CandidateContext): Candidate[] => {
   const { work, part } = ctx;
-  if (work.family === "er" || !allIdFamilies(ctx)) return [];
+
+  if (work.family === "er" || !allIdFamilies(ctx)) {
+    return [];
+  }
+
   const familyOfKey = (k: string): string | null => {
     const fs = new Set(membersOfKey(part, k).map((m) => familyOf(work, m)));
+
     return fs.size === 1 ? ([...fs][0] ?? null) : null;
   };
-  const first = (k: string): string =>
-    work.nodes.get(sorted(membersOfKey(part, k))[0] ?? k)?.label ?? k;
+
+  const first = (k: string): string => work.nodes.get(sorted(membersOfKey(part, k))[0] ?? k)?.label ?? k;
   const byFamily = new Map<string, string[]>();
+
   for (const k of overviewKeys(work, part)) {
     const f = familyOfKey(k);
-    if (f !== null && !work.protectedIds.has(k))
+
+    if (f !== null && !work.protectedIds.has(k)) {
       byFamily.set(f, [...(byFamily.get(f) ?? []), k]);
+    }
   }
+
   return [...byFamily.keys()].sort(byText).flatMap((f) => {
-    const keys = (byFamily.get(f) ?? []).sort(
-      (a, b) => byNatural(first(a), first(b)) || byText(a, b),
-    );
+    const keys = (byFamily.get(f) ?? []).sort((a, b) => byNatural(first(a), first(b)) || byText(a, b));
     const parent = parentOfKey(work, part, keys[0] ?? "");
-    if (
-      keys.length < 2 ||
-      keys.some((k) => parentOfKey(work, part, k) !== parent)
-    )
+
+    if (keys.length < 2 || keys.some((k) => parentOfKey(work, part, k) !== parent)) {
       return [];
+    }
+
     const base = {
       parent,
       tier: "T6" as const,
@@ -281,20 +265,15 @@ const idFamilies = (ctx: CandidateContext): Candidate[] => {
       tie: 0,
     };
     const whole: Candidate = { ...base, keys };
-    const runs = mergeFits(ctx, whole)
-      ? [whole]
-      : evenRuns(ctx, spread(ctx, keys, chunksThatFit(ctx, keys, base)));
+    const runs = mergeFits(ctx, whole) ? [whole] : evenRuns(ctx, spread(ctx, keys, chunksThatFit(ctx, keys, base)));
     const connected = runs.every((r) =>
       joined(work, {
         members: r.keys.flatMap((k) => membersOfKey(part, k)),
         regions: [],
       }),
     );
-    return connected
-      ? together(
-          runs.map((r) => ({ ...r, ...base, keys: [...r.keys].sort(byText) })),
-        )
-      : [];
+
+    return connected ? together(runs.map((r) => ({ ...r, ...base, keys: [...r.keys].sort(byText) }))) : [];
   });
 };
 
@@ -303,27 +282,30 @@ const idFamilies = (ctx: CandidateContext): Candidate[] => {
 // fed by one quality suite. Offered with no edge between them, so only a pair
 // of one prefix family is taken (SLOP-0036), and a group so made is connected
 // through the neighbours its members share, as contract.ts joined reads it.
-const stagePairs = (
-  ctx: CandidateContext,
-  w: Map<string, number>,
-): Array<readonly [string, string, number]> => {
+const stagePairs = (ctx: CandidateContext, w: Map<string, number>): Array<readonly [string, string, number]> => {
   const { work, part } = ctx;
   const around = new Map<string, Set<string>>();
   const link = (a: string, b: string): void => {
     around.set(a, new Set([...(around.get(a) ?? []), b]));
   };
+
   for (const e of work.edges.filter((x) => x.source !== x.target)) {
     link(e.source, e.target);
     link(e.target, e.source);
   }
+
   const keys = new Set<string>();
+
   for (const via of [...around.keys()].sort(byText)) {
-    const ks = sorted(
-      new Set([...(around.get(via) ?? [])].map((x) => over(part, x))),
-    );
-    for (const [i, a] of ks.entries())
-      for (const b of ks.slice(i + 1)) keys.add(pairKey(a, b));
+    const ks = sorted(new Set([...(around.get(via) ?? [])].map((x) => over(part, x))));
+
+    for (const [i, a] of ks.entries()) {
+      for (const b of ks.slice(i + 1)) {
+        keys.add(pairKey(a, b));
+      }
+    }
   }
+
   return [...keys]
     .filter((key) => !w.has(key))
     .map((key) => [...(key.split("\u0002") as [string, string]), 0] as const);

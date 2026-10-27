@@ -15,7 +15,9 @@ for (const eol of ["\n", "\r\n", "\r"]) {
       "  A[Thing]",
       "  style A fill:#ffffff,color:#222222",
     ].join(eol);
+
     const result = await readStyles(source);
+
     assert.deepEqual(result.directives, [
       {
         kind: "style",
@@ -24,10 +26,7 @@ for (const eol of ["\n", "\r\n", "\r"]) {
         line: 8,
       },
     ]);
-    assert.equal(
-      frontmatterLine(source, ["config", "themeVariables", "primaryColor"]),
-      4,
-    );
+    assert.equal(frontmatterLine(source, ["config", "themeVariables", "primaryColor"]), 4);
   });
 }
 
@@ -37,11 +36,16 @@ test("style cascade readers retain family-specific class and direct declarations
     "erDiagram\nTHING {\nstring id PK\n}\nclassDef accent fill:#123456,color:#ffffff\nclass THING accent\nstyle THING stroke:#abcdef",
     "stateDiagram-v2\nA\nclassDef accent fill:#123456,color:#ffffff\nclass A accent\nstyle A stroke:#abcdef",
   ];
+
   for (const source of sources) {
     const result = await readStyles(source);
+
     assert.deepEqual(result.unmodelled, []);
+
     const direct = result.directives.find((item) => item.kind === "style");
+
     assert(direct, source);
+
     assert.deepEqual(
       direct.properties,
       {

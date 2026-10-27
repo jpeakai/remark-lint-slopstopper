@@ -14,6 +14,7 @@ import { createDocument } from "./context.ts";
 
 test("only concept headings teach nouns; tables, definitions and code examples are ignored", async () => {
   const cwd = await mkdtemp(join(tmpdir(), "slopstopper-concepts-"));
+
   try {
     await writeFile(
       join(cwd, "CONCEPTS.md"),
@@ -45,17 +46,19 @@ test("only concept headings teach nouns; tables, definitions and code examples a
         "```",
       ].join("\n"),
     );
+
     assert.deepEqual(await conceptVocabulary(cwd)(), {
       can: "Noun",
       "work bundle": "Noun",
     });
-    const document = createDocument(
-      "can handles requests. may stores records.",
-      { cwd },
-    );
+
+    const document = createDocument("can handles requests. may stores records.", { cwd });
     const paragraph = document.paragraphs[0];
+
     assert.ok(paragraph);
+
     const sentences = await document.language(paragraph.node).sentences;
+
     assert.ok(sentences.some((sentence) => sentence.terms.has("can")));
     assert.equal(
       sentences.some((sentence) => sentence.terms.has("may")),
@@ -68,62 +71,50 @@ test("only concept headings teach nouns; tables, definitions and code examples a
 
 test("concurrent project vocabularies do not mutate Compromise globally", async () => {
   const cwd = await mkdtemp(join(tmpdir(), "slopstopper-concepts-"));
+
   const empty = await mkdtemp(join(tmpdir(), "slopstopper-empty-"));
+
   try {
-    await writeFile(
-      join(cwd, "CONCEPTS.md"),
-      "## CAN\n\nA transport envelope.\n",
-    );
+    await writeFile(join(cwd, "CONCEPTS.md"), "## CAN\n\nA transport envelope.\n");
+
     const read = async (directory: string): Promise<boolean> => {
       const doc = createDocument("can handles requests.", { cwd: directory });
       const paragraph = doc.paragraphs[0];
+
       assert.ok(paragraph);
-      return (await doc.language(paragraph.node).sentences).some((s) =>
-        s.terms.has("can"),
-      );
+
+      return (await doc.language(paragraph.node).sentences).some((s) => s.terms.has("can"));
     };
-    assert.deepEqual(await Promise.all([read(cwd), read(empty), read(cwd)]), [
-      true,
-      false,
-      true,
-    ]);
+
+    assert.deepEqual(await Promise.all([read(cwd), read(empty), read(cwd)]), [true, false, true]);
     assert.equal(await read(empty), false);
   } finally {
-    await Promise.all([
-      rm(cwd, { recursive: true, force: true }),
-      rm(empty, { recursive: true, force: true }),
-    ]);
+    await Promise.all([rm(cwd, { recursive: true, force: true }), rm(empty, { recursive: true, force: true })]);
   }
 });
 
 test("vocabulary reads are lazy, shared per context, and refreshed for new contexts", async () => {
   const cwd = await mkdtemp(join(tmpdir(), "slopstopper-concepts-"));
+
   try {
-    const document = createDocument(
-      "can handles requests.\n\nmay stores records.",
-      { cwd },
-    );
-    await writeFile(
-      join(cwd, "CONCEPTS.md"),
-      "## CAN\n\nA transport envelope.\n",
-    );
+    const document = createDocument("can handles requests.\n\nmay stores records.", { cwd });
+
+    await writeFile(join(cwd, "CONCEPTS.md"), "## CAN\n\nA transport envelope.\n");
+
     const first = document.paragraphs[0],
       second = document.paragraphs[1];
+
     assert.ok(first && second);
-    assert.ok(
-      (await document.language(first.node).sentences)[0]?.terms.has("can"),
-    );
+    assert.ok((await document.language(first.node).sentences)[0]?.terms.has("can"));
     await writeFile(join(cwd, "CONCEPTS.md"), "## MAY\n\nA routing record.\n");
-    assert.equal(
-      (await document.language(second.node).sentences)[0]?.terms.has("may"),
-      false,
-    );
+
+    assert.equal((await document.language(second.node).sentences)[0]?.terms.has("may"), false);
+
     const fresh = createDocument("may stores records.", { cwd });
     const paragraph = fresh.paragraphs[0];
+
     assert.ok(paragraph);
-    assert.ok(
-      (await fresh.language(paragraph.node).sentences)[0]?.terms.has("may"),
-    );
+    assert.ok((await fresh.language(paragraph.node).sentences)[0]?.terms.has("may"));
   } finally {
     await rm(cwd, { recursive: true, force: true });
   }
@@ -131,10 +122,14 @@ test("vocabulary reads are lazy, shared per context, and refreshed for new conte
 
 test("absent concepts are optional while real file access failures remain visible", async () => {
   const cwd = await mkdtemp(join(tmpdir(), "slopstopper-concepts-"));
+
   try {
     assert.deepEqual(await conceptVocabulary(cwd)(), {});
+
     const file = join(cwd, "not-a-directory");
+
     await writeFile(file, "content");
+
     await assert.rejects(conceptVocabulary(file)(), { code: "ENOTDIR" });
   } finally {
     await rm(cwd, { recursive: true, force: true });
@@ -143,11 +138,10 @@ test("absent concepts are optional while real file access failures remain visibl
 
 test("remark uses VFile.cwd and keeps project vocabulary on reparsed fixer nodes", async () => {
   const cwd = await mkdtemp(join(tmpdir(), "slopstopper-concepts-"));
+
   try {
-    await writeFile(
-      join(cwd, "CONCEPTS.md"),
-      "## CAN\n\nA transport envelope.\n",
-    );
+    await writeFile(join(cwd, "CONCEPTS.md"), "## CAN\n\nA transport envelope.\n");
+
     let recognized = false;
     const processor = unified()
       .use(remarkParse)
@@ -160,18 +154,17 @@ test("remark uses VFile.cwd and keeps project vocabulary on reparsed fixer nodes
         },
       })
       .use(() => async (tree: Root) => {
-        const paragraph = tree.children.find(
-          (node) => node.type === "paragraph",
-        );
+        const paragraph = tree.children.find((node) => node.type === "paragraph");
+
         assert.ok(paragraph?.data?.language);
-        recognized = (await paragraph.data.language.sentences).some((s) =>
-          s.terms.has("can"),
-        );
+        recognized = (await paragraph.data.language.sentences).some((s) => s.terms.has("can"));
       });
+
     const file = await processor.process({
       cwd,
       value: "can handles requests. Another sentence.",
     });
+
     assert.equal(recognized, true);
     assert.equal(String(file), "can handles requests.\nAnother sentence.");
     assert.equal(file.messages.length, 0);
@@ -182,18 +175,28 @@ test("remark uses VFile.cwd and keeps project vocabulary on reparsed fixer nodes
 
 test("disabled prose policies never read concepts and concurrent node requests share the vocabulary promise", async () => {
   const cwd = await mkdtemp(join(tmpdir(), "slopstopper-concepts-"));
+
   try {
     const invalid = join(cwd, "not-a-directory");
+
     await writeFile(invalid, "content");
+
     const document = createDocument("A sentence.", { cwd: invalid });
+
     assert.deepEqual(await analyzeProse(document, { rules: [] }), []);
+
     const paragraph = document.paragraphs[0];
+
     assert.ok(paragraph);
+
     const view = document.language(paragraph.node);
+
     assert.equal(view.text, "A sentence.");
     assert.equal(view.requested, false);
     await assert.rejects(view.sentences, { code: "ENOTDIR" });
+
     const vocabulary = conceptVocabulary(cwd);
+
     assert.equal(vocabulary(), vocabulary());
     await vocabulary();
   } finally {

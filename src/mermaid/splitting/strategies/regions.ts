@@ -19,14 +19,14 @@ const descendants = (work: WorkGraph, region: string): string[] =>
   work.regionIds.filter((r) => r !== region && regionWithin(work, r, region));
 
 // Whether every pinned member may fold with these regions.
-const pinsHold = (
-  work: WorkGraph,
-  members: string[],
-  regions: string[],
-): boolean =>
+const pinsHold = (work: WorkGraph, members: string[], regions: string[]): boolean =>
   members.every((m) => {
-    if (!work.pins.has(m)) return true;
+    if (!work.pins.has(m)) {
+      return true;
+    }
+
     const pin = work.pins.get(m) ?? null;
+
     return regions.some((r) => regionWithin(work, pin, r));
   });
 
@@ -35,15 +35,15 @@ const pinsHold = (
 // holds one node, whose group's detail would show nothing new.
 const candidateOf = (ctx: CandidateContext, r: string): Candidate | null => {
   const { work, part } = ctx;
-  const within = (k: string): boolean =>
-    membersOfKey(part, k).every((m) => regionWithin(work, homeOf(work, m), r));
+  const within = (k: string): boolean => membersOfKey(part, k).every((m) => regionWithin(work, homeOf(work, m), r));
   const keys = overviewKeys(work, part).filter(within);
-  const regions = [
-    r,
-    ...descendants(work, r).filter((d) => !part.regionOf.has(d)),
-  ];
+  const regions = [r, ...descendants(work, r).filter((d) => !part.regionOf.has(d))];
   const members = keys.flatMap((k) => membersOfKey(part, k));
-  if (members.length < 2 || !pinsHold(work, members, regions)) return null;
+
+  if (members.length < 2 || !pinsHold(work, members, regions)) {
+    return null;
+  }
+
   return {
     keys,
     regions,
@@ -57,10 +57,7 @@ const ready = (ctx: CandidateContext, region: string): boolean =>
   !ctx.part.regionOf.has(region) &&
   holdsNode(ctx.work, region) &&
   childrenOf(ctx.work, region).every(
-    (c) =>
-      ctx.part.regionOf.has(c) ||
-      !holdsNode(ctx.work, c) ||
-      candidateOf(ctx, c) === null,
+    (c) => ctx.part.regionOf.has(c) || !holdsNode(ctx.work, c) || candidateOf(ctx, c) === null,
   );
 
 // A region's shape: how many nodes it holds of its own, and each region
@@ -80,26 +77,22 @@ const shapeOf = (work: WorkGraph, r: string): string =>
 // so they fold to the same depth.
 export const echoesOf = (work: WorkGraph, r: string): string[] => {
   const region = work.regions.get(r);
-  if (!region) return [];
+
+  if (!region) {
+    return [];
+  }
+
   const shape = shapeOf(work, r);
   const parent = region.parent ?? null;
-  const siblings = work.regionIds.filter(
-    (s) => s !== r && (work.regions.get(s)?.parent ?? null) === parent,
-  );
-  const twins =
-    childrenOf(work, r).length > 0
-      ? siblings.filter((s) => shapeOf(work, s) === shape)
-      : [];
+  const siblings = work.regionIds.filter((s) => s !== r && (work.regions.get(s)?.parent ?? null) === parent);
+  const twins = childrenOf(work, r).length > 0 ? siblings.filter((s) => shapeOf(work, s) === shape) : [];
   const cousins =
     parent === null
       ? []
       : echoesOf(work, parent).flatMap((q) =>
-          childrenOf(work, q).filter(
-            (c) =>
-              work.regions.get(c)?.label === region.label &&
-              shapeOf(work, c) === shape,
-          ),
+          childrenOf(work, q).filter((c) => work.regions.get(c)?.label === region.label && shapeOf(work, c) === shape),
         );
+
   return [...new Set([...twins, ...cousins])].sort(byText);
 };
 
@@ -111,12 +104,18 @@ export const authorRegions = (ctx: CandidateContext): Candidate[] =>
     .filter((r) => ready(ctx, r))
     .flatMap((r) => {
       const c = candidateOf(ctx, r);
-      if (!c) return [];
-      const echoes = echoesOf(ctx.work, r).filter(
-        (e) => !ctx.part.regionOf.has(e),
-      );
-      if (echoes.some((e) => !ready(ctx, e) && candidateOf(ctx, e) !== null))
+
+      if (!c) {
         return [];
+      }
+
+      const echoes = echoesOf(ctx.work, r).filter((e) => !ctx.part.regionOf.has(e));
+
+      if (echoes.some((e) => !ready(ctx, e) && candidateOf(ctx, e) !== null)) {
+        return [];
+      }
+
       const also = echoes.flatMap((e) => candidateOf(ctx, e) ?? []);
+
       return [also.length > 0 ? { ...c, also } : c];
     });

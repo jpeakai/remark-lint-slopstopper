@@ -1,10 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import {
-  calculateComplexity,
-  configFromPreset,
-  type ThresholdConfig,
-} from "../../complexity/metrics.ts";
+import { calculateComplexity, configFromPreset, type ThresholdConfig } from "../../complexity/metrics.ts";
 import { extractGraph } from "../../parsing/graph.ts";
 import { extractStats } from "../../parsing/statistics.ts";
 import { buildWorkGraph, type WorkGraph } from "../graph/model.ts";
@@ -17,6 +13,7 @@ const MEDIUM = configFromPreset("medium-density");
 
 const workOf = async (source: string): Promise<WorkGraph> => {
   const stats = await extractStats(source);
+
   return buildWorkGraph(await extractGraph(source), {
     direction: await directionOf(source),
     rows: stats.rows,
@@ -24,36 +21,30 @@ const workOf = async (source: string): Promise<WorkGraph> => {
   });
 };
 
-const planOf = async (
-  source: string,
-  config: ThresholdConfig,
-): Promise<SplitPlan> => {
+const planOf = async (source: string, config: ThresholdConfig): Promise<SplitPlan> => {
   const outcome = await splitOutcome(source, config);
+
   assert.deepEqual(outcome.violations, []);
   assert.ok(outcome.plan, outcome.reason);
+
   return outcome.plan;
 };
 
 // The node count and score of emitted Mermaid, read back by the parser.
-const measure = async (
-  source: string,
-  config: ThresholdConfig,
-): Promise<[number, number]> => {
+const measure = async (source: string, config: ThresholdConfig): Promise<[number, number]> => {
   const stats = await extractStats(source);
+
   assert.equal(stats.error, null);
-  return [
-    stats.nodes,
-    calculateComplexity(stats, config).visual_complexity_score,
-  ];
+
+  return [stats.nodes, calculateComplexity(stats, config).visual_complexity_score];
 };
 
-const meetsTarget = async (
-  source: string,
-  config: ThresholdConfig,
-): Promise<number> => {
+const meetsTarget = async (source: string, config: ThresholdConfig): Promise<number> => {
   const [nodes, score] = await measure(source, config);
+
   assert.ok(nodes <= config.node_target, `${nodes} nodes`);
   assert.ok(score <= config.vcs_target, `score ${score}`);
+
   return nodes;
 };
 
@@ -64,9 +55,9 @@ test("a detail may split once more, and evening keeps three fifths", () => {
 
 test("a diagram with author regions walks regions first, then the default", async () => {
   const flat = await workOf("flowchart LR\n  A --> B");
-  const boxed = await workOf(
-    "flowchart LR\n  subgraph box\n    A --> B\n  end\n  B --> C",
-  );
+
+  const boxed = await workOf("flowchart LR\n  subgraph box\n    A --> B\n  end\n  B --> C");
+
   assert.equal(laddersOf(flat).length, 1);
   assert.equal(laddersOf(boxed).length, 2);
   assert.equal(laddersOf(boxed)[1], laddersOf(flat)[0]);
@@ -76,16 +67,7 @@ test("a diagram with author regions walks regions first, then the default", asyn
 // owns entities, LINE and PAYMENT, which relate to nothing else, and ORDER's
 // one outside relationship is to CUSTOMER: a closed aggregate. The many-to-
 // many relationships among the rest form three independent cycles.
-const ENTITIES = [
-  "CUSTOMER",
-  "ORDER",
-  "ADDRESS",
-  "REVIEW",
-  "LINE",
-  "PAYMENT",
-  "PRODUCT",
-  "STORE",
-];
+const ENTITIES = ["CUSTOMER", "ORDER", "ADDRESS", "REVIEW", "LINE", "PAYMENT", "PRODUCT", "STORE"];
 const SHOP = [
   "erDiagram",
   "  CUSTOMER }o--o{ ORDER : places",
@@ -100,20 +82,20 @@ const SHOP = [
   "  ORDER ||--|{ PAYMENT : settles",
   ...ENTITIES.flatMap((e) => [
     `  ${e} {`,
-    ...["id", "created", "updated", "owner", "status", "note"].map(
-      (a) => `    string ${a}`,
-    ),
+    ...["id", "created", "updated", "owner", "status", "note"].map((a) => `    string ${a}`),
     "  }",
   ]),
 ].join("\n");
 
 test("an erDiagram over its target by rows folds its closed aggregate", async () => {
   const plan = await planOf(SHOP, LOW);
+
   assert.equal(plan.tier, "T4");
   assert.deepEqual(
     plan.groups.map((g) => [g.reason, g.members]),
     [["aggregate root", ["LINE", "ORDER", "PAYMENT"]]],
   );
+
   // Eight entities, three folded into one.
   assert.equal(await meetsTarget(plan.overviewSource, LOW), 6);
   assert.equal(plan.details.length, 1);
@@ -151,6 +133,7 @@ const OVERSHOOT = [
 test("an overview folded below three fifths of its target gives a region back", async () => {
   const plan = await planOf(OVERSHOOT, MEDIUM);
   const folded = plan.groups.map((g) => g.members.length).sort((a, b) => a - b);
+
   // All three regions folded leave 6 nodes, under ceil(0.6 * 15) = 9; giving
   // back one small region leaves 9.
   assert.deepEqual(folded, [4, 16]);
@@ -164,10 +147,8 @@ const CROWN = [
   "  subgraph box [inner]",
   ...Array.from({ length: 12 }, (_, k) => {
     const i = k + 1;
-    return [
-      `    p${i} --> q${i}`,
-      ...(i < 12 ? [`    p${i} --> q${i + 1}`] : []),
-    ].join("\n");
+
+    return [`    p${i} --> q${i}`, ...(i < 12 ? [`    p${i} --> q${i + 1}`] : [])].join("\n");
   }),
   "  end",
   "  in1 --> in2",
@@ -179,18 +160,24 @@ const CROWN = [
 
 test("a region too large for its detail folds whole and splits again", async () => {
   const plan = await planOf(CROWN, MEDIUM);
+
   assert.equal(plan.tier, "T3");
   assert.deepEqual(
     plan.groups.map((g) => [g.reason, g.members.length]),
     [["author region", 24]],
   );
   assert.equal(await meetsTarget(plan.overviewSource, MEDIUM), 5);
+
   // p1 reaches only q1 and q2, so the folded box newly joins in1 and in2 to
   // out1, and in2 to out2.
   assert.equal(plan.loss.newReachablePairs, 3);
+
   const [detail] = plan.details;
+
   assert.ok(detail?.split, "the region's detail is split again");
   await meetsTarget(detail.split.overviewSource, MEDIUM);
-  for (const nested of detail.split.details)
+
+  for (const nested of detail.split.details) {
     await meetsTarget(nested.source, MEDIUM);
+  }
 });

@@ -3,12 +3,7 @@ import type { WorkGraph } from "../graph/model.ts";
 import { byNaturalTuple } from "../graph/order.ts";
 import { newReachablePairs } from "../graph/reachability.ts";
 import { assemble } from "../presentation/assemble.ts";
-import {
-  meets,
-  overviewShape,
-  quotientEdges,
-  scoreOf,
-} from "../projection/quotient.ts";
+import { meets, overviewShape, quotientEdges, scoreOf } from "../projection/quotient.ts";
 import { ID_FAMILY } from "../strategies/communities.ts";
 import {
   adjacencyOf,
@@ -61,14 +56,10 @@ interface Measure {
   score: number;
 }
 
-const measure = (
-  work: WorkGraph,
-  part: Partition,
-  config: ThresholdConfig,
-  rules: FoldRules,
-): Measure => {
+const measure = (work: WorkGraph, part: Partition, config: ThresholdConfig, rules: FoldRules): Measure => {
   const qedges = quotientEdges(work, part);
   const shape = overviewShape(work, part, qedges);
+
   return {
     ctx: { work, part, config, qedges, rules },
     nodes: shape.nodes,
@@ -80,13 +71,17 @@ type DetailPolicy = "recursive" | "fitting" | "lossless";
 type Density = "balanced" | "compact";
 interface Walk {
   order: readonly Strategy[];
+
   // Holds author regions to details that fit, as every other tier is held.
   details: DetailPolicy;
+
   // What T5 and T6 may not fold.
   rules: FoldRules;
+
   // Lets the evening steps go below evenFloorOf, down to floorOf, for a
   // diagram whose details fit only when more of it folds.
   density: Density;
+
   // Folds an author region only when that adds no new reachable pair.
   // How twin chains fold (SLOP-0033).
   lanes?: LaneSearch;
@@ -113,23 +108,33 @@ const evenOut = (
   rules: FoldRules,
   work: WorkGraph,
 ): ((c: Candidate) => boolean) | null => {
-  if (tier === "T4") return tangled(work, part) ? () => true : null;
-  if (tier === "T2") {
-    return part.groups.some((g) => g.reason === "decision region")
-      ? (c) => c.reason === "decision region"
-      : null;
+  if (tier === "T4") {
+    return tangled(work, part) ? () => true : null;
   }
+
+  if (tier === "T2") {
+    return part.groups.some((g) => g.reason === "decision region") ? (c) => c.reason === "decision region" : null;
+  }
+
   if (tier === "T3") {
-    const parents = new Set(
-      part.groups.filter((g) => g.tier === "T3").map((g) => g.parent),
-    );
+    const parents = new Set(part.groups.filter((g) => g.tier === "T3").map((g) => g.parent));
+
     return (c) => parents.has(c.parent) && c.keys.length > 1;
   }
-  if (tier !== "T5" && tier !== "T6") return null;
-  if (byFamilies(part)) return (c) => c.reason === ID_FAMILY;
+
+  if (tier !== "T5" && tier !== "T6") {
+    return null;
+  }
+
+  if (byFamilies(part)) {
+    return (c) => c.reason === ID_FAMILY;
+  }
+
   const largest = Math.max(0, ...part.groups.map((g) => g.members.length));
+
   return (c) => {
     const n = membersIn(part, c);
+
     return n <= largest && n > rules.minHidden;
   };
 };
@@ -137,8 +142,7 @@ const evenOut = (
 // Whether the plan folds id families, which then fold whole or not at all:
 // the evening takes only the families still open, down to floorOf, since a
 // family half folded or left open reads as scattered.
-const byFamilies = (part: Partition): boolean =>
-  part.groups.some((g) => g.reason === ID_FAMILY);
+const byFamilies = (part: Partition): boolean => part.groups.some((g) => g.reason === ID_FAMILY);
 
 // An overview a reader meets a cycle in for every MIN_OVERVIEW nodes, a
 // chunk held at once: its independent cycles, edges less nodes plus one,
@@ -146,6 +150,7 @@ const byFamilies = (part: Partition): boolean =>
 // is; a tangled one still reads better with its aggregates folded.
 export const tangled = (work: WorkGraph, part: Partition): boolean => {
   const shape = overviewShape(work, part, quotientEdges(work, part));
+
   return MIN_OVERVIEW * (shape.edges - shape.nodes + 1) >= shape.nodes;
 };
 
@@ -153,11 +158,9 @@ export const tangled = (work: WorkGraph, part: Partition): boolean => {
 // keeps at least evenFloorOf nodes.
 const foldEvenly = (start: Measure, step: Step, deep: boolean): Measure => {
   const { work, config, rules } = start.ctx;
-  const floor =
-    deep || byFamilies(start.ctx.part)
-      ? floorOf(work)
-      : evenFloorOf(work, config);
+  const floor = deep || byFamilies(start.ctx.part) ? floorOf(work) : evenFloorOf(work, config);
   let m = start;
+
   for (
     let only = evenOut(m.ctx.part, step.strategy.tier, rules, work);
     only;
@@ -170,14 +173,15 @@ const foldEvenly = (start: Measure, step: Step, deep: boolean): Measure => {
             loss: newReachablePairs(work, m.ctx.part),
           }
         : undefined;
-    const best = bestStep(
-      m.ctx,
-      { ...step, only, floor, ...(before ? { before } : {}) },
-      m.score,
-    );
-    if (!best) break;
+    const best = bestStep(m.ctx, { ...step, only, floor, ...(before ? { before } : {}) }, m.score);
+
+    if (!best) {
+      break;
+    }
+
     m = measure(work, best.part, config, rules);
   }
+
   return m;
 };
 
@@ -197,13 +201,12 @@ const smallGroup = (m: Measure, stuck: Set<string>): Group | undefined =>
 // detail that fitted still fits, since the nodes given back become stubs.
 const undo = (m: Measure, g: Group): Measure | null => {
   const { work, config, rules } = m.ctx;
-  const next = measure(
-    work,
-    partitionOf(m.ctx.part.groups.filter((x) => x !== g)),
-    config,
-    rules,
-  );
-  if (!meets(next.nodes, next.score, config)) return null;
+  const next = measure(work, partitionOf(m.ctx.part.groups.filter((x) => x !== g)), config, rules);
+
+  if (!meets(next.nodes, next.score, config)) {
+    return null;
+  }
+
   return othersFit(m.ctx, next.ctx.part) ? next : null;
 };
 
@@ -216,26 +219,17 @@ const grow = (m: Measure, g: Group): Measure | null => {
     const other = groupOfKey(ctx.part, k);
     const kind = other ? LEAF_TIERS.has(other.tier) : foldable(ctx, k);
     const near = parentOfKey(ctx.work, ctx.part, k) === g.parent;
-    return (
-      kind &&
-      near &&
-      keepsBranches(ctx, [key, k]) &&
-      keepsFamilies(ctx, [key, k])
-    );
+
+    return kind && near && keepsBranches(ctx, [key, k]) && keepsFamilies(ctx, [key, k]);
   };
+
   const step: Step = { strategy: strategyOf(g.tier), capped: true };
   const best = [...neighboursOf(adjacencyOf(ctx.qedges), key)]
     .filter(joinable)
-    .map((k) =>
-      evaluate(
-        ctx,
-        { keys: [key, k], parent: g.parent, tier: g.tier, reason: g.reason },
-        m.score,
-        step,
-      ),
-    )
+    .map((k) => evaluate(ctx, { keys: [key, k], parent: g.parent, tier: g.tier, reason: g.reason }, m.score, step))
     .filter((s): s is Scored => s !== null)
     .sort((a, b) => compareScored(a, b, "density"))[0];
+
   return best ? measure(ctx.work, best.part, ctx.config, ctx.rules) : null;
 };
 
@@ -247,11 +241,17 @@ const grow = (m: Measure, g: Group): Measure | null => {
 const tidy = (start: Measure): Measure => {
   let m = start;
   const stuck = new Set<string>();
+
   for (let g = smallGroup(m, stuck); g; g = smallGroup(m, stuck)) {
     const next = undo(m, g) ?? (LEAF_TIERS.has(g.tier) ? grow(m, g) : null);
-    if (next) m = next;
-    else stuck.add(keyOf(g));
+
+    if (next) {
+      m = next;
+    } else {
+      stuck.add(keyOf(g));
+    }
   }
+
   return m;
 };
 
@@ -265,20 +265,24 @@ const tidy = (start: Measure): Measure => {
 const loosen = (start: Measure): Measure => {
   const floor = evenFloorOf(start.ctx.work, start.ctx.config);
   let m = start;
+
   while (m.nodes < floor) {
     const best = m.ctx.part.groups
       .filter((g) => g.tier !== "T2" && g.reason !== ID_FAMILY)
       .flatMap((g) => {
         const next = undo(m, g);
+
         return next ? [{ next, members: g.members }] : [];
       })
-      .sort(
-        (a, b) =>
-          b.next.nodes - a.next.nodes || byNaturalTuple(a.members, b.members),
-      )[0];
-    if (!best) break;
+      .sort((a, b) => b.next.nodes - a.next.nodes || byNaturalTuple(a.members, b.members))[0];
+
+    if (!best) {
+      break;
+    }
+
     m = best.next;
   }
+
   return m;
 };
 
@@ -293,6 +297,7 @@ const closed = (work: WorkGraph, g: Group): boolean => {
       .filter((e) => inside.has(e.source) !== inside.has(e.target))
       .map((e) => (inside.has(e.source) ? e.source : e.target)),
   );
+
   return faces.size === 1;
 };
 
@@ -302,22 +307,23 @@ const closed = (work: WorkGraph, g: Group): boolean => {
 // and draws every relationship it keeps at its own entity. An aggregate
 // whose other members relate outside it stays in view, as do other
 // diagrams, at T1 (SLOP-0035).
-const closedAggregates = (
-  start: Measure,
-  snapshots: Snapshot[],
-  walk: Walk,
-): Folded => {
+const closedAggregates = (start: Measure, snapshots: Snapshot[], walk: Walk): Folded => {
   const { work } = start.ctx;
   const done: Folded = { work, part: EMPTY_PARTITION, snapshots, tier: "T1" };
-  if (work.family !== "er" || !walk.order.includes(AGGREGATES)) return done;
-  const folded = foldEvenly(
-    start,
-    { strategy: AGGREGATES, capped: true },
-    false,
-  ).ctx.part.groups;
+
+  if (work.family !== "er" || !walk.order.includes(AGGREGATES)) {
+    return done;
+  }
+
+  const folded = foldEvenly(start, { strategy: AGGREGATES, capped: true }, false).ctx.part.groups;
   const kept = folded.filter((g) => g.tier === "T4" && closed(work, g));
-  if (kept.length === 0) return done;
+
+  if (kept.length === 0) {
+    return done;
+  }
+
   const part = partitionOf(kept);
+
   return {
     work,
     part,
@@ -333,6 +339,7 @@ const closedAggregates = (
 const stepOf = (strategy: Strategy, walk: Walk): Step => {
   const { tier } = strategy;
   const capped = !strategy.recursiveDetails || walk.details !== "recursive";
+
   return {
     strategy,
     capped,
@@ -346,26 +353,30 @@ const stepOf = (strategy: Strategy, walk: Walk): Step => {
 // dropped, and folds only its closed aggregates (SLOP-0035).
 const finishFold = (measure: Measure, step: Step, walk: Walk): Measure => {
   const folded = tidy(foldEvenly(measure, step, walk.density === "compact"));
+
   return walk.density === "compact" ? folded : loosen(folded);
 };
 
-const foldToTarget = (
-  work: WorkGraph,
-  config: ThresholdConfig,
-  walk: Walk,
-): Folded | string => {
+const foldToTarget = (work: WorkGraph, config: ThresholdConfig, walk: Walk): Folded | string => {
   let m = measure(work, EMPTY_PARTITION, config, walk.rules);
   const snapshots: Snapshot[] = [snapshotOf("T1", EMPTY_PARTITION)];
-  if (meets(m.nodes, m.score, config))
+
+  if (meets(m.nodes, m.score, config)) {
     return closedAggregates(m, snapshots, walk);
+  }
+
   let tier: Tier = "T1";
+
   for (const t of walk.order) {
     const step = stepOf(t, walk);
+
     for (let best = bestStep(m.ctx, step, m.score); best; ) {
       m = measure(work, best.part, config, walk.rules);
       tier = t.tier;
+
       if (meets(m.nodes, m.score, config)) {
         m = finishFold(m, step, walk);
+
         return {
           work,
           part: m.ctx.part,
@@ -373,23 +384,22 @@ const foldToTarget = (
           tier,
         };
       }
+
       best = bestStep(m.ctx, step, m.score);
     }
+
     snapshots.push(snapshotOf(t.tier, m.ctx.part));
   }
+
   return `no tier reaches the target: the overview stops at ${m.nodes} nodes and a score of ${m.score}`;
 };
 
 // The new reachable pairs a build's details split again declare, at every depth.
 const nestedLoss = (build: Build): number =>
-  Object.values(build.nested).reduce(
-    (n, b) => n + b.plan.loss.newReachablePairs + nestedLoss(b),
-    0,
-  );
+  Object.values(build.nested).reduce((n, b) => n + b.plan.loss.newReachablePairs + nestedLoss(b), 0);
 
 // The new reachable pairs a build declares, its own and its details'.
-const totalLoss = (build: Build): number =>
-  build.plan.loss.newReachablePairs + nestedLoss(build);
+const totalLoss = (build: Build): number => build.plan.loss.newReachablePairs + nestedLoss(build);
 
 interface SearchContext {
   work: WorkGraph;
@@ -404,11 +414,7 @@ interface Attempt {
 }
 
 // Every attempt uses the same fold engine. Only detail admission and overview density vary.
-const buildAttempt = (
-  ctx: SearchContext,
-  rules: FoldRules,
-  attempt: Attempt,
-): Build | string => {
+const buildAttempt = (ctx: SearchContext, rules: FoldRules, attempt: Attempt): Build | string => {
   const { work, config, depth, order, lanes } = ctx;
   const folded = foldToTarget(work, config, {
     order,
@@ -416,47 +422,47 @@ const buildAttempt = (
     lanes,
     ...attempt,
   });
+
   return typeof folded === "string"
     ? folded
     : assemble(folded, config, (detail) =>
-        depth >= MAX_DEPTH
-          ? "the split depth is exhausted"
-          : planWork(detail, config, depth + 1, order),
+        depth >= MAX_DEPTH ? "the split depth is exhausted" : planWork(detail, config, depth + 1, order),
       );
 };
 
 // Recursive detail splits yield to a fitting plan when that declares less reachability loss.
-const minimizeLoss = (
-  ctx: SearchContext,
-  rules: FoldRules,
-  built: Build,
-): Build => {
-  if (nestedLoss(built) === 0) return built;
+const minimizeLoss = (ctx: SearchContext, rules: FoldRules, built: Build): Build => {
+  if (nestedLoss(built) === 0) {
+    return built;
+  }
+
   const fitting = (["lossless", "fitting"] as const)
-    .map((details) =>
-      buildAttempt(ctx, rules, { details, density: "balanced" }),
-    )
+    .map((details) => buildAttempt(ctx, rules, { details, density: "balanced" }))
     .find((result): result is Build => typeof result !== "string");
+
   return fitting && totalLoss(fitting) < totalLoss(built) ? fitting : built;
 };
 
-const searchDetails = (
-  ctx: SearchContext,
-  rules: FoldRules,
-): Build | string => {
+const searchDetails = (ctx: SearchContext, rules: FoldRules): Build | string => {
   const reasons = new Set<string>();
-  const policies: DetailPolicy[] =
-    ctx.depth >= MAX_DEPTH ? ["fitting"] : ["recursive", "fitting"];
+  const policies: DetailPolicy[] = ctx.depth >= MAX_DEPTH ? ["fitting"] : ["recursive", "fitting"];
+
   for (const details of policies) {
     const balanced = buildAttempt(ctx, rules, { details, density: "balanced" });
-    if (typeof balanced !== "string")
-      return details === "recursive"
-        ? minimizeLoss(ctx, rules, balanced)
-        : balanced;
+
+    if (typeof balanced !== "string") {
+      return details === "recursive" ? minimizeLoss(ctx, rules, balanced) : balanced;
+    }
+
     const compact = buildAttempt(ctx, rules, { details, density: "compact" });
-    if (typeof compact !== "string") return compact;
+
+    if (typeof compact !== "string") {
+      return compact;
+    }
+
     reasons.add(balanced);
   }
+
   return [...reasons].join("; then, holding regions to details that fit, ");
 };
 
@@ -474,20 +480,28 @@ export const planWork = (
   };
   const ctx = { work, config, depth, order, lanes };
   let reason = "";
+
   for (const mode of [lanes.mode, "staged"] as const) {
-    if (mode === "staged" && !lanes.encountered) break;
+    if (mode === "staged" && !lanes.encountered) {
+      break;
+    }
+
     lanes.mode = mode;
+
     for (const rules of RELAXED) {
       const built = searchDetails(ctx, rules);
-      if (typeof built !== "string") return built;
+
+      if (typeof built !== "string") {
+        return built;
+      }
+
       reason = built;
     }
   }
+
   return reason;
 };
 
 // The ladders a diagram is walked along, preferred first.
 export const laddersOf = (work: WorkGraph): Array<readonly Strategy[]> =>
-  work.regionIds.length > 0
-    ? [REGIONS_FIRST, DEFAULT_STRATEGIES]
-    : [DEFAULT_STRATEGIES];
+  work.regionIds.length > 0 ? [REGIONS_FIRST, DEFAULT_STRATEGIES] : [DEFAULT_STRATEGIES];

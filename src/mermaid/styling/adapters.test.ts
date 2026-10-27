@@ -5,14 +5,9 @@ import { readStyles } from "./declarations.ts";
 
 test("a flowchart's default linkStyle is its own directive and every edge inherits it", async () => {
   const result = await readStyles(
-    [
-      "flowchart LR",
-      "A-->B",
-      "B-->C",
-      "linkStyle default stroke:#ff0000",
-      "linkStyle 1 color:#00ff00",
-    ].join("\n"),
+    ["flowchart LR", "A-->B", "B-->C", "linkStyle default stroke:#ff0000", "linkStyle 1 color:#00ff00"].join("\n"),
   );
+
   assert.deepEqual(result, {
     directives: [
       {
@@ -33,9 +28,8 @@ test("a flowchart's default linkStyle is its own directive and every edge inheri
 });
 
 test("a flowchart edge linkStyle with no default stands alone", async () => {
-  const result = await readStyles(
-    "flowchart LR\nA-->B\nlinkStyle 0 stroke:#ff0000",
-  );
+  const result = await readStyles("flowchart LR\nA-->B\nlinkStyle 0 stroke:#ff0000");
+
   assert.deepEqual(result.directives, [
     {
       kind: "linkStyle",
@@ -57,6 +51,7 @@ test("a classDiagram reports its classDefs and only the classes a style statemen
       'cssClass "Animal" hot',
     ].join("\n"),
   );
+
   assert.deepEqual(result, {
     directives: [
       {
@@ -80,6 +75,7 @@ test("a state classDef's statement holds only the styles it added", async () => 
   const result = await readStyles(
     "stateDiagram-v2\nA\nclassDef hot fill:#ff0000\nclassDef hot color:#ffffff\nclass A hot",
   );
+
   assert.deepEqual(result.directives, [
     {
       kind: "classDef",

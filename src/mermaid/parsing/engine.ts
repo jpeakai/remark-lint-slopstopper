@@ -17,29 +17,32 @@ const NODE_GETTERS = ["nodeName", "nodeValue", "textContent"] as const;
 const dispatchToOverride = (proto: object, property: string): void => {
   const base = Object.getOwnPropertyDescriptor(proto, property);
   const baseGet = base?.get;
-  if (!(base && baseGet)) return;
+
+  if (!(base && baseGet)) {
+    return;
+  }
+
   Object.defineProperty(proto, property, {
     ...base,
     get(this: object): unknown {
-      for (
-        let p = Object.getPrototypeOf(this);
-        p && p !== proto;
-        p = Object.getPrototypeOf(p)
-      ) {
+      for (let p = Object.getPrototypeOf(this); p && p !== proto; p = Object.getPrototypeOf(p)) {
         const own = Object.getOwnPropertyDescriptor(p, property)?.get;
-        if (own) return own.call(this);
+
+        if (own) {
+          return own.call(this);
+        }
       }
+
       return baseGet.call(this);
     },
   });
 };
 
 // Must run before mermaid loads: DOMPurify keeps the getters it finds then.
-export const repairNodeGetters = (window: {
-  Node: { prototype: object };
-}): void => {
-  for (const property of NODE_GETTERS)
+export const repairNodeGetters = (window: { Node: { prototype: object } }): void => {
+  for (const property of NODE_GETTERS) {
     dispatchToOverride(window.Node.prototype, property);
+  }
 };
 
 // A parse result depends only on its source, and a split plan measures the
@@ -48,18 +51,23 @@ export const repairNodeGetters = (window: {
 
 const LIMIT = 512;
 
-export const memoBySource = <T>(
-  read: (source: string) => Promise<T>,
-): ((source: string) => Promise<T>) => {
+export const memoBySource = <T>(read: (source: string) => Promise<T>): ((source: string) => Promise<T>) => {
   const cache = new Map<string, Promise<T>>();
+
   return async (source) => {
     let hit = cache.get(source);
+
     if (!hit) {
       hit = read(source);
       cache.set(source, hit);
+
       const oldest = cache.keys().next().value;
-      if (cache.size > LIMIT && oldest !== undefined) cache.delete(oldest);
+
+      if (cache.size > LIMIT && oldest !== undefined) {
+        cache.delete(oldest);
+      }
     }
+
     return structuredClone(await hit);
   };
 };
@@ -71,8 +79,13 @@ export const memoBySource = <T>(
 // imported dynamically: a static import is hoisted above this call.
 const installDomShim = (): void => {
   const g = globalThis as Record<string, unknown>;
-  if (g.window) return;
+
+  if (g.window) {
+    return;
+  }
+
   const win = new Window();
+
   repairNodeGetters(win);
   g.window = win;
   g.document = win.document;
@@ -82,6 +95,7 @@ const installDomShim = (): void => {
   g.DocumentFragment = win.DocumentFragment;
   g.NodeFilter = win.NodeFilter;
   g.getComputedStyle = win.getComputedStyle.bind(win);
+
   // happy-dom's CSS.supports("color", v) is true for any word, where a browser
   // checks that v is a colour. Mermaid asks it to split `box Shop` into a fill
   // and a title, so the shim's answer gave every one-word box title away as
@@ -93,12 +107,14 @@ const installDomShim = (): void => {
   const fixed = {
     ...css,
     supports: (property: string, value?: string): boolean => {
-      if (value === undefined) return supports(property);
-      return property === "color"
-        ? isCssColour(value)
-        : supports(property, value);
+      if (value === undefined) {
+        return supports(property);
+      }
+
+      return property === "color" ? isCssColour(value) : supports(property, value);
     },
   };
+
   Object.defineProperty(win, "CSS", { value: fixed, configurable: true });
 };
 
@@ -113,11 +129,7 @@ const ZENUML = {
   id: "zenuml",
   detector: (text: string): boolean => /^\s*zenuml/.test(text),
   loader: (): Promise<never> =>
-    Promise.reject(
-      new Error(
-        "zenuml is drawn by an external mermaid add-on that is not installed",
-      ),
-    ),
+    Promise.reject(new Error("zenuml is drawn by an external mermaid add-on that is not installed")),
 };
 
 // Mermaid core is loaded once, when this module loads, so its diagram detection
@@ -125,9 +137,12 @@ const ZENUML = {
 // initialize registers every diagram's detector.
 const loadMermaid = async (): Promise<typeof import("mermaid").default> => {
   installDomShim();
+
   const mermaid = (await import("mermaid")).default;
+
   mermaid.initialize({});
   await mermaid.registerExternalDiagrams([ZENUML]);
+
   return mermaid;
 };
 
@@ -143,7 +158,10 @@ export const detectType = (content: string): string | null => {
   try {
     return mermaidCore.detectType(content);
   } catch (err) {
-    if (err instanceof Error && err.name === "UnknownDiagramError") return null;
+    if (err instanceof Error && err.name === "UnknownDiagramError") {
+      return null;
+    }
+
     throw err;
   }
 };

@@ -1,19 +1,13 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import {
-  type DiagramGraph,
-  extractGraph,
-  type GraphEdge,
-} from "../../parsing/graph.ts";
+import { type DiagramGraph, extractGraph, type GraphEdge } from "../../parsing/graph.ts";
 import { buildWorkGraph } from "../graph/model.ts";
 import { emitSource } from "./serialize.ts";
 
-const byId = <T extends { id: string }>(items: T[]): T[] =>
-  [...items].sort((a, b) => a.id.localeCompare(b.id));
+const byId = <T extends { id: string }>(items: T[]): T[] => [...items].sort((a, b) => a.id.localeCompare(b.id));
 const edgeFacts = (edges: GraphEdge[]) =>
-  edges
-    .map(({ id: _, ...facts }) => facts)
-    .sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
+  edges.map(({ id: _, ...facts }) => facts).sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
+
 function facts(graph: DiagramGraph) {
   return {
     nodes: byId(graph.nodes),
@@ -34,13 +28,16 @@ test("state serialization preserves composite ownership when generated region ID
     measured: { nodes: 4, edges: 2, subgraphs: 1, depth: 1 },
   });
   const owned = work.regions.get("A__group_");
+
   assert.equal(owned?.owner, "A");
   assert.equal(owned?.label, "Composite");
   assert.equal(work.nodes.get("A")?.owns, "A__group_");
+
   const source = emitSource(
     { family: "state", type: graph.diagram_type, direction: "TB" },
     { graph, stubs: new Set() },
   );
+
   assert.deepEqual(facts(await extractGraph(source)), facts(graph));
 });
 
@@ -54,6 +51,7 @@ test("each emitted scene owns its ordering without mutating or retaining graph s
   };
   const plain = emitSource(head, { graph, stubs: new Set() });
   const stubbed = emitSource(head, { graph, stubs: new Set(["A"]) });
+
   assert.notEqual(stubbed, plain);
   assert.equal(emitSource(head, { graph, stubs: new Set() }), plain);
   assert.equal(
@@ -73,10 +71,8 @@ test("each emitted scene owns its ordering without mutating or retaining graph s
 const roundTrips = async (source: string, direction = "TB"): Promise<void> => {
   const graph = await extractGraph(source);
   const family = graph.diagram_type === "er" ? "er" : "flowchart";
-  const emitted = emitSource(
-    { family, type: graph.diagram_type, direction },
-    { graph, stubs: new Set() },
-  );
+  const emitted = emitSource({ family, type: graph.diagram_type, direction }, { graph, stubs: new Set() });
+
   assert.deepEqual(facts(await extractGraph(emitted)), facts(graph));
 };
 

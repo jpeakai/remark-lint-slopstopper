@@ -19,6 +19,7 @@ export const MERMAID_RULES: PolicyRuleId[] = [
   "mermaid/complexity-visual-score-acceptable-exceeded",
 ];
 export const RULES = [...PROSE_RULES, ...MERMAID_RULES];
+
 // The order automatic edits land in, one policy per round. A promotion needs
 // the separators a glyph swap would erase, so list policies come before the
 // punctuation swaps, and sentence layout settles the blocks last.

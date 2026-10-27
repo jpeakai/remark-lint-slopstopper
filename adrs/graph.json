@@ -626,6 +626,32 @@
     },
     {
       "data": {
+        "id": "SLOP-0042",
+        "label": "0042",
+        "parent": "group-quality",
+        "colour": "#0891b2",
+        "file": "0042-biome-remains-the-only-typescript-linter.md",
+        "title": "Biome remains the only TypeScript linter with a 120-character wrapping target",
+        "description": "Biome enforces braces and formats at 120 columns, while structural blank lines remain a review convention",
+        "status": "superseded",
+        "tags": "quality, formatting, tooling"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0043",
+        "label": "0043",
+        "parent": "group-quality",
+        "colour": "#0891b2",
+        "file": "0043-eslint-only-enforces-blank-line-placement.md",
+        "title": "ESLint only enforces blank-line placement while Biome owns other TypeScript checks",
+        "description": "Separate tool responsibilities automate breathing space without competing formatting rules",
+        "status": "accepted",
+        "tags": "quality, formatting, tooling"
+      }
+    },
+    {
+      "data": {
         "id": "SLOP-0002-depended_on_by-SLOP-0012",
         "source": "SLOP-0002",
         "target": "SLOP-0012",
@@ -1502,6 +1528,26 @@
         "label": "see also",
         "relation": "see_also",
         "note": "minItems is set like any other rule option"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0042-superseded_by-SLOP-0043",
+        "source": "SLOP-0042",
+        "target": "SLOP-0043",
+        "label": "superseded by",
+        "relation": "superseded_by",
+        "note": "ESLint now owns blank-line placement only, with Biome retaining formatting and code-quality checks"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0043-supersedes-SLOP-0042",
+        "source": "SLOP-0043",
+        "target": "SLOP-0042",
+        "label": "supersedes",
+        "relation": "supersedes",
+        "note": "Blank-line placement becomes automatic through a narrowly scoped companion linter"
       }
     }
   ],

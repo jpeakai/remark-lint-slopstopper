@@ -16,38 +16,32 @@ const orderOf = async (source: string): Promise<Array<[string, number]>> => {
       depth: 0,
     },
   });
+
   return [...flowOrder(work)].sort(([a], [b]) => a.localeCompare(b));
 };
 
 test("flow ranks use shortest distance from all entries without inventing disconnected cycle entries", async () => {
-  assert.deepEqual(
-    await orderOf(
-      "flowchart TB\nA-->C\nB-->D\nC-->E\nD-->E\nE-->E\nX-->Y\nY-->X\nZ",
-    ),
-    [
-      ["A", 0],
-      ["B", 0],
-      ["C", 1],
-      ["D", 1],
-      ["E", 2],
-      ["Z", 0],
-    ],
-  );
+  assert.deepEqual(await orderOf("flowchart TB\nA-->C\nB-->D\nC-->E\nD-->E\nE-->E\nX-->Y\nY-->X\nZ"), [
+    ["A", 0],
+    ["B", 0],
+    ["C", 1],
+    ["D", 1],
+    ["E", 2],
+    ["Z", 0],
+  ]);
 });
 
 test("state start markers select the entry into a directed cycle", async () => {
-  assert.deepEqual(
-    await orderOf("stateDiagram-v2\n[*]-->B\nA-->B\nB-->C\nC-->A"),
-    [
-      ["A", 2],
-      ["B", 0],
-      ["C", 1],
-    ],
-  );
+  assert.deepEqual(await orderOf("stateDiagram-v2\n[*]-->B\nA-->B\nB-->C\nC-->A"), [
+    ["A", 2],
+    ["B", 0],
+    ["C", 1],
+  ]);
 });
 
 const workOf = async (source: string) => {
   const graph = await extractGraph(source);
+
   return buildWorkGraph(graph, {
     direction: "TB",
     rows: 0,
@@ -57,10 +51,12 @@ const workOf = async (source: string) => {
 
 test("aggregate members rank by boundary crossings, then degree", async () => {
   const work = await workOf("flowchart TB\nA-->B\nB-->C\nC-->D\nX-->B");
+
   assert.deepEqual(byCrossing(work, ["A", "B", "C"]), ["B", "C", "A"]);
 });
 
 test("start and end transitions count as boundary crossings", async () => {
   const work = await workOf("stateDiagram-v2\n[*]-->A\nA-->[*]\nA-->B\nB-->C");
+
   assert.deepEqual(byCrossing(work, ["A", "B"]), ["A", "B"]);
 });

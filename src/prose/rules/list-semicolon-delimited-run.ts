@@ -7,34 +7,38 @@ import {
   type SourceParagraph,
   sentenceSpans,
 } from "../../document/source-text.ts";
-import {
-  cleanLeadIn,
-  itemsBetween,
-  promote,
-  sentenceRunCheck,
-} from "../promotion.ts";
+import { cleanLeadIn, itemsBetween, promote, sentenceRunCheck } from "../promotion.ts";
 
 const SEMICOLON = /;/g;
+
 // Two semicolons join three items.
 const DEFAULT_MIN_ITEMS = 3;
 
 // The first sentence with enough semicolons and a colon lead-in is the only
 // one promoted; the next round comes back for the rest.
-const promotion = (
-  source: string,
-  paragraph: SourceParagraph,
-  minItems: number,
-): DeclaredEdit | null => {
+const promotion = (source: string, paragraph: SourceParagraph, minItems: number): DeclaredEdit | null => {
   const semicolons = matchesInAll(source, paragraph.texts, SEMICOLON);
   const colons = colonsIn(source, paragraph);
-  if (semicolons === null || colons === null) return null;
+
+  if (semicolons === null || colons === null) {
+    return null;
+  }
+
   for (const span of sentenceSpans(source, paragraph)) {
     const inside = semicolons.filter((semicolon) => within(semicolon, span));
-    if (inside.length === 0 || inside.length + 1 < minItems) continue;
+
+    if (inside.length === 0 || inside.length + 1 < minItems) {
+      continue;
+    }
+
     // The outermost colon opens the lead-in, so "Note: the rules: a; b; c"
     // keeps the whole of "Note: the rules".
     const colon = colonsBefore(colons, span, first(inside)[0])[0];
-    if (!colon) continue;
+
+    if (!colon) {
+      continue;
+    }
+
     return promote({
       source,
       paragraph,
@@ -46,6 +50,7 @@ const promotion = (
       ordered: false,
     });
   }
+
   return null;
 };
 

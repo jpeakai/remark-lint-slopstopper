@@ -11,21 +11,11 @@ import { applyEdits } from "../document/edits.ts";
 import { pointAt } from "../document/positions.ts";
 import { analyzeProse } from "../prose/analyze.ts";
 import { FIX_ORDER, PROSE_RULES, RULES } from "../rules.ts";
-import type {
-  Diagnostic,
-  PolicyRuleId,
-  RuleOptions,
-  TextEdit,
-} from "../types.ts";
+import type { Diagnostic, PolicyRuleId, RuleOptions, TextEdit } from "../types.ts";
 
-type ShortRuleId = PolicyRuleId extends `${string}/${infer Name}`
-  ? Name
-  : never;
+type ShortRuleId = PolicyRuleId extends `${string}/${infer Name}` ? Name : never;
 type Severity = boolean | 0 | 2 | "off" | "error";
-export type RemarkRuleSetting =
-  | Severity
-  | RuleOptions
-  | [Severity, RuleOptions?];
+export type RemarkRuleSetting = Severity | RuleOptions | [Severity, RuleOptions?];
 
 export interface RemarkSlopstopperOptions {
   fix?: boolean;
@@ -49,24 +39,27 @@ interface Report {
 type ReportDiagnostics = (tree: Root, file: VFile) => Promise<Report>;
 
 function setting(value: RemarkRuleSetting | undefined): Setting | null {
-  if (value === false || value === "off" || value === 0) return null;
+  if (value === false || value === "off" || value === 0) {
+    return null;
+  }
+
   if (Array.isArray(value)) {
     const severity = setting(value[0]);
+
     return severity ? { ...severity, options: value[1] ?? {} } : null;
   }
+
   return {
     options: typeof value === "object" && value !== null ? value : {},
   };
 }
 
-const shortName = (ruleId: PolicyRuleId): ShortRuleId =>
-  ruleId.split("/")[1] as ShortRuleId;
+const shortName = (ruleId: PolicyRuleId): ShortRuleId => ruleId.split("/")[1] as ShortRuleId;
 
-function configuredRules(
-  options: RemarkSlopstopperOptions,
-): RuleConfiguration[] {
+function configuredRules(options: RemarkSlopstopperOptions): RuleConfiguration[] {
   return RULES.flatMap((ruleId) => {
     const config = setting(options.rules?.[shortName(ruleId)]);
+
     return config ? [{ ruleId, ...config }] : [];
   });
 }
@@ -78,12 +71,7 @@ async function diagnostics(
   defaults: RuleOptions = {},
 ): Promise<Diagnostic[]> {
   // Every enabled policy's options, so a policy can defer to another one.
-  const policies = Object.fromEntries(
-    settings.map((setting) => [
-      setting.ruleId,
-      { ...defaults, ...setting.options },
-    ]),
-  );
+  const policies = Object.fromEntries(settings.map((setting) => [setting.ruleId, { ...defaults, ...setting.options }]));
   const options = {
     ...defaults,
     ...config.options,
@@ -92,10 +80,8 @@ async function diagnostics(
   };
   const findings = PROSE_RULES.includes(config.ruleId)
     ? await analyzeProse(document, options)
-    : await (await import("../mermaid/analyze.ts")).analyzeMermaid(
-        document,
-        options,
-      );
+    : await (await import("../mermaid/analyze.ts")).analyzeMermaid(document, options);
+
   return findingsForRule(findings, config.ruleId);
 }
 
@@ -106,6 +92,7 @@ function emitDiagnostics(
   emitted: Report["emitted"],
 ): void {
   const source = String(file);
+
   for (const diagnostic of diagnostics) {
     const message = file.message(
       diagnostic.message,
@@ -115,6 +102,7 @@ function emitDiagnostics(
       },
       `remark-lint:${shortName(config.ruleId)}`,
     );
+
     message.fatal = true;
     emitted.set(message, diagnostic);
   }
@@ -127,18 +115,18 @@ function reporter(options: RemarkSlopstopperOptions): ReportDiagnostics {
     source: "remark-lint",
     known: RULES.map(shortName),
   });
+
   return async (tree, file) => {
     const document = createDocument(String(file), { tree, cwd: file.cwd });
     const emitted: Report["emitted"] = new Map();
-    for (const config of settings)
-      emitDiagnostics(
-        file,
-        config,
-        await diagnostics(document, config, settings, options.options),
-        emitted,
-      );
+
+    for (const config of settings) {
+      emitDiagnostics(file, config, await diagnostics(document, config, settings, options.options), emitted);
+    }
+
     // Native suppression controls both messages and the source edits they expose.
     control(tree, file);
+
     return {
       emitted,
       visible: file.messages.filter((message) => emitted.has(message)),
@@ -148,66 +136,75 @@ function reporter(options: RemarkSlopstopperOptions): ReportDiagnostics {
 
 // One policy's edits land per round, in fix order; the next round reparses
 // and reports again, so later policies see the settled source.
-function visibleEdits(
-  { emitted, visible }: Report,
-  source: string,
-): TextEdit[] {
+function visibleEdits({ emitted, visible }: Report, source: string): TextEdit[] {
   const fixes = visible.flatMap((message) => {
     const diagnostic = emitted.get(message);
     const fix = diagnostic?.fix;
-    return fix && source.slice(fix.start, fix.end) !== fix.text
-      ? [{ ruleId: diagnostic.ruleId, fix }]
-      : [];
+
+    return fix && source.slice(fix.start, fix.end) !== fix.text ? [{ ruleId: diagnostic.ruleId, fix }] : [];
   });
-  const ruleId = FIX_ORDER.find((id) =>
-    fixes.some((item) => item.ruleId === id),
-  );
+  const ruleId = FIX_ORDER.find((id) => fixes.some((item) => item.ruleId === id));
+
   return fixes.flatMap((item) => (item.ruleId === ruleId ? [item.fix] : []));
 }
 
 function applyRound(file: VFile, report: Report): TextEdit[] | null {
   const edits = visibleEdits(report, String(file));
-  if (!edits.length) return null;
+
+  if (!edits.length) {
+    return null;
+  }
+
   const next = applyEdits(String(file), edits);
-  if (next === String(file)) return null;
-  file.messages = file.messages.filter(
-    (message) => !report.emitted.has(message),
-  );
+
+  if (next === String(file)) {
+    return null;
+  }
+
+  file.messages = file.messages.filter((message) => !report.emitted.has(message));
   file.value = next;
+
   return edits;
 }
 
-function transformer(
-  processor: Processor,
-  options: RemarkSlopstopperOptions,
-): Transformer<Root> {
+function transformer(processor: Processor, options: RemarkSlopstopperOptions): Transformer<Root> {
   const report = reporter(options);
+
   return async (tree, file) => {
     let currentTree = tree;
     const applied: TextEdit[] = [];
+
     while (true) {
       const current = await report(currentTree, file);
-      if (!options.fix) break;
+
+      if (!options.fix) {
+        break;
+      }
+
       const edits = applyRound(file, current);
-      if (!edits) break;
+
+      if (!edits) {
+        break;
+      }
+
       applied.push(...edits);
       currentTree = processor.parse(file) as Root;
     }
+
     if (options.fix) {
       // A Markdown serializer could reformat unrelated bytes. Compile the
       // verified source edits, even if remark-stringify is also installed.
       processor.compiler = (_tree, currentFile) => String(currentFile);
       file.data.slopstopperFixes = applied;
     }
+
     return currentTree;
   };
 }
 
 /** Native remark/VFile diagnostics, with opt-in verified source edits. */
-export default function remarkSlopstopper(
-  this: Processor,
-  options: RemarkSlopstopperOptions = {},
-): Transformer<Root> {
+export default function remarkSlopstopper(this: Processor, options: RemarkSlopstopperOptions = {}): Transformer<Root> {
   this.use(remarkGfm).use(remarkFrontmatter, ["yaml", "toml"]);
+
   return transformer(this, options);
 }

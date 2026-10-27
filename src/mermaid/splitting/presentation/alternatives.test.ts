@@ -20,6 +20,7 @@ test("a star lists its hub's links by way, then other edges, then unlinked nodes
       "H-->S",
     ].join("\n"),
   );
+
   assert.deepEqual(starList(graph), {
     kind: "list",
     markdown: [
@@ -64,6 +65,7 @@ test("a star writes erDiagram cardinalities and escapes markdown in names", () =
     ],
     subgraphs: [],
   };
+
   assert.equal(
     starList(graph).markdown,
     [
@@ -77,9 +79,8 @@ test("a star writes erDiagram cardinalities and escapes markdown in names", () =
 });
 
 test("a mesh matrix draws every edge in both cells and names unlinked pairs", async () => {
-  const graph = await extractGraph(
-    "flowchart LR\nA-->B\nB<-->C\nC---A\nA-->A\nD",
-  );
+  const graph = await extractGraph("flowchart LR\nA-->B\nB<-->C\nC---A\nA-->A\nD");
+
   assert.deepEqual(meshMatrix(graph), {
     kind: "matrix",
     markdown: [
@@ -98,9 +99,8 @@ test("a mesh matrix draws every edge in both cells and names unlinked pairs", as
 });
 
 test("a fully linked mesh escapes table pipes in connectors and joins repeated edges", async () => {
-  const graph = await extractGraph(
-    "erDiagram\nA ||--o{ B : has\nB }|--|| A : owns",
-  );
+  const graph = await extractGraph("erDiagram\nA ||--o{ B : has\nB }|--|| A : owns");
+
   assert.equal(
     meshMatrix(graph).markdown,
     [

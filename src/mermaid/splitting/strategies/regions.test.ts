@@ -13,6 +13,7 @@ import { authorRegions, echoesOf } from "./regions.ts";
 
 const workOf = async (source: string): Promise<WorkGraph> => {
   const stats = await extractStats(source);
+
   return buildWorkGraph(await extractGraph(source), {
     direction: await directionOf(source),
     rows: stats.rows,
@@ -31,6 +32,7 @@ const folded = (members: string[], region: string, parent: string): Group => ({
 
 const proposed = (work: WorkGraph, groups: Group[] = []): Candidate[] => {
   const part = partitionOf(groups);
+
   return authorRegions({
     work,
     part,
@@ -41,11 +43,7 @@ const proposed = (work: WorkGraph, groups: Group[] = []): Candidate[] => {
 };
 
 const summary = (cs: Candidate[]): string[][] =>
-  cs.map((c) => [
-    ...(c.regions ?? []),
-    "|",
-    ...(c.also ?? []).flatMap((a) => a.regions ?? []),
-  ]);
+  cs.map((c) => [...(c.regions ?? []), "|", ...(c.also ?? []).flatMap((a) => a.regions ?? [])]);
 
 // Two cloud regions drawn from one template: public and app subnets each.
 const CLOUDS = [
@@ -73,23 +71,27 @@ const CLOUDS = [
 
 test("sibling regions of one shape echo each other", async () => {
   const work = await workOf(CLOUDS);
+
   assert.deepEqual(echoesOf(work, "east"), ["west"]);
 });
 
 test("a subnet echoes the subnet of its label in the echoing region", async () => {
   const work = await workOf(CLOUDS);
+
   assert.deepEqual(echoesOf(work, "epub"), ["wpub"]);
   assert.deepEqual(echoesOf(work, "wapp"), ["eapp"]);
 });
 
 test("an unknown region echoes nothing", async () => {
   const work = await workOf(CLOUDS);
+
   assert.deepEqual(echoesOf(work, "north"), []);
 });
 
 test("innermost regions fold first, each with its echo", async () => {
   const work = await workOf(CLOUDS);
   const cs = proposed(work);
+
   assert.deepEqual(summary(cs), [
     ["eapp", "|", "wapp"],
     ["epub", "|", "wpub"],
@@ -103,10 +105,8 @@ test("innermost regions fold first, each with its echo", async () => {
 
 test("a region waits while its echo still has subnets to fold", async () => {
   const work = await workOf(CLOUDS);
-  const cs = proposed(work, [
-    folded(["e1", "e2"], "epub", "east"),
-    folded(["e3", "e4"], "eapp", "east"),
-  ]);
+  const cs = proposed(work, [folded(["e1", "e2"], "epub", "east"), folded(["e3", "e4"], "eapp", "east")]);
+
   assert.deepEqual(summary(cs), [
     ["wapp", "|"],
     ["wpub", "|"],
@@ -121,6 +121,7 @@ test("echoing regions fold together once every subnet has folded", async () => {
     folded(["w1", "w2"], "wpub", "west"),
     folded(["w3", "w4"], "wapp", "west"),
   ]);
+
   assert.deepEqual(summary(cs), [
     ["east", "|", "west"],
     ["west", "|", "east"],
@@ -144,6 +145,7 @@ test("a region is ready when its children hold one node or none", async () => {
     ].join("\n"),
   );
   const cs = proposed(work);
+
   assert.equal(cs.length, 1);
   assert.deepEqual(cs[0]?.keys, ["n1", "n2", "n3"]);
   assert.deepEqual(cs[0]?.regions, ["X", "Y", "Z"]);
@@ -168,6 +170,7 @@ test("a composite state folds with the states its start marker pins", async () =
     ].join("\n"),
   );
   const cs = proposed(work);
+
   assert.deepEqual(
     cs.map((c) => [c.keys, c.regions, c.parent]),
     [[["Inner", "b", "c"], ["Inner__group"], "Outer__group"]],

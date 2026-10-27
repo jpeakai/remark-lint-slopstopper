@@ -1,33 +1,16 @@
 import type { ClassDB } from "mermaid/dist/diagrams/class/classDb.js";
-import type {
-  ClassMember,
-  ClassNode,
-  ClassRelation,
-} from "mermaid/dist/diagrams/class/classTypes.js";
+import type { ClassMember, ClassNode, ClassRelation } from "mermaid/dist/diagrams/class/classTypes.js";
 import type { ErDB } from "mermaid/dist/diagrams/er/erDb.js";
-import type {
-  Attribute as ErAttribute,
-  Relationship as ErRelationship,
-} from "mermaid/dist/diagrams/er/erTypes.js";
+import type { Attribute as ErAttribute, Relationship as ErRelationship } from "mermaid/dist/diagrams/er/erTypes.js";
 import type { FlowDB } from "mermaid/dist/diagrams/flowchart/flowDb.js";
 import type { FlowEdge } from "mermaid/dist/diagrams/flowchart/types.js";
 import type { MindmapDB } from "mermaid/dist/diagrams/mindmap/mindmapDb.js";
 import type { SequenceDB } from "mermaid/dist/diagrams/sequence/sequenceDb.js";
 import type { Message as SequenceRecord } from "mermaid/dist/diagrams/sequence/types.js";
 import { flowchartNodeIds } from "./adapters/graphs.ts";
-import {
-  isSequenceMessage,
-  type SequenceCodes,
-  sequenceCodes,
-} from "./adapters/sequence.ts";
+import { isSequenceMessage, type SequenceCodes, sequenceCodes } from "./adapters/sequence.ts";
 import { getMermaidCore, memoBySource } from "./engine.ts";
-import {
-  type DiagramGraph,
-  edgeIds,
-  type GraphEdge,
-  type GraphNode,
-  walkTree,
-} from "./model.ts";
+import { type DiagramGraph, edgeIds, type GraphEdge, type GraphNode, walkTree } from "./model.ts";
 import { stateGraph } from "./state-graph.ts";
 
 export type { DiagramGraph, GraphEdge, GraphNode } from "./model.ts";
@@ -64,15 +47,23 @@ const FLOW_TAIL: Record<string, string> = {
 };
 
 const flowKind = (e: FlowEdge): string => {
-  if (e.stroke === "invisible") return "~~~";
+  if (e.stroke === "invisible") {
+    return "~~~";
+  }
+
   const line = FLOW_LINE[e.stroke ?? ""];
-  const arrow = /^(double_)?arrow_(point|circle|cross|open)$/.exec(
-    e.type ?? "",
-  );
-  if (!(line && arrow))
+  const arrow = /^(double_)?arrow_(point|circle|cross|open)$/.exec(e.type ?? "");
+
+  if (!(line && arrow)) {
     throw new Error(`no kind for the flowchart link ${e.stroke} ${e.type}`);
+  }
+
   const head = arrow[2] ?? "";
-  if (head === "open") return line.open;
+
+  if (head === "open") {
+    return line.open;
+  }
+
   return `${arrow[1] ? FLOW_TAIL[head] : ""}${line.arrowed}${FLOW_HEAD[head]}`;
 };
 
@@ -85,8 +76,13 @@ const flowchartGraph = (type: string, db: AnyDb): DiagramGraph => {
   const edges = flow.getEdges();
   const subGraphs = flow.getSubGraphs();
   const parentOf = new Map<string, string>();
-  for (const sg of subGraphs)
-    for (const member of sg.nodes ?? []) parentOf.set(member, sg.id);
+
+  for (const sg of subGraphs) {
+    for (const member of sg.nodes ?? []) {
+      parentOf.set(member, sg.id);
+    }
+  }
+
   const kept = new Set(
     flowchartNodeIds(
       vertices.map((v) => v.id),
@@ -94,6 +90,7 @@ const flowchartGraph = (type: string, db: AnyDb): DiagramGraph => {
     ),
   );
   const id = edgeIds();
+
   return {
     diagram_type: type,
     nodes: vertices
@@ -127,14 +124,19 @@ const mindmapGraph = (type: string, db: AnyDb): DiagramGraph => {
   const nodes: GraphNode[] = [];
   const edges: GraphEdge[] = [];
   const edgeId = edgeIds();
+
   for (const { node, parent } of walkTree(root)) {
     const id = `n${node.id}`;
+
     nodes.push({ id, label: node.descr, parent: null });
+
     if (parent) {
       const source = `n${parent.id}`;
+
       edges.push({ id: edgeId(source, id), source, target: id });
     }
   }
+
   return { diagram_type: type, nodes, edges, subgraphs: [] };
 };
 
@@ -155,6 +157,7 @@ const sequenceGraph = (type: string, db: AnyDb): DiagramGraph => {
   }));
   const nodes: GraphNode[] = [...actors].map(([id, a]) => {
     const i = a.box ? boxes.indexOf(a.box) : -1;
+
     return { id, label: a.description ?? id, parent: i >= 0 ? boxId(i) : null };
   });
   const id = edgeIds();
@@ -163,9 +166,11 @@ const sequenceGraph = (type: string, db: AnyDb): DiagramGraph => {
     .filter((r) => isSequenceMessage(codes, r))
     .map((r) => {
       const [source, target] = [r.from as string, r.to as string];
+
       return { id: id(source, target), source, target };
     });
   const blocks = sequenceBlocks(codes, messages, subgraphs.length);
+
   return {
     diagram_type: type,
     nodes,
@@ -176,34 +181,31 @@ const sequenceGraph = (type: string, db: AnyDb): DiagramGraph => {
 
 // Each block in statement order, inside the block open around it. Ids number
 // on from the boxes, so a block and a box never share one.
-const sequenceBlocks = (
-  codes: SequenceCodes,
-  records: SequenceRecord[],
-  first: number,
-): GraphNode[] => {
+const sequenceBlocks = (codes: SequenceCodes, records: SequenceRecord[], first: number): GraphNode[] => {
   const blocks: GraphNode[] = [];
   const open: string[] = [];
+
   for (const r of records) {
-    if (r.type === undefined) continue;
+    if (r.type === undefined) {
+      continue;
+    }
+
     if (codes.open.has(r.type)) {
       const id = `block_${first + blocks.length}`;
       const label = sequenceBlockLabel(r, id);
+
       blocks.push({ id, label, parent: open[open.length - 1] ?? null });
       open.push(id);
     } else if (codes.close.has(r.type)) {
       open.pop();
     }
   }
+
   return blocks;
 };
 
-const sequenceBlockLabel = (
-  record: SequenceRecord,
-  fallback: string,
-): string =>
-  typeof record.message === "string" && record.message
-    ? record.message
-    : fallback;
+const sequenceBlockLabel = (record: SequenceRecord, fallback: string): string =>
+  typeof record.message === "string" && record.message ? record.message : fallback;
 
 const erRow = (a: ErAttribute): string =>
   [
@@ -213,26 +215,27 @@ const erRow = (a: ErAttribute): string =>
     ...(a.comment ? [`"${a.comment}"`] : []),
   ].join(" ");
 
-const rowsOf = (rows: string[]): { rows?: string[] } =>
-  rows.length > 0 ? { rows } : {};
+const rowsOf = (rows: string[]): { rows?: string[] } => (rows.length > 0 ? { rows } : {});
 const enumValue = <T>(db: AnyDb, table: string, name: string): T => {
-  const value = (db[table] as Readonly<Record<string, unknown>> | undefined)?.[
-    name
-  ];
-  if (value === undefined)
+  const value = (db[table] as Readonly<Record<string, unknown>> | undefined)?.[name];
+
+  if (value === undefined) {
     throw new Error(`the ${table} table in mermaid's db has no ${name}`);
+  }
+
   return value as T;
 };
 
 // The name an enum table gives a value, the inverse of enumValue.
 const enumName = (db: AnyDb, table: string, value: unknown): string => {
-  const entry = Object.entries(
-    (db[table] as Readonly<Record<string, unknown>> | undefined) ?? {},
-  ).find(([, v]) => v === value);
-  if (!entry)
-    throw new Error(
-      `the ${table} table in mermaid's db has no value ${String(value)}`,
-    );
+  const entry = Object.entries((db[table] as Readonly<Record<string, unknown>> | undefined) ?? {}).find(
+    ([, v]) => v === value,
+  );
+
+  if (!entry) {
+    throw new Error(`the ${table} table in mermaid's db has no value ${String(value)}`);
+  }
+
   return entry[0];
 };
 
@@ -266,23 +269,19 @@ const erConnector = (
     from: enumName(db, "Cardinality", cardB),
     to: enumName(db, "Cardinality", cardA),
   };
-  const identifying =
-    relType === enumValue(db, "Identification", "IDENTIFYING");
-  if (
-    !identifying &&
-    relType !== enumValue(db, "Identification", "NON_IDENTIFYING")
-  ) {
+  const identifying = relType === enumValue(db, "Identification", "IDENTIFYING");
+
+  if (!identifying && relType !== enumValue(db, "Identification", "NON_IDENTIFYING")) {
     throw new Error(`no line for the relationship type ${relType}`);
   }
+
   const line = identifying ? "--" : "..";
-  const [nearSource, nearTarget] = [
-    ER_NEAR_SOURCE[ends.from],
-    ER_NEAR_TARGET[ends.to],
-  ];
-  if (!(nearSource && nearTarget))
-    throw new Error(
-      `no cardinality for the relationship ${ends.from} ${ends.to}`,
-    );
+  const [nearSource, nearTarget] = [ER_NEAR_SOURCE[ends.from], ER_NEAR_TARGET[ends.to]];
+
+  if (!(nearSource && nearTarget)) {
+    throw new Error(`no cardinality for the relationship ${ends.from} ${ends.to}`);
+  }
+
   return {
     kind: line,
     cardinality: `${nearSource}${line}${nearTarget}`,
@@ -297,10 +296,9 @@ const erGraph = (type: string, db: AnyDb): DiagramGraph => {
   const er = db as unknown as ErDB;
   const entities = er.getEntities();
   const rels = er.getRelationships();
-  const nameOf = new Map(
-    [...entities].map(([name, e]) => [e.id ?? name, name]),
-  );
+  const nameOf = new Map([...entities].map(([name, e]) => [e.id ?? name, name]));
   const id = edgeIds();
+
   return {
     diagram_type: type,
     nodes: [...entities].map(([name, e]) => ({
@@ -312,6 +310,7 @@ const erGraph = (type: string, db: AnyDb): DiagramGraph => {
     edges: rels.map((r) => {
       const source = nameOf.get(r.entityA ?? "") ?? r.entityA ?? "";
       const target = nameOf.get(r.entityB ?? "") ?? r.entityB ?? "";
+
       return {
         id: id(source, target),
         source,
@@ -328,9 +327,14 @@ const erGraph = (type: string, db: AnyDb): DiagramGraph => {
 // then for a method its parameters, classifier and return type.
 const classRow = (m: ClassMember, method: boolean): string => {
   const head = `${m.visibility ?? ""}${m.id ?? ""}`;
-  if (!method) return `${head}${m.classifier ?? ""}`;
+
+  if (!method) {
+    return `${head}${m.classifier ?? ""}`;
+  }
+
   return `${head}(${m.parameters ?? ""})${m.classifier ?? ""}${m.returnType ? ` ${m.returnType}` : ""}`;
 };
+
 // A relation end's marker, by the name classDb's relationType table gives its
 // number, beside the first class and beside the second. An end with no marker
 // is "none".
@@ -349,15 +353,17 @@ const CLASS_NEAR_2: Readonly<Record<string, string>> = {
   LOLLIPOP: "()",
 };
 
-const classEnd = (
-  db: AnyDb,
-  markers: Readonly<Record<string, string>>,
-  type: number | string | undefined,
-): string => {
-  if (type === undefined || type === "none") return "";
+const classEnd = (db: AnyDb, markers: Readonly<Record<string, string>>, type: number | string | undefined): string => {
+  if (type === undefined || type === "none") {
+    return "";
+  }
+
   const marker = markers[enumName(db, "relationType", type)];
-  if (marker === undefined)
+
+  if (marker === undefined) {
     throw new Error(`no marker for the class relation end ${type}`);
+  }
+
   return marker;
 };
 
@@ -368,25 +374,16 @@ const classRows = (c: ClassNode): string[] => [
 ];
 
 // A multiplicity is quoted beside its end, as the source writes it.
-const classEdge = (
-  db: AnyDb,
-  r: ClassRelation,
-  id: (source: string, target: string) => string,
-): GraphEdge => {
+const classEdge = (db: AnyDb, r: ClassRelation, id: (source: string, target: string) => string): GraphEdge => {
   const [source, target] = [r.id1 ?? "", r.id2 ?? ""];
-  const dotted =
-    r.relation?.lineType === enumValue(db, "lineType", "DOTTED_LINE");
+  const dotted = r.relation?.lineType === enumValue(db, "lineType", "DOTTED_LINE");
   const line = dotted ? ".." : "--";
-  const [end1, end2] = [
-    classEnd(db, CLASS_NEAR_1, r.relation?.type1),
-    classEnd(db, CLASS_NEAR_2, r.relation?.type2),
-  ];
+  const [end1, end2] = [classEnd(db, CLASS_NEAR_1, r.relation?.type1), classEnd(db, CLASS_NEAR_2, r.relation?.type2)];
   const kind = `${end1}${line}${end2}`;
-  const quoted = (t: string | undefined): string[] =>
-    t && t !== "none" ? [`"${t}"`] : [];
+  const quoted = (t: string | undefined): string[] => (t && t !== "none" ? [`"${t}"`] : []);
   const [near1, near2] = [quoted(r.relationTitle1), quoted(r.relationTitle2)];
-  const cardinality =
-    near1.length + near2.length > 0 ? [...near1, kind, ...near2].join(" ") : "";
+  const cardinality = near1.length + near2.length > 0 ? [...near1, kind, ...near2].join(" ") : "";
+
   return {
     id: id(source, target),
     source,
@@ -405,10 +402,9 @@ const classGraph = (type: string, db: AnyDb): DiagramGraph => {
   const classes = classesDb.getClasses();
   const namespaces = classesDb.getNamespaces();
   const relations = classesDb.getRelations();
-  const interfaces = (
-    Array.isArray(db.interfaces) ? db.interfaces : []
-  ) as Array<{ id?: string; label?: string }>;
+  const interfaces = (Array.isArray(db.interfaces) ? db.interfaces : []) as Array<{ id?: string; label?: string }>;
   const id = edgeIds();
+
   return {
     diagram_type: type,
     nodes: [...classes].map(([key, c]) => ({
@@ -439,6 +435,7 @@ const classGraph = (type: string, db: AnyDb): DiagramGraph => {
 const READERS: Record<string, (type: string, db: AnyDb) => DiagramGraph> = {
   "flowchart-v2": flowchartGraph,
   flowchart: flowchartGraph,
+
   // A flowchart drawn with the ELK layout, parsed into the same db.
   "flowchart-elk": flowchartGraph,
   graph: flowchartGraph,
@@ -452,17 +449,18 @@ const READERS: Record<string, (type: string, db: AnyDb) => DiagramGraph> = {
   "stateDiagram-v2": stateGraph,
 };
 
-export const extractGraph = memoBySource(
-  async (content: string): Promise<DiagramGraph> => {
-    const mermaid = await getMermaidCore();
-    await mermaid.parse(content);
-    const diagram = await mermaid.mermaidAPI.getDiagramFromText(content);
-    const type = diagram.type;
-    const read = READERS[type];
-    if (!read)
-      throw new Error(
-        `extractGraph reads ${Object.keys(READERS).join(", ")}, not ${type}`,
-      );
-    return read(type, diagram.db as unknown as AnyDb);
-  },
-);
+export const extractGraph = memoBySource(async (content: string): Promise<DiagramGraph> => {
+  const mermaid = await getMermaidCore();
+
+  await mermaid.parse(content);
+
+  const diagram = await mermaid.mermaidAPI.getDiagramFromText(content);
+  const type = diagram.type;
+  const read = READERS[type];
+
+  if (!read) {
+    throw new Error(`extractGraph reads ${Object.keys(READERS).join(", ")}, not ${type}`);
+  }
+
+  return read(type, diagram.db as unknown as AnyDb);
+});

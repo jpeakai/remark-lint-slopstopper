@@ -35,33 +35,36 @@ const contextOf = async (): Promise<LabelContext> => {
       reason: "aggregate",
     },
   ]);
-  const groups = new Map([
-    [KEY, { id: "g1", base: "ORDER", label: "ORDER (+1)" }],
-  ]);
+  const groups = new Map([[KEY, { id: "g1", base: "ORDER", label: "ORDER (+1)" }]]);
+
   return { work, part, groups };
 };
 
 const readerFor = (ctx: LabelContext) =>
-  readerOf(ctx.work, [...ctx.groups.values()], (id) =>
-    ctx.part.groupOf.has(id) ? "g1" : undefined,
-  );
+  readerOf(ctx.work, [...ctx.groups.values()], (id) => (ctx.part.groupOf.has(id) ? "g1" : undefined));
 
 test("a member's own label suffices when the group label names it", () => {
   const g = { label: "ORDER (+1)", base: "ORDER" };
+
   assert.equal(ownSuffices(g, "ORDER", false), true);
   assert.equal(ownSuffices(g, "ORDER", true), false);
   assert.equal(ownSuffices(g, "LINE", false), false);
   assert.equal(ownSuffices({ ...g, paired: "LINE" }, "LINE", false), true);
+
   const span = { label: "a → b (+1)", base: "a → b", spanned: true };
+
   assert.equal(ownSuffices(span, "b", false), true);
   assert.equal(ownSuffices(span, "b", true), false);
+
   const range = { label: "S1 … S9 (+1)", base: "S1 … S9" };
+
   assert.equal(ownSuffices(range, "S9", false), true);
   assert.equal(ownSuffices({ ...range, markdown: true }, "S9", false), false);
 });
 
 test("a member reads by its own label or inside its group's label", async () => {
   const ctx = await contextOf();
+
   assert.equal(memberText(ctx, "O"), "ORDER");
   assert.equal(memberText(ctx, "L"), "LINE (in ORDER (+1))");
   assert.equal(memberText(ctx, "Y"), "Other");
@@ -72,6 +75,7 @@ test("a member reads by its own label or inside its group's label", async () => 
 test("each form a stub's text takes has its readings", async () => {
   const ctx = await contextOf();
   const r = readerFor(ctx);
+
   assert.deepEqual(readingsOf(r, "Other"), new Set(["Y", "Z"]));
   assert.deepEqual(readingsOf(r, "Other [Z]"), new Set(["Z"]));
   assert.deepEqual(readingsOf(r, "Other [O]"), new Set());
@@ -87,6 +91,7 @@ test("each form a stub's text takes has its readings", async () => {
 test("an ambiguous stub text is tagged with its endpoint", async () => {
   const ctx = await contextOf();
   const texts = labelStubs(ctx, [{ id: "s1", endpoint: "Z" }], () => []);
+
   assert.deepEqual(texts.get("s1"), { label: "Other [Z]", endpoint: "Z" });
 });
 
@@ -100,27 +105,19 @@ const groupBesideNamesake = async (sources: string[]) => {
     ],
     (stub) => (stub === "s1" ? sources : []),
   );
+
   return [texts.get("s1")?.label, texts.get("s2")?.label];
 };
 
 test("a group stub beside its namesake names the member its edges leave", async () => {
-  assert.deepEqual(await groupBesideNamesake(["L"]), [
-    "ORDER (+1) from LINE",
-    "ORDER",
-  ]);
+  assert.deepEqual(await groupBesideNamesake(["L"]), ["ORDER (+1) from LINE", "ORDER"]);
 });
 
 test("a group stub keeps its label when no one member can name it", async () => {
   assert.deepEqual(await groupBesideNamesake(["O"]), ["ORDER (+1)", "ORDER"]);
-  assert.deepEqual(await groupBesideNamesake(["L", "O"]), [
-    "ORDER (+1)",
-    "ORDER",
-  ]);
+  assert.deepEqual(await groupBesideNamesake(["L", "O"]), ["ORDER (+1)", "ORDER"]);
   assert.deepEqual(await groupBesideNamesake([]), ["ORDER (+1)", "ORDER"]);
-  assert.deepEqual(await groupBesideNamesake(["missing"]), [
-    "ORDER (+1)",
-    "ORDER",
-  ]);
+  assert.deepEqual(await groupBesideNamesake(["missing"]), ["ORDER (+1)", "ORDER"]);
 });
 
 test("stubs that would still show one text keep their plain texts", async () => {
@@ -133,6 +130,7 @@ test("stubs that would still show one text keep their plain texts", async () => 
     ],
     () => ["L"],
   );
+
   assert.deepEqual(
     [...texts.values()].map((t) => t.label),
     ["ORDER (+1)", "ORDER (+1)"],

@@ -1,6 +1,6 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
-  "entry": ["src/**/*.test.ts", "src/cli/main.ts!", "examples/*.mjs"],
-  "project": ["src/**/*.ts!", "!src/**/*.test.ts!", "examples/*.mjs"],
+  "entry": ["src/**/*.test.ts", "src/cli/main.ts!", "examples/*.mjs", "eslint.config.mjs"],
+  "project": ["src/**/*.ts!", "!src/**/*.test.ts!", "examples/*.mjs", "eslint.config.mjs"],
   "ignoreExportsUsedInFile": true
 }

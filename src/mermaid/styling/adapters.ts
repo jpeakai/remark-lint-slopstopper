@@ -2,19 +2,11 @@ import type { DiagramStyleClassDef } from "mermaid/dist/diagram-api/types.js";
 import type { ErDB } from "mermaid/dist/diagrams/er/erDb.js";
 import type { FlowDB } from "mermaid/dist/diagrams/flowchart/flowDb.js";
 import type { StateDB } from "mermaid/dist/diagrams/state/stateDb.js";
-import type {
-  Db,
-  DirectiveKind,
-  Hook,
-  Method,
-  Reader,
-  Styled,
-} from "./types.ts";
+import type { Db, DirectiveKind, Hook, Method, Reader, Styled } from "./types.ts";
 
 // Family-specific grammar hooks and resolved declaration cascades.
 
-const strings = (value: unknown): string[] =>
-  Array.isArray(value) ? value.map(String) : [];
+const strings = (value: unknown): string[] => (Array.isArray(value) ? value.map(String) : []);
 
 function arrayStatement(kind: DirectiveKind): Hook {
   return ([ids, styles]) => ({
@@ -28,8 +20,11 @@ type ClassMap = Map<string, DiagramStyleClassDef>;
 
 const call = <T>(db: Db, name: string, ...args: unknown[]): T => {
   const method = db[name];
-  if (typeof method !== "function")
+
+  if (typeof method !== "function") {
     throw new Error(`the parser's DB has no ${name}`);
+  }
+
   return (method as Method).apply(db, args) as T;
 };
 
@@ -50,46 +45,54 @@ const flowchart: Reader = {
       ids: String(ids).split(","),
       styles: strings(styles),
     }),
+
     // A vertex statement passes no styles. Only a style statement does.
     addVertex: ([id, , , styles]) =>
-      Array.isArray(styles)
-        ? { kind: "style", ids: [String(id)], styles: strings(styles) }
-        : null,
+      Array.isArray(styles) ? { kind: "style", ids: [String(id)], styles: strings(styles) } : null,
     updateLink: arrayStatement("linkStyle"),
   },
   styled: (db) => {
     const out = classDefs(call<ClassMap>(db, "getClasses"));
     const vertices = call<ReturnType<FlowDB["getVertices"]>>(db, "getVertices");
+
     for (const [id, v] of vertices) {
       const own = strings(v.styles);
-      if (own.length === 0) continue;
+
+      if (own.length === 0) {
+        continue;
+      }
+
       // The renderer compiles the default and node classes, then the vertex's.
-      const inherited = call<string[]>(db, "getCompiledStyles", [
-        "default",
-        "node",
-        ...strings(v.classes),
-      ]);
+      const inherited = call<string[]>(db, "getCompiledStyles", ["default", "node", ...strings(v.classes)]);
+
       out.push({ kind: "style", selector: id, inherited, own });
     }
+
     const edges = call<ReturnType<FlowDB["getEdges"]>>(db, "getEdges");
     const fallback = strings(edges.defaultStyle);
-    if (fallback.length > 0)
+
+    if (fallback.length > 0) {
       out.push({
         kind: "linkStyle",
         selector: "default",
         inherited: [],
         own: fallback,
       });
+    }
+
     for (const [i, e] of edges.entries()) {
       const own = strings(e.style);
-      if (own.length > 0)
+
+      if (own.length > 0) {
         out.push({
           kind: "linkStyle",
           selector: String(i),
           inherited: fallback,
           own,
         });
+      }
     }
+
     return out;
   },
 };
@@ -102,17 +105,20 @@ const er: Reader = {
   styled: (db) => {
     const out = classDefs(call<ClassMap>(db, "getClasses"));
     const entities = call<ReturnType<ErDB["getEntities"]>>(db, "getEntities");
+
     for (const [name, e] of entities) {
       const own = strings(e.cssStyles);
-      if (own.length === 0) continue;
+
+      if (own.length === 0) {
+        continue;
+      }
+
       // An entity's classes are one space-separated list, as the renderer reads them.
-      const inherited = call<string[]>(
-        db,
-        "getCompiledStyles",
-        String(e.cssClasses ?? "").split(" "),
-      );
+      const inherited = call<string[]>(db, "getCompiledStyles", String(e.cssClasses ?? "").split(" "));
+
       out.push({ kind: "style", selector: name, inherited, own });
     }
+
     return out;
   },
 };
@@ -132,13 +138,12 @@ const state: Reader = {
   hooks: {
     handleStyleDef: ([item], db, apply) => {
       const { id, styleClass } = (item ?? {}) as StateItem;
+
       apply();
+
       const ids = String(id).trim().split(",");
-      const styled = call<ReturnType<StateDB["getState"]>>(
-        db,
-        "getState",
-        ids[0]?.trim(),
-      );
+      const styled = call<ReturnType<StateDB["getState"]>>(db, "getState", ids[0]?.trim());
+
       return {
         kind: "style",
         ids: ids.map((s) => s.trim()),
@@ -149,7 +154,9 @@ const state: Reader = {
     addStyleClass: ([id, attributes], db, apply) => {
       const classes = call<ClassMap>(db, "getClasses");
       const before = strings(classes.get(String(id))?.styles).length;
+
       apply();
+
       return {
         kind: "classDef",
         ids: [String(id)],
@@ -162,14 +169,19 @@ const state: Reader = {
     const classes = call<ClassMap>(db, "getClasses");
     const out = classDefs(classes);
     const states = call<ReturnType<StateDB["getStates"]>>(db, "getStates");
+
     for (const [id, s] of states) {
       const own = strings(s.styles);
-      if (own.length === 0) continue;
-      const inherited = strings(s.classes).flatMap((c) =>
-        strings(classes.get(c)?.styles),
-      );
+
+      if (own.length === 0) {
+        continue;
+      }
+
+      const inherited = strings(s.classes).flatMap((c) => strings(classes.get(c)?.styles));
+
       out.push({ kind: "style", selector: id, inherited, own });
     }
+
     return out;
   },
 };
@@ -191,18 +203,19 @@ const classDiagram: Reader = {
   styled: (db, statements) => {
     const defs = db.styleClasses;
     const out = defs instanceof Map ? classDefs(defs as ClassMap) : [];
-    const styledIds = new Set(
-      statements.filter((s) => s.kind === "style").flatMap((s) => s.ids),
-    );
+    const styledIds = new Set(statements.filter((s) => s.kind === "style").flatMap((s) => s.ids));
+
     for (const [id, c] of call<ClassMap>(db, "getClasses")) {
-      if (styledIds.has(id))
+      if (styledIds.has(id)) {
         out.push({
           kind: "style",
           selector: id,
           inherited: [],
           own: strings(c.styles),
         });
+      }
     }
+
     return out;
   },
 };

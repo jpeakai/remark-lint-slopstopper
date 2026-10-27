@@ -16,13 +16,7 @@ import {
   shapeOfKey,
   together,
 } from "../planning/candidates.ts";
-import {
-  groupOfKey,
-  isGroupKey,
-  membersOfKey,
-  overviewKeys,
-  parentOfKey,
-} from "../planning/state.ts";
+import { groupOfKey, isGroupKey, membersOfKey, overviewKeys, parentOfKey } from "../planning/state.ts";
 import type { QEdge } from "../projection/quotient.ts";
 
 // T2, lossless structure. Twins share every neighbour, edge label and kind,
@@ -33,23 +27,18 @@ import type { QEdge } from "../projection/quotient.ts";
 // extract and the bronze table it lands in fold as one lane (SLOP-0033).
 
 const end = (e: QEdge, other: string, self: string): string =>
-  [
-    other === self ? "\u0001self" : other,
-    e.label ?? "",
-    e.kind ?? "",
-    e.cardinality ?? "",
-  ].join("|");
+  [other === self ? "\u0001self" : other, e.label ?? "", e.kind ?? "", e.cardinality ?? ""].join("|");
 
 // A node's neighbourhood as text: each incoming and outgoing edge by the
 // node at its other end and its attributes. Null for an isolated node.
 const signature = (adj: Adjacency, key: string): string | null => {
-  const ins = new Set(
-    (adj.in.get(key) ?? []).map((e) => end(e, e.source, key)),
-  );
-  const outs = new Set(
-    (adj.out.get(key) ?? []).map((e) => end(e, e.target, key)),
-  );
-  if (ins.size + outs.size === 0) return null;
+  const ins = new Set((adj.in.get(key) ?? []).map((e) => end(e, e.source, key)));
+  const outs = new Set((adj.out.get(key) ?? []).map((e) => end(e, e.target, key)));
+
+  if (ins.size + outs.size === 0) {
+    return null;
+  }
+
   return `${[...ins].sort(byText).join(",")}>${[...outs].sort(byText).join(",")}`;
 };
 
@@ -57,28 +46,34 @@ const signature = (adj: Adjacency, key: string): string | null => {
 // from it read as alphabetical ranges, as an index is cut into volumes.
 const twinClasses = (ctx: CandidateContext, adj: Adjacency): string[][] => {
   const classes = new Map<string, string[]>();
+
   for (const key of overviewKeys(ctx.work, ctx.part)) {
-    if (!groupable(ctx, key)) continue;
+    if (!groupable(ctx, key)) {
+      continue;
+    }
+
     const sig = signature(adj, key);
-    if (sig === null) continue;
-    const k = [
-      parentOfKey(ctx.work, ctx.part, key) ?? "",
-      shapeOfKey(ctx, key),
-      sig,
-    ].join("\u0002");
+
+    if (sig === null) {
+      continue;
+    }
+
+    const k = [parentOfKey(ctx.work, ctx.part, key) ?? "", shapeOfKey(ctx, key), sig].join("\u0002");
+
     classes.set(k, [...(classes.get(k) ?? []), key]);
   }
+
   // A group by the label it is named after, so twin chains sort by their entries.
   const labelOf = (key: string): string => {
     const g = groupOfKey(ctx.part, key);
     const named = g ? rankedMembers(ctx.work, g)[0] : key;
+
     return ctx.work.nodes.get(named ?? key)?.label ?? key;
   };
+
   return [...classes.values()]
     .filter((c) => c.length > 1)
-    .map((c) =>
-      c.sort((a, b) => byNatural(labelOf(a), labelOf(b)) || byNatural(a, b)),
-    );
+    .map((c) => c.sort((a, b) => byNatural(labelOf(a), labelOf(b)) || byNatural(a, b)));
 };
 
 const isLeaf = (adj: Adjacency, key: string): boolean =>
@@ -86,32 +81,34 @@ const isLeaf = (adj: Adjacency, key: string): boolean =>
 
 // The runs cut again to sizes that differ by one at most, as many runs as
 // before, when every run still fits; else the runs as they were.
-export const evenRuns = (
-  ctx: CandidateContext,
-  runs: Candidate[],
-): Candidate[] => {
+export const evenRuns = (ctx: CandidateContext, runs: Candidate[]): Candidate[] => {
   const keys = runs.flatMap((r) => r.keys);
-  if (runs.length < 2) return runs;
+
+  if (runs.length < 2) {
+    return runs;
+  }
+
   const slices = evenSlices(keys, runs.length);
   const even = runs.map((run, i) => ({ ...run, keys: slices[i] ?? [] }));
-  return even.every((r) => r.keys.length >= 2 && mergeFits(ctx, r))
-    ? even
-    : runs;
+
+  return even.every((r) => r.keys.length >= 2 && mergeFits(ctx, r)) ? even : runs;
 };
 
 // Whether a twin class is twin chains: every key a group holding whole paths,
 // the members of all of them forming paths of one length, two or more, as
 // extracts each feeding the bronze table it lands in.
 const isLanes = (ctx: CandidateContext, keys: readonly string[]): boolean => {
-  if (!keys.every(isGroupKey)) return false;
+  if (!keys.every(isGroupKey)) {
+    return false;
+  }
+
   const all = chainsOf(
     ctx.work,
     keys.flatMap((k) => membersOfKey(ctx.part, k)),
   );
-  const each = keys.map(
-    (k) => chainsOf(ctx.work, membersOfKey(ctx.part, k))?.length ?? 0,
-  );
+  const each = keys.map((k) => chainsOf(ctx.work, membersOfKey(ctx.part, k))?.length ?? 0);
   const length = all?.[0]?.length ?? 0;
+
   return (
     all !== null &&
     length >= 2 &&
@@ -125,14 +122,21 @@ const isLanes = (ctx: CandidateContext, keys: readonly string[]): boolean => {
 // (SLOP-0033): split again when the walk lets a detail be, else only when the
 // detail fits.
 const wholeLanes = (ctx: CandidateContext, keys: string[]): Candidate[] => {
-  if (ctx.lanes) ctx.lanes.encountered = true;
+  if (ctx.lanes) {
+    ctx.lanes.encountered = true;
+  }
+
   const c: Candidate = {
     keys,
     parent: parentOfKey(ctx.work, ctx.part, keys[0] ?? ""),
     tier: "T2",
     reason: "twins",
   };
-  if (ctx.lanes?.mode === "nested") return [{ ...c, splits: true }];
+
+  if (ctx.lanes?.mode === "nested") {
+    return [{ ...c, splits: true }];
+  }
+
   return mergeFits(ctx, c) ? [c] : [];
 };
 
@@ -140,6 +144,7 @@ const wholeLanes = (ctx: CandidateContext, keys: string[]): Candidate[] => {
 // On a walk folding twin chains whole, they fold as one group (wholeLanes).
 export const proposeTwins = (ctx: CandidateContext): Candidate[] => {
   const adj = adjacencyOf(ctx.qedges);
+
   return twinClasses(ctx, adj).flatMap((keys) =>
     (ctx.lanes?.mode ?? "staged") !== "staged" && isLanes(ctx, keys)
       ? wholeLanes(ctx, keys)
@@ -149,35 +154,20 @@ export const proposeTwins = (ctx: CandidateContext): Candidate[] => {
             chunksThatFit(ctx, keys, {
               parent: parentOfKey(ctx.work, ctx.part, keys[0] ?? ""),
               tier: "T2",
-              reason: keys.every((k) => isLeaf(adj, k))
-                ? "sibling leaves"
-                : "twins",
+              reason: keys.every((k) => isLeaf(adj, k)) ? "sibling leaves" : "twins",
             }),
           ),
         ),
   );
 };
 
-const chainable = (
-  ctx: CandidateContext,
-  adj: Adjacency,
-  key: string,
-): boolean => {
+const chainable = (ctx: CandidateContext, adj: Adjacency, key: string): boolean => {
   const [ins, outs] = [adj.in.get(key) ?? [], adj.out.get(key) ?? []];
-  return (
-    groupable(ctx, key) &&
-    ins.length === 1 &&
-    outs.length === 1 &&
-    ins[0]?.source !== key
-  );
+
+  return groupable(ctx, key) && ins.length === 1 && outs.length === 1 && ins[0]?.source !== key;
 };
 
-const follows = (
-  ctx: CandidateContext,
-  adj: Adjacency,
-  from: string,
-  to: string | undefined,
-): to is string =>
+const follows = (ctx: CandidateContext, adj: Adjacency, from: string, to: string | undefined): to is string =>
   to !== undefined &&
   to !== from &&
   chainable(ctx, adj, to) &&
@@ -185,42 +175,48 @@ const follows = (
 
 // Each maximal run of chainable nodes, in path order. A closed loop of
 // chainable nodes has no start and is left alone.
-const chainFrom = (
-  ctx: CandidateContext,
-  adj: Adjacency,
-  key: string,
-): string[] => {
+const chainFrom = (ctx: CandidateContext, adj: Adjacency, key: string): string[] => {
   const run = [key];
   const seen = new Set(run);
-  for (
-    let next = adj.out.get(key)?.[0]?.target;
-    follows(ctx, adj, run.at(-1) ?? key, next) && !seen.has(next);
-  ) {
+
+  for (let next = adj.out.get(key)?.[0]?.target; follows(ctx, adj, run.at(-1) ?? key, next) && !seen.has(next); ) {
     run.push(next);
     seen.add(next);
     next = adj.out.get(next)?.[0]?.target;
   }
+
   return run;
 };
 
 const chainRuns = (ctx: CandidateContext, adj: Adjacency): string[][] => {
   const runs: string[][] = [];
+
   for (const key of overviewKeys(ctx.work, ctx.part)) {
-    if (!chainable(ctx, adj, key)) continue;
+    if (!chainable(ctx, adj, key)) {
+      continue;
+    }
+
     const pred = adj.in.get(key)?.[0]?.source;
-    if (follows(ctx, adj, key, pred)) continue;
+
+    if (follows(ctx, adj, key, pred)) {
+      continue;
+    }
+
     const run = chainFrom(ctx, adj, key);
-    if (run.length > 1) runs.push(run);
+
+    if (run.length > 1) {
+      runs.push(run);
+    }
   }
+
   return runs;
 };
 
 // The largest stage a chain detail holds: k members, two stubs, k + 1 edges.
 const stageCap = (ctx: CandidateContext): number => {
   const { node_target, vcs_target, edge_weight } = ctx.config;
-  const byScore = Math.floor(
-    (vcs_target - 2 - edge_weight) / (1 + edge_weight),
-  );
+  const byScore = Math.floor((vcs_target - 2 - edge_weight) / (1 + edge_weight));
+
   return Math.max(2, Math.min(node_target - 2, byScore));
 };
 
@@ -234,26 +230,27 @@ const stages = (ctx: CandidateContext, run: string[]): string[][] => {
   const windows: string[][] = [];
   let window: string[] = [];
   let sum = 0;
+
   for (let i = 0; i < run.length; i++) {
     const s = sizes[i] ?? 1;
+
     if (window.length > 0 && sum + s > size) {
       windows.push(window);
       [window, sum] = [[], 0];
     }
+
     window.push(run[i] as string);
     sum += s;
   }
+
   windows.push(window);
+
   return windows.filter((w) => w.length > 1);
 };
 
 // Chain runs by where they sit: the node before the first, the node after
 // the last, the region and the length. Runs alike are twin chains.
-const placeOf = (
-  ctx: CandidateContext,
-  adj: Adjacency,
-  run: string[],
-): string =>
+const placeOf = (ctx: CandidateContext, adj: Adjacency, run: string[]): string =>
   JSON.stringify([
     adj.in.get(run[0] ?? "")?.[0]?.source,
     adj.out.get(run.at(-1) ?? "")?.[0]?.target,
@@ -269,17 +266,15 @@ export const proposeChains = (ctx: CandidateContext): Candidate[] => {
   const adj = adjacencyOf(ctx.qedges);
   const runs = chainRuns(ctx, adj);
   const places = new Map<string, string[][]>();
+
   for (const run of runs) {
-    const k =
-      (ctx.lanes?.mode ?? "staged") !== "staged"
-        ? placeOf(ctx, adj, run)
-        : JSON.stringify(run);
+    const k = (ctx.lanes?.mode ?? "staged") !== "staged" ? placeOf(ctx, adj, run) : JSON.stringify(run);
+
     places.set(k, [...(places.get(k) ?? []), run]);
   }
+
   return [...places.values()].flatMap(
-    (alike) =>
-      laneRuns(ctx, alike) ??
-      together(alike.flatMap((run) => stagesOf(ctx, run))),
+    (alike) => laneRuns(ctx, alike) ?? together(alike.flatMap((run) => stagesOf(ctx, run))),
   );
 };
 
@@ -295,35 +290,34 @@ export const MIN_LANES = 2;
 // (laneLabel), rather than one per lane. A lane left over, in no run, folds
 // alone. Null on any other walk, for lanes that fit whole (wholeLanes then
 // folds them as one group), or when no two lanes fit together (SLOP-0033).
-const laneRuns = (
-  ctx: CandidateContext,
-  lanes: string[][],
-): Candidate[] | null => {
-  if (ctx.lanes?.mode !== "whole" || lanes.length < MIN_LANES) return null;
-  if (lanes.some((l) => stages(ctx, l).length !== 1)) return null;
+const laneRuns = (ctx: CandidateContext, lanes: string[][]): Candidate[] | null => {
+  if (ctx.lanes?.mode !== "whole" || lanes.length < MIN_LANES) {
+    return null;
+  }
+
+  if (lanes.some((l) => stages(ctx, l).length !== 1)) {
+    return null;
+  }
+
   const parent = parentOfKey(ctx.work, ctx.part, lanes[0]?.[0] ?? "");
   const base = { parent, tier: "T2" as const, reason: "twins" };
-  const fits = (ls: readonly string[][]): boolean =>
-    mergeFits(ctx, { ...base, keys: ls.flat() });
-  if (fits(lanes)) return null;
+  const fits = (ls: readonly string[][]): boolean => mergeFits(ctx, { ...base, keys: ls.flat() });
+
+  if (fits(lanes)) {
+    return null;
+  }
+
   const labelOf = (id: string): string => ctx.work.nodes.get(id)?.label ?? "";
-  const order = [...lanes].sort(
-    (a, b) =>
-      byNatural(labelOf(a[0] ?? ""), labelOf(b[0] ?? "")) ||
-      byNaturalTuple(a, b),
-  );
-  const runs =
-    byStage(
-      order,
-      (l) => JSON.stringify(l.map((id) => stageWord(labelOf(id)))),
-      fits,
-    ) ?? byFit(order, fits);
-  if (!runs.some((r) => r.length >= MIN_LANES)) return null;
+  const order = [...lanes].sort((a, b) => byNatural(labelOf(a[0] ?? ""), labelOf(b[0] ?? "")) || byNaturalTuple(a, b));
+  const runs = byStage(order, (l) => JSON.stringify(l.map((id) => stageWord(labelOf(id)))), fits) ?? byFit(order, fits);
+
+  if (!runs.some((r) => r.length >= MIN_LANES)) {
+    return null;
+  }
+
   return together(
     runs.flatMap((r) =>
-      r.length >= MIN_LANES
-        ? [{ ...base, keys: r.flat().sort(byText) }]
-        : r.flatMap((l) => stagesOf(ctx, l)),
+      r.length >= MIN_LANES ? [{ ...base, keys: r.flat().sort(byText) }] : r.flatMap((l) => stagesOf(ctx, l)),
     ),
   );
 };
@@ -332,19 +326,16 @@ type Fits = (ls: readonly string[][]) => boolean;
 
 // The lanes by their stage words, in order: null unless there are two sets
 // or more, every set fits whole, and one holds MIN_LANES lanes.
-const byStage = (
-  lanes: string[][],
-  key: (l: string[]) => string,
-  fits: Fits,
-): string[][][] | null => {
+const byStage = (lanes: string[][], key: (l: string[]) => string, fits: Fits): string[][][] | null => {
   const sets = new Map<string, string[][]>();
-  for (const l of lanes) sets.set(key(l), [...(sets.get(key(l)) ?? []), l]);
+
+  for (const l of lanes) {
+    sets.set(key(l), [...(sets.get(key(l)) ?? []), l]);
+  }
+
   const runs = [...sets.values()];
-  return runs.length >= 2 &&
-    runs.every(fits) &&
-    runs.some((r) => r.length >= MIN_LANES)
-    ? runs
-    : null;
+
+  return runs.length >= 2 && runs.every(fits) && runs.some((r) => r.length >= MIN_LANES) ? runs : null;
 };
 
 // The lanes, in order, in runs of as many as fit, cut evenly (evenLanes).
@@ -356,6 +347,7 @@ const byFit = (lanes: string[][], fits: Fits): string[][][] => {
 // still fits and holds MIN_LANES lanes; else the runs as they were.
 const evenLanes = (chunks: string[][][], fits: Fits): string[][][] => {
   const even = evenSlices(chunks.flat(), chunks.length);
+
   return even.every((r) => r.length >= MIN_LANES && fits(r)) ? even : chunks;
 };
 
@@ -363,6 +355,7 @@ const stagesOf = (ctx: CandidateContext, run: string[]): Candidate[] =>
   stages(ctx, run)
     .map((keys): Candidate => {
       const parent = parentOfKey(ctx.work, ctx.part, keys[0] ?? "");
+
       return {
         keys: [...keys].sort(byText),
         parent,
@@ -374,12 +367,13 @@ const stagesOf = (ctx: CandidateContext, run: string[]): Candidate[] =>
 
 // A decision region folded whole: every overview node inside it, none
 // straddling its boundary. Null when it is already one group.
-const regionCandidate = (
-  ctx: CandidateContext,
-  r: FlowRegion,
-): Candidate | null => {
+const regionCandidate = (ctx: CandidateContext, r: FlowRegion): Candidate | null => {
   const keys = completeKeys(ctx, r.members);
-  if (!keys) return null;
+
+  if (!keys) {
+    return null;
+  }
+
   const parent = ctx.work.nodes.get(r.head)?.parent ?? null;
   const c: Candidate = {
     keys,
@@ -388,20 +382,22 @@ const regionCandidate = (
     reason: "decision region",
     head: r.head,
   };
+
   return mergeFits(ctx, c) ? c : null;
 };
 
 const within = (inner: FlowRegion, outer: FlowRegion): boolean =>
-  inner.members.length < outer.members.length &&
-  inner.members.every((m) => outer.members.includes(m));
+  inner.members.length < outer.members.length && inner.members.every((m) => outer.members.includes(m));
 
 // Decision regions, innermost first: a region is offered once every region
 // inside it has folded or cannot fold.
 export const proposeRegions = (ctx: CandidateContext): Candidate[] => {
   const regions = flowRegionsOf(ctx.work);
   const open = new Map(regions.map((r) => [r, regionCandidate(ctx, r)]));
+
   return regions.flatMap((r) => {
     const c = open.get(r);
+
     return c && !regions.some((x) => within(x, r) && open.get(x)) ? [c] : [];
   });
 };

@@ -9,23 +9,7 @@ import { DOTTED, htmlEntities, ID_LEAD } from "./text.ts";
 // An id-like label says nothing about meaning, so it contributes nothing.
 
 // Stop words, and the "fa" of a Font Awesome icon a label names (fa:fa-car).
-const STOP = new Set([
-  "fa",
-  "the",
-  "a",
-  "an",
-  "of",
-  "to",
-  "and",
-  "or",
-  "for",
-  "in",
-  "on",
-  "by",
-  "with",
-  "is",
-  "per",
-]);
+const STOP = new Set(["fa", "the", "a", "an", "of", "to", "and", "or", "for", "in", "on", "by", "with", "is", "per"]);
 const ROLE_WORDS = [
   "service",
   "db",
@@ -54,21 +38,23 @@ const words = new Intl.Segmenter("en", { granularity: "word" });
 
 const textOf = (label: string, lineBreaks = false): string => {
   const text: string[] = [];
+
   new Parser({
     ontext: (part) => {
       text.push(part);
     },
     onopentagname: (name) => {
-      if (lineBreaks && name === "br") text.push(" ");
+      if (lineBreaks && name === "br") {
+        text.push(" ");
+      }
     },
   }).end(htmlEntities(label));
+
   return text.join("");
 };
 
 const wordsOf = (label: string): string[] =>
-  [...words.segment(textOf(label))]
-    .filter((s) => s.isWordLike)
-    .map((s) => s.segment.toLowerCase());
+  [...words.segment(textOf(label))].filter((s) => s.isWordLike).map((s) => s.segment.toLowerCase());
 
 // Preserve line boundaries as spaces so adjacent label lines never join words.
 export const plainText = (label: string): string => {
@@ -78,7 +64,11 @@ export const plainText = (label: string): string => {
 // The stems of a label's words, or none for an id-like label.
 export const labelBag = (label: string, id: string): Set<string> => {
   const text = label.trim();
-  if (text === id || ID_LIKE.test(text)) return new Set();
+
+  if (text === id || ID_LIKE.test(text)) {
+    return new Set();
+  }
+
   return new Set(
     wordsOf(text)
       .filter((w) => !STOP.has(w))
@@ -91,16 +81,18 @@ const ROLE = new Set(ROLE_WORDS.map(stem));
 
 const weight = (w: string): number => (ROLE.has(w) ? ROLE_WEIGHT : 1);
 
-export const similarity = (
-  a: ReadonlySet<string>,
-  b: ReadonlySet<string>,
-): number => {
+export const similarity = (a: ReadonlySet<string>, b: ReadonlySet<string>): number => {
   let shared = 0;
   let union = 0;
+
   for (const w of new Set([...a, ...b])) {
     union += weight(w);
-    if (a.has(w) && b.has(w)) shared += weight(w);
+
+    if (a.has(w) && b.has(w)) {
+      shared += weight(w);
+    }
   }
+
   return union === 0 ? 0 : shared / union;
 };
 
@@ -113,11 +105,8 @@ const STAGE_ID = /^([A-Za-z]+)_[A-Za-z0-9]/;
 
 export const stageOf = (label: string, id: string): string | null => {
   const text = label.trim();
-  const found =
-    DOTTED.exec(text)?.[1] ??
-    FAMILY_ID_LEAD.exec(text)?.[1] ??
-    STAGE_ID.exec(id)?.[1] ??
-    null;
+  const found = DOTTED.exec(text)?.[1] ?? FAMILY_ID_LEAD.exec(text)?.[1] ?? STAGE_ID.exec(id)?.[1] ?? null;
+
   return found?.toLowerCase() ?? null;
 };
 
@@ -131,52 +120,59 @@ export const STATUS_MARK = "~";
 
 const countStems = (stems: Map<string, Set<string>>): Map<string, number> => {
   const count = new Map<string, number>();
+
   for (const words of stems.values()) {
-    for (const word of words) count.set(word, (count.get(word) ?? 0) + 1);
+    for (const word of words) {
+      count.set(word, (count.get(word) ?? 0) + 1);
+    }
   }
+
   return count;
 };
 
-export const statusFamilies = (
-  labels: ReadonlyMap<string, string>,
-): Map<string, string> => {
+export const statusFamilies = (labels: ReadonlyMap<string, string>): Map<string, string> => {
   const stems = new Map<string, Set<string>>();
+
   for (const [id, label] of labels) {
     const text = label.trim();
     const lead = ID_LEAD.exec(text);
-    if (!lead || stageOf(text, id) !== null) continue;
+
+    if (!lead || stageOf(text, id) !== null) {
+      continue;
+    }
+
     const words = labelBag(text.slice(lead[0].length), id);
+
     stems.set(id, new Set([...words].filter((w) => !ID_LIKE.test(w))));
   }
+
   const count = countStems(stems);
   const out = new Map<string, string>();
+
   for (const [id, ws] of stems) {
     const shared = [...ws].filter((w) => (count.get(w) ?? 0) > 1);
-    if (shared.length === 1) out.set(id, `${STATUS_MARK}${shared[0]}`);
+
+    if (shared.length === 1) {
+      out.set(id, `${STATUS_MARK}${shared[0]}`);
+    }
   }
+
   return out;
 };
 
-const named = (xs: Iterable<string | null>): Set<string> =>
-  new Set([...xs].filter((s): s is string => s !== null));
+const named = (xs: Iterable<string | null>): Set<string> => new Set([...xs].filter((s): s is string => s !== null));
 
 // Whether two sets of members name families and share none: merging them
 // would mix two stages of a pipeline, such as an extract and a gold table.
-export const crossesStages = (
-  a: Iterable<string | null>,
-  b: Iterable<string | null>,
-): boolean => {
+export const crossesStages = (a: Iterable<string | null>, b: Iterable<string | null>): boolean => {
   const [sa, sb] = [named(a), named(b)];
+
   return sa.size > 0 && sb.size > 0 && ![...sa].some((s) => sb.has(s));
 };
 
 // Whether members name two prefix families or more between them.
-export const mixesFamilies = (families: Iterable<string | null>): boolean =>
-  named(families).size > 1;
+export const mixesFamilies = (families: Iterable<string | null>): boolean => named(families).size > 1;
 
 // Whether two sets of members name one prefix family between them, and only one.
-export const oneFamily = (
-  a: Iterable<string | null>,
-  b: Iterable<string | null>,
-): boolean =>
+export const oneFamily = (a: Iterable<string | null>, b: Iterable<string | null>): boolean =>
   named([...a, ...b]).size === 1 && named(a).size === 1 && named(b).size === 1;

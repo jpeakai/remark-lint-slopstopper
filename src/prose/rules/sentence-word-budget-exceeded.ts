@@ -1,9 +1,4 @@
-import {
-  type DocumentContext,
-  endOf,
-  type ParagraphContext,
-  startOf,
-} from "../../document/context.ts";
+import { type DocumentContext, endOf, type ParagraphContext, startOf } from "../../document/context.ts";
 import type { Diagnostic } from "../../types.ts";
 
 export async function checkSentenceWordBudget(
@@ -11,19 +6,19 @@ export async function checkSentenceWordBudget(
   { node }: ParagraphContext,
   budget = 25,
 ): Promise<Diagnostic[]> {
-  if (!Number.isInteger(budget) || budget < 1)
+  if (!Number.isInteger(budget) || budget < 1) {
     throw new RangeError("maxWords must be a positive integer");
+  }
+
   const view = document.projection(node);
   const sentences = await document.language(node).sentences;
   const end = endOf(node);
+
   return sentences
     .filter((sentence) => sentence.wordCount > budget)
     .map((sentence) => {
-      const target = Math.max(
-        2,
-        sentence.clauses,
-        Math.ceil(sentence.wordCount / budget),
-      );
+      const target = Math.max(2, sentence.clauses, Math.ceil(sentence.wordCount / budget));
+
       return {
         ruleId: "prose/sentence-word-budget-exceeded",
         start: view.offsets[sentence.start] ?? startOf(node),

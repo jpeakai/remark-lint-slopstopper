@@ -118,10 +118,7 @@ test("a pair label names both members", () => {
 });
 
 test("a list names every other member within its limits", () => {
-  assert.equal(
-    listedOthers("ADDRESS", ["COUNTRY", "ADDRESS", "CITY"]),
-    "CITY, COUNTRY",
-  );
+  assert.equal(listedOthers("ADDRESS", ["COUNTRY", "ADDRESS", "CITY"]), "CITY, COUNTRY");
   assert.equal(listedOthers("ZIP", ["CITY", "COUNTRY"]), null);
   assert.equal(listedOthers("A", ["A", "B, C", "D"]), null);
   assert.equal(listedOthers("A", ["A", "B", "C", "D"]), null);
@@ -130,13 +127,8 @@ test("a list names every other member within its limits", () => {
 });
 
 test("group labels offer the cut, the whole and the tagged label", () => {
-  assert.deepEqual(groupLabels({ base: "X", n: 0, pair: "Y" }, "g1"), [
-    "X (+Y)",
-  ]);
-  assert.deepEqual(groupLabels({ base: "Base", n: 3 }, "g1"), [
-    "Base (+3)",
-    "Base (+3) [g1]",
-  ]);
+  assert.deepEqual(groupLabels({ base: "X", n: 0, pair: "Y" }, "g1"), ["X (+Y)"]);
+  assert.deepEqual(groupLabels({ base: "Base", n: 3 }, "g1"), ["Base (+3)", "Base (+3) [g1]"]);
   assert.deepEqual(groupLabels({ base: LONG, n: 2 }, "g2"), [
     "abcdefghijklmnopqrstuvwxyz0…6789ABCDEFGH (+2)",
     `${LONG} (+2)`,

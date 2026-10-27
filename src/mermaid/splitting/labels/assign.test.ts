@@ -12,20 +12,15 @@ const workOf = async (source: string): Promise<WorkGraph> =>
     measured: { nodes: 0, edges: 0, subgraphs: 0, depth: 0 },
   });
 
-const group = (
-  members: string[],
-  extra: Partial<Group> & Pick<Group, "tier" | "reason">,
-): Group => ({ members, regions: [], parent: null, ...extra });
+const group = (members: string[], extra: Partial<Group> & Pick<Group, "tier" | "reason">): Group => ({
+  members,
+  regions: [],
+  parent: null,
+  ...extra,
+});
 
-const labelsOf = async (
-  source: string,
-  groups: Group[],
-): Promise<Array<[string, string, string]>> =>
-  groupsOf(await workOf(source), partitionOf(groups)).map((g) => [
-    g.id,
-    g.label,
-    g.labelBase,
-  ]);
+const labelsOf = async (source: string, groups: Group[]): Promise<Array<[string, string, string]>> =>
+  groupsOf(await workOf(source), partitionOf(groups)).map((g) => [g.id, g.label, g.labelBase]);
 
 const NESTED = [
   "flowchart TB",
@@ -88,12 +83,9 @@ const FAN = [
 ].join("\n");
 
 test("leaves hanging from one node are named after that node", async () => {
-  assert.deepEqual(
-    await labelsOf(FAN, [
-      group(["A", "B", "C"], { tier: "T5", reason: "community" }),
-    ]),
-    [["g1", "Order service → … (+3)", "Order service → …"]],
-  );
+  assert.deepEqual(await labelsOf(FAN, [group(["A", "B", "C"], { tier: "T5", reason: "community" })]), [
+    ["g1", "Order service → … (+3)", "Order service → …"],
+  ]);
 });
 
 test("leaves hanging from a group take the name that group shows", async () => {

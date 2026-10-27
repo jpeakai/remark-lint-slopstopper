@@ -20,9 +20,11 @@ import { byNatural } from "./order.ts";
 export interface FlowRegion {
   // The decision the region starts at, which every edge into it enters.
   head: string;
+
   // The node every edge out of the region reaches, or null when the region
   // ends the flow.
   exit: string | null;
+
   // Every node of the region, the head included, sorted.
   members: string[];
 }
@@ -42,26 +44,34 @@ const decisionCache = new WeakMap<WorkGraph, Decision[]>();
 
 export const decisionsOf = (work: WorkGraph): Decision[] => {
   const known = decisionCache.get(work);
-  if (known) return known;
+
+  if (known) {
+    return known;
+  }
+
   const bySource = new Map<string, Decision>();
+
   if (FLOWING.has(work.family)) {
     for (const e of work.edges) {
-      if (e.label === undefined || e.source === e.target) continue;
+      if (e.label === undefined || e.source === e.target) {
+        continue;
+      }
+
       const d = bySource.get(e.source) ?? {
         source: e.source,
         targets: new Map<string, Set<string>>(),
       };
-      d.targets.set(
-        e.target,
-        new Set([...(d.targets.get(e.target) ?? []), e.label]),
-      );
+
+      d.targets.set(e.target, new Set([...(d.targets.get(e.target) ?? []), e.label]));
       bySource.set(e.source, d);
     }
   }
-  const labels = (d: Decision): number =>
-    new Set([...d.targets.values()].flatMap((l) => [...l])).size;
+
+  const labels = (d: Decision): number => new Set([...d.targets.values()].flatMap((l) => [...l])).size;
   const decisions = [...bySource.values()].filter((d) => labels(d) >= 2);
+
   decisionCache.set(work, decisions);
+
   return decisions;
 };
 
@@ -79,59 +89,83 @@ interface Flow {
 }
 
 const link = (flow: Flow, from: string, to: string): void => {
-  if (from === to) return;
+  if (from === to) {
+    return;
+  }
+
   const out = flow.succ.get(from) ?? [];
-  if (!out.includes(to)) out.push(to);
+
+  if (!out.includes(to)) {
+    out.push(to);
+  }
+
   flow.succ.set(from, out);
+
   const inn = flow.pred.get(to) ?? [];
-  if (!inn.includes(from)) inn.push(from);
+
+  if (!inn.includes(from)) {
+    inn.push(from);
+  }
+
   flow.pred.set(to, inn);
 };
 
 // Every node, region endpoint and start or end marker, with the edges between
 // them and the start and end transitions.
 const flowOf = (work: WorkGraph): Flow => {
-  const ends = [...work.edges, ...work.markerEdges].flatMap((e) => [
-    e.source,
-    e.target,
-  ]);
-  const ids = [
-    ...new Set([...work.ids, ...work.markers.map((m) => m.id), ...ends]),
-  ].sort(byNatural);
+  const ends = [...work.edges, ...work.markerEdges].flatMap((e) => [e.source, e.target]);
+  const ids = [...new Set([...work.ids, ...work.markers.map((m) => m.id), ...ends])].sort(byNatural);
   const flow: Flow = { ids, succ: new Map(), pred: new Map() };
+
   for (const e of [...work.edges, ...work.markerEdges]) {
     link(flow, e.source, e.target);
-    if (UNDIRECTED.has(e.kind ?? "")) link(flow, e.target, e.source);
+
+    if (UNDIRECTED.has(e.kind ?? "")) {
+      link(flow, e.target, e.source);
+    }
   }
-  for (const m of [flow.succ, flow.pred])
-    for (const [k, v] of m) m.set(k, v.sort(byNatural));
+
+  for (const m of [flow.succ, flow.pred]) {
+    for (const [k, v] of m) {
+      m.set(k, v.sort(byNatural));
+    }
+  }
+
   return flow;
 };
 
 // Joins a virtual root to every node nothing leads into, then to the first
 // node, in natural order, of each part the root still does not reach.
-const rooted = (
-  ids: string[],
-  into: Map<string, string[]>,
-  from: Map<string, string[]>,
-): string[] => {
+const rooted = (ids: string[], into: Map<string, string[]>, from: Map<string, string[]>): string[] => {
   const roots = ids.filter((id) => (into.get(id) ?? []).length === 0);
   const topology = directedGraph(
     ids.flatMap((id) => (from.get(id) ?? []).map((to) => [id, to] as const)),
     ids,
   );
+
   try {
     const reached = new Set<string>();
     const visit = (start: string): void => {
       reached.add(start);
-      for (const id of reachableFrom(topology, start)) reached.add(id);
+
+      for (const id of reachableFrom(topology, start)) {
+        reached.add(id);
+      }
     };
-    for (const r of roots) visit(r);
+
+    for (const r of roots) {
+      visit(r);
+    }
+
     for (const id of ids) {
-      if (reached.has(id)) continue;
+      if (reached.has(id)) {
+        continue;
+      }
+
       roots.push(id);
       visit(id);
     }
+
     return roots;
   } finally {
     topology.destroy();
@@ -140,28 +174,26 @@ const rooted = (
 
 interface Trees {
   flow: Flow;
+
   // Immediate dominators from the virtual entry.
   idom: Map<string, string>;
+
   // Immediate post-dominators towards the virtual exit, terminal nodes left out.
   ipdom: Map<string, string>;
 }
 
 const treesOf = (flow: Flow): Trees => {
   const entries = rooted(flow.ids, flow.pred, flow.succ);
-  const next = (v: string): string[] =>
-    v === ENTRY ? entries : (flow.succ.get(v) ?? []);
+  const next = (v: string): string[] => (v === ENTRY ? entries : (flow.succ.get(v) ?? []));
   const idom = immediateDominators(ENTRY, flow.ids, next);
-  const terminal = new Set(
-    flow.ids.filter((id) => (flow.succ.get(id) ?? []).length === 0),
-  );
+  const terminal = new Set(flow.ids.filter((id) => (flow.succ.get(id) ?? []).length === 0));
   const inner = flow.ids.filter((id) => !terminal.has(id));
-  const keep = (xs: string[] | undefined): string[] =>
-    (xs ?? []).filter((x) => !terminal.has(x));
+  const keep = (xs: string[] | undefined): string[] => (xs ?? []).filter((x) => !terminal.has(x));
   const succ = new Map(inner.map((id) => [id, keep(flow.succ.get(id))]));
   const pred = new Map(inner.map((id) => [id, keep(flow.pred.get(id))]));
   const exits = rooted(inner, succ, pred);
-  const back = (v: string): string[] =>
-    v === EXIT ? exits : (pred.get(v) ?? []);
+  const back = (v: string): string[] => (v === EXIT ? exits : (pred.get(v) ?? []));
+
   return { flow, idom, ipdom: immediateDominators(EXIT, inner, back) };
 };
 
@@ -169,15 +201,12 @@ const treesOf = (flow: Flow): Trees => {
 // and a composite, a stub or a region endpoint is never a member.
 const memberOk = (work: WorkGraph, head: string): ((id: string) => boolean) => {
   const markers = new Set(work.markers.map((m) => m.id));
-  const boxed = new Set(
-    work.markers.filter((m) => m.parent !== null).map((m) => m.id),
-  );
+  const boxed = new Set(work.markers.filter((m) => m.parent !== null).map((m) => m.id));
   const pinned = new Set(
-    work.markerEdges.flatMap((e) =>
-      boxed.has(e.source) ? [e.target] : boxed.has(e.target) ? [e.source] : [],
-    ),
+    work.markerEdges.flatMap((e) => (boxed.has(e.source) ? [e.target] : boxed.has(e.target) ? [e.source] : [])),
   );
   const home = homeOf(work, head);
+
   return (id) =>
     markers.has(id) ||
     (work.nodes.has(id) &&
@@ -191,13 +220,10 @@ const memberOk = (work: WorkGraph, head: string): ((id: string) => boolean) => {
 const reach = (flow: Flow, head: string, exit: string | null): Set<string> => {
   const ids = flow.ids.filter((id) => id !== exit);
   const graph = directedGraph(
-    ids.flatMap((id) =>
-      (flow.succ.get(id) ?? [])
-        .filter((to) => to !== exit)
-        .map((to) => [id, to] as const),
-    ),
+    ids.flatMap((id) => (flow.succ.get(id) ?? []).filter((to) => to !== exit).map((to) => [id, to] as const)),
     ids,
   );
+
   try {
     return new Set([head, ...reachableFrom(graph, head)]);
   } finally {
@@ -208,26 +234,31 @@ const reach = (flow: Flow, head: string, exit: string | null): Set<string> => {
 // The region from head to exit, or null when it is not single-entry
 // single-exit: a node in it the head does not dominate, an edge entering it
 // anywhere but the head, or an edge leaving it anywhere but the exit.
-const regionOf = (
-  work: WorkGraph,
-  t: Trees,
-  head: string,
-  exit: string | null,
-): FlowRegion | null => {
+const regionOf = (work: WorkGraph, t: Trees, head: string, exit: string | null): FlowRegion | null => {
   const inside = reach(t.flow, head, exit);
   const ok = memberOk(work, head);
   const contained = (v: string): boolean => {
-    if (!(ok(v) && dominates(t.idom, head, v))) return false;
-    if (v !== head && (t.flow.pred.get(v) ?? []).some((u) => !inside.has(u)))
+    if (!(ok(v) && dominates(t.idom, head, v))) {
       return false;
-    if ((t.flow.succ.get(v) ?? []).some((w) => !inside.has(w) && w !== exit))
+    }
+
+    if (v !== head && (t.flow.pred.get(v) ?? []).some((u) => !inside.has(u))) {
       return false;
+    }
+
+    if ((t.flow.succ.get(v) ?? []).some((w) => !inside.has(w) && w !== exit)) {
+      return false;
+    }
+
     return true;
   };
-  if (![...inside].every(contained)) return null;
-  const members = [...inside]
-    .filter((id) => work.nodes.has(id))
-    .sort(byNatural);
+
+  if (![...inside].every(contained)) {
+    return null;
+  }
+
+  const members = [...inside].filter((id) => work.nodes.has(id)).sort(byNatural);
+
   return members.length < 2 ? null : { head, exit, members };
 };
 
@@ -235,14 +266,13 @@ const regionOf = (
 // outgoing edge, a condition, that leads to two nodes or more.
 const headsOf = (work: WorkGraph, flow: Flow): string[] => {
   const labelled = new Set(
-    FLOWING.has(work.family)
-      ? work.edges.filter((e) => e.label !== undefined).map((e) => e.source)
-      : [],
+    FLOWING.has(work.family) ? work.edges.filter((e) => e.label !== undefined).map((e) => e.source) : [],
   );
+
   return work.ids.filter((id) => {
     const shape = work.nodes.get(id)?.shape;
-    const decides =
-      labelled.has(id) || (isProtectedShape(shape) && shape !== "join");
+    const decides = labelled.has(id) || (isProtectedShape(shape) && shape !== "join");
+
     return decides && (flow.succ.get(id) ?? []).length >= 2;
   });
 };
@@ -252,14 +282,14 @@ const headsOf = (work: WorkGraph, flow: Flow): string[] => {
 // region. A longer region would be a sequence of regions, which chain stages
 // fold.
 const regionFrom = (work: WorkGraph, t: Trees, head: string): FlowRegion[] => {
-  for (
-    let p = t.ipdom.get(head);
-    p !== undefined;
-    p = p === EXIT ? undefined : t.ipdom.get(p)
-  ) {
+  for (let p = t.ipdom.get(head); p !== undefined; p = p === EXIT ? undefined : t.ipdom.get(p)) {
     const r = regionOf(work, t, head, p === EXIT ? null : p);
-    if (r) return [r];
+
+    if (r) {
+      return [r];
+    }
   }
+
   return [];
 };
 
@@ -268,24 +298,32 @@ const cache = new WeakMap<WorkGraph, FlowRegion[]>();
 // Every decision region of the diagram, smallest first, then by head.
 export const flowRegionsOf = (work: WorkGraph): FlowRegion[] => {
   const known = cache.get(work);
-  if (known) return known;
+
+  if (known) {
+    return known;
+  }
+
   const regions: FlowRegion[] = [];
+
   if (FLOWING.has(work.family)) {
     const t = treesOf(flowOf(work));
     const seen = new Set<string>();
-    for (const r of headsOf(work, t.flow).flatMap((h) =>
-      regionFrom(work, t, h),
-    )) {
+
+    for (const r of headsOf(work, t.flow).flatMap((h) => regionFrom(work, t, h))) {
       const key = r.members.join("\u0000");
-      if (!seen.has(key)) regions.push(r);
+
+      if (!seen.has(key)) {
+        regions.push(r);
+      }
+
       seen.add(key);
     }
-    regions.sort(
-      (a, b) =>
-        a.members.length - b.members.length || byNatural(a.head, b.head),
-    );
+
+    regions.sort((a, b) => a.members.length - b.members.length || byNatural(a.head, b.head));
   }
+
   cache.set(work, regions);
+
   return regions;
 };
 
@@ -308,27 +346,30 @@ export const immediateDominators = (
       })),
     ),
   });
+
   return new Map(
-    Object.entries(getDominatorTree(graph, { from: nodeKey(root) })).map(
-      ([id, parent]) => [
-        originals.get(id) as string,
-        parent === null ? root : (originals.get(parent) as string),
-      ],
-    ),
+    Object.entries(getDominatorTree(graph, { from: nodeKey(root) })).map(([id, parent]) => [
+      originals.get(id) as string,
+      parent === null ? root : (originals.get(parent) as string),
+    ]),
   );
 };
 
 // Whether d dominates v in the tree given: d is v or one of its ancestors.
-export const dominates = (
-  idom: ReadonlyMap<string, string>,
-  d: string,
-  v: string,
-): boolean => {
+export const dominates = (idom: ReadonlyMap<string, string>, d: string, v: string): boolean => {
   for (let x: string | undefined = v; x !== undefined; ) {
-    if (x === d) return true;
+    if (x === d) {
+      return true;
+    }
+
     const up = idom.get(x);
-    if (up === x) return false;
+
+    if (up === x) {
+      return false;
+    }
+
     x = up;
   }
+
   return false;
 };

@@ -13,29 +13,34 @@ const endpoints = (work: WorkGraph): string[] => [
 
 export const newReachablePairs = (work: WorkGraph, part: Partition): number => {
   const original = directedGraph(work.edges.map((e) => [e.source, e.target]));
-  const summary = directedGraph(
-    quotientEdges(work, part).map((e) => [e.source, e.target]),
-  );
+  const summary = directedGraph(quotientEdges(work, part).map((e) => [e.source, e.target]));
+
   try {
     const inside = new Map<string, string[]>();
+
     for (const x of endpoints(work)) {
       const k = over(part, x);
+
       inside.set(k, [...(inside.get(k) ?? []), x]);
     }
+
     const reach = new Map<string, Set<string>>();
     const reachOf = (x: string): Set<string> => {
       const known = reach.get(x) ?? reachableFrom(original, x);
+
       reach.set(x, known);
+
       return known;
     };
+
     let count = 0;
     const existed = (from: string[], to: string[]): boolean =>
       from.some((u) => to.some((v) => u !== v && reachOf(u).has(v)));
+
     for (const [a, from] of inside) {
-      count += [...reachableFrom(summary, a)].filter(
-        (b) => b !== a && !existed(from, inside.get(b) ?? []),
-      ).length;
+      count += [...reachableFrom(summary, a)].filter((b) => b !== a && !existed(from, inside.get(b) ?? [])).length;
     }
+
     return count;
   } finally {
     original.destroy();

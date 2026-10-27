@@ -14,6 +14,7 @@ type LangiumResult = MermaidParseError["result"];
 
 const jisonHash = (err: unknown): JisonHash | null => {
   const hash = (err as { hash?: unknown } | null)?.hash;
+
   return typeof hash === "object" && hash !== null ? (hash as JisonHash) : null;
 };
 
@@ -25,27 +26,29 @@ export interface ParserError {
 
 const fromJison = (hash: JisonHash): ParserError => {
   const parseLine = hash.loc?.first_line;
+
   if (parseLine !== undefined) {
     const got = `'${hash.token ?? ""}'`;
-    const what = hash.expected?.length
-      ? `Expecting ${hash.expected.join(", ")}, got ${got}`
-      : `Unexpected ${got}`;
+    const what = hash.expected?.length ? `Expecting ${hash.expected.join(", ")}, got ${got}` : `Unexpected ${got}`;
+
     return {
       reason: `Parse error on line ${parseLine}: ${what}`,
       line: parseLine,
     };
   }
-  if (hash.line === undefined) return { reason: "Parse error", line: null };
+
+  if (hash.line === undefined) {
+    return { reason: "Parse error", line: null };
+  }
+
   const line = hash.line + 1;
+
   return { reason: `Lexical error on line ${line}: Unrecognized text`, line };
 };
 
 // Where a Langium error points. A token past the end of the input, as an
 // unexpected end is, has NaN for its line and column.
-const at = (
-  line: number | null | undefined,
-  column: number | null | undefined,
-): string =>
+const at = (line: number | null | undefined, column: number | null | undefined): string =>
   Number.isFinite(line)
     ? `on line ${line}, column ${Number.isFinite(column) ? column : "?"}`
     : "at the end of the diagram";
@@ -61,6 +64,7 @@ const fromLangium = (result: LangiumResult): ParserError => {
   }));
   const all = [...lexer, ...parser];
   const first = all.find((e) => Number.isFinite(e.line))?.line;
+
   return {
     reason: `Parsing failed: ${all.map((e) => e.text).join(" ")}`,
     line: first ?? null,
@@ -74,8 +78,16 @@ const fromLangium = (result: LangiumResult): ParserError => {
 // text, so its first line is the reason.
 export const parserError = (err: unknown): ParserError => {
   const hash = jisonHash(err);
-  if (hash) return fromJison(hash);
-  if (err instanceof MermaidParseError) return fromLangium(err.result);
+
+  if (hash) {
+    return fromJison(hash);
+  }
+
+  if (err instanceof MermaidParseError) {
+    return fromLangium(err.result);
+  }
+
   const message = err instanceof Error ? err.message : String(err);
+
   return { reason: (message.split("\n")[0] ?? "").trim(), line: null };
 };

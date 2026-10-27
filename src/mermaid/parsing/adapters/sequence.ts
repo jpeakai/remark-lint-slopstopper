@@ -13,6 +13,7 @@ interface SequenceState {
     boxes?: Array<{ name?: string }>;
   };
 }
+
 // The sequence db's messages list holds every statement in order: a message,
 // but also a note, an activation and each line that opens, divides or closes a
 // block. Each carries a code from the db's own LINETYPE table. A block opens
@@ -29,14 +30,7 @@ const SEQUENCE_BLOCK_OPENERS = [
   "BREAK_START",
   "PAR_OVER_START",
 ] as const;
-const SEQUENCE_BLOCK_CLOSERS = [
-  "LOOP_END",
-  "ALT_END",
-  "OPT_END",
-  "PAR_END",
-  "CRITICAL_END",
-  "BREAK_END",
-] as const;
+const SEQUENCE_BLOCK_CLOSERS = ["LOOP_END", "ALT_END", "OPT_END", "PAR_END", "CRITICAL_END", "BREAK_END"] as const;
 
 export interface SequenceCodes {
   note: number;
@@ -50,10 +44,14 @@ export const sequenceCodes = (db: AnyDb): SequenceCodes => {
   const table = db.LINETYPE as Readonly<Record<string, unknown>> | undefined;
   const code = (name: string): number => {
     const value = table?.[name];
-    if (typeof value !== "number")
+
+    if (typeof value !== "number") {
       throw new Error(`the sequence db's LINETYPE has no ${name}`);
+    }
+
     return value;
   };
+
   return {
     note: code("NOTE"),
     open: new Set(SEQUENCE_BLOCK_OPENERS.map(code)),
@@ -63,29 +61,24 @@ export const sequenceCodes = (db: AnyDb): SequenceCodes => {
 
 // A message runs from one participant to another (or itself). A note also
 // names both, so it is told apart by its code, and an activation names only one.
-export const isSequenceMessage = (
-  codes: SequenceCodes,
-  m: SequenceRecord,
-): boolean =>
-  m.type !== codes.note &&
-  typeof m.from === "string" &&
-  typeof m.to === "string";
+export const isSequenceMessage = (codes: SequenceCodes, m: SequenceRecord): boolean =>
+  m.type !== codes.note && typeof m.from === "string" && typeof m.to === "string";
 
 export function adaptSequence(db: AnyDb): Structure {
   const codes = sequenceCodes(db);
+
   // sequenceDb stores state under db.state.records.{actors,messages,boxes}.
   const state = (db.state as SequenceState | undefined)?.records;
-  const actors =
-    state?.actors instanceof Map ? state.actors : new Map<string, unknown>();
+  const actors = state?.actors instanceof Map ? state.actors : new Map<string, unknown>();
   const rawMessages = state?.messages;
-  const records = (
-    Array.isArray(rawMessages) ? rawMessages : []
-  ) as SequenceRecord[];
+  const records = (Array.isArray(rawMessages) ? rawMessages : []) as SequenceRecord[];
   const boxes = Array.isArray(state?.boxes) ? state.boxes : [];
+
   // A box groups participants and a block frames messages: both are drawn as
   // a labelled boundary. Boxes cannot nest, and blocks nest inside each other.
   const subgraphNames = boxes.map((b, i) => b.name || `box_${i}`);
   const maxBlockDepth = sequenceBlockDepth(records, codes, subgraphNames);
+
   return {
     nodeIds: [...actors.keys()],
     edges: records.filter((r) => isSequenceMessage(codes, r)).length,
@@ -94,15 +87,15 @@ export function adaptSequence(db: AnyDb): Structure {
   };
 }
 
-function sequenceBlockDepth(
-  records: SequenceRecord[],
-  codes: SequenceCodes,
-  names: string[],
-): number {
+function sequenceBlockDepth(records: SequenceRecord[], codes: SequenceCodes, names: string[]): number {
   let depth = 0;
   let maxBlockDepth = 0;
+
   for (const r of records) {
-    if (r.type === undefined) continue;
+    if (r.type === undefined) {
+      continue;
+    }
+
     if (codes.open.has(r.type)) {
       depth++;
       maxBlockDepth = Math.max(maxBlockDepth, depth);
@@ -111,10 +104,9 @@ function sequenceBlockDepth(
       depth = Math.max(0, depth - 1);
     }
   }
+
   return maxBlockDepth;
 }
 
 const sequenceBlockName = (record: SequenceRecord, index: number): string =>
-  typeof record.message === "string" && record.message
-    ? record.message
-    : `block_${index}`;
+  typeof record.message === "string" && record.message ? record.message : `block_${index}`;

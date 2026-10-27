@@ -40,6 +40,7 @@ test("ownership cycles break at one deterministic entity while retaining descend
       ["c", "leaf"],
     ],
   );
+
   assert.equal(ownersOf(work).has("a"), false);
   assert.equal(rootOf(work, "leaf"), "a");
   assert.deepEqual(aggregateOf(work, "a"), ["a", "b", "c", "leaf"]);
@@ -55,6 +56,7 @@ test("ambiguous identifying parents keep junctions outside either aggregate", ()
       ["junction", "leaf"],
     ],
   );
+
   assert.equal(ownersOf(work).has("junction"), false);
   assert.equal(isJunction(work, "junction"), true);
   assert.equal(rootOf(work, "leaf"), "junction");
@@ -70,6 +72,7 @@ test("native compound hierarchy preserves an empty root and prototype-named enti
       ["__proto__", "constructor"],
     ],
   );
+
   assert.equal(rootOf(work, "constructor"), "");
   assert.deepEqual(aggregateOf(work, ""), ["", "__proto__", "constructor"]);
 });

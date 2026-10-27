@@ -127,6 +127,11 @@ Verify targeted edits, unchanged surrounding bytes, recheck and idempotence.
 
 ## Verify the change
 
+Run `bun run format` after editing TypeScript.
+It applies Biome's required-brace fixer, ESLint's blank-line rules, then Biome formatting at a 120-character target.
+The tools have separate responsibilities, described in [Coding standards](CODING_STANDARDS.md#readability).
+`bun run lint` checks both without changing files.
+
 For documentation-site changes, run `make site` and review `make site-serve` locally.
 See [the site workflow](docs/documentation-site.md) for the source map and preview address.
 

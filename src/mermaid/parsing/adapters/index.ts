@@ -14,18 +14,14 @@ import {
 } from "./collections.ts";
 import { adaptClass, adaptEr, adaptFlowchart, adaptState } from "./graphs.ts";
 import { adaptSequence } from "./sequence.ts";
-import {
-  adaptBlock,
-  adaptIshikawa,
-  adaptMindmap,
-  adaptRailroad,
-} from "./trees.ts";
+import { adaptBlock, adaptIshikawa, adaptMindmap, adaptRailroad } from "./trees.ts";
 
 type CoreAdapter = (db: AnyDb) => Structure;
 
 const CORE_ADAPTERS: Record<string, CoreAdapter> = {
   "flowchart-v2": adaptFlowchart,
   flowchart: adaptFlowchart,
+
   // `flowchart-elk` is a flowchart drawn with the ELK layout. Mermaid parses it
   // with the flowchart grammar into the same DB, and only the layout differs.
   "flowchart-elk": adaptFlowchart,
@@ -63,6 +59,10 @@ const CORE_ADAPTERS: Record<string, CoreAdapter> = {
 
 export function readCoreStructure(type: string, db: unknown): Structure {
   const adapter = CORE_ADAPTERS[type];
-  if (!adapter) throw new Error(`no core adapter for diagram.type="${type}"`);
+
+  if (!adapter) {
+    throw new Error(`no core adapter for diagram.type="${type}"`);
+  }
+
   return adapter(db as AnyDb);
 }
