@@ -1,0 +1,124 @@
+site_name: Slopstopper
+site_description: Markdown policies for concise prose and readable Mermaid diagrams.
+docs_dir: docs
+site_dir: ../tmp/site
+strict: true
+dev_addr: 127.0.0.1:8010
+
+hooks:
+  - hooks.py
+
+watch:
+  - ../README.md
+  - ../RULES.md
+  - ../ARCHITECTURE.md
+  - ../CONTRIBUTING.md
+  - ../CODING_STANDARDS.md
+  - ../GLOSSARY.md
+  - ../docs
+  - ../package.json
+  - ../src/mermaid/README.md
+  - ../src/mermaid/splitting/README.md
+  - ../adrs
+
+theme:
+  name: material
+  language: en
+  font: false
+  logo: assets/mark.svg
+  favicon: assets/mark.svg
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.indexes
+    - navigation.top
+    - navigation.footer
+    - search.highlight
+    - search.suggest
+    - toc.follow
+    - content.code.copy
+    - content.tabs.link
+  palette:
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light theme
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark theme
+
+plugins:
+  - search
+
+extra:
+  generator: false
+
+extra_css:
+  - assets/site.css
+
+markdown_extensions:
+  admonition:
+  attr_list:
+  md_in_html:
+  tables:
+  toc:
+    permalink: true
+  pymdownx.details:
+  pymdownx.highlight:
+    anchor_linenums: true
+  pymdownx.inlinehilite:
+  pymdownx.superfences:
+    custom_fences:
+      - name: mermaid
+        class: mermaid
+        format: !!python/name:pymdownx.superfences.fence_code_format
+  pymdownx.tabbed:
+    alternate_style: true
+
+validation:
+  nav:
+    omitted_files: info
+  links:
+    not_found: warn
+    anchors: warn
+    unrecognized_links: warn
+
+nav:
+  - Home: index.md
+  - Get started: get-started.md
+  - Guides:
+      - guides/index.md
+      - Configure policies: guides/configuration.md
+      - Apply verified fixes: guides/fixes.md
+      - Teach project vocabulary: guides/vocabulary.md
+      - Run checks in CI: guides/ci.md
+      - Troubleshoot findings: guides/troubleshooting.md
+  - Examples:
+      - examples/index.md
+      - Prose before and after: examples/prose.md
+      - Mermaid findings: examples/mermaid.md
+  - Reference:
+      - reference/index.md
+      - Standalone CLI: docs/cli.md
+      - Rules: RULES.md
+      - Configuration: reference/configuration.md
+      - Document API: reference/document-api.md
+      - Glossary: GLOSSARY.md
+  - Internals:
+      - internals/index.md
+      - Architecture: ARCHITECTURE.md
+      - Mermaid analysis: src/mermaid/README.md
+      - Split planning: src/mermaid/splitting/README.md
+      - Decisions: adrs/index.md
+  - Contribute:
+      - CONTRIBUTING.md
+      - Coding standards: CODING_STANDARDS.md
+      - Preview this site: docs/documentation-site.md
+      - Documentation conventions: docs/CONVENTIONS.md

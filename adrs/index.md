@@ -43,6 +43,8 @@
 | [SLOP-0037](0037-a-group-is-named-by-what-it-holds.md) | A split plan names each group by what it holds, never by one arbitrary member | accepted |
 | [SLOP-0038](0038-a-stub-names-exactly-one-thing-and-draws-each-edge-once.md) | A detail's stub text has exactly one reading, and each edge it stands for is drawn once | accepted |
 | [SLOP-0039](0039-plain-word-runs-and-min-items.md) | A long plain-word run is a hidden list, and every run rule takes a minItems option | accepted |
+| [SLOP-0040](0040-mkdocs-includes-canonical-reference-documents.md) | The MkDocs site includes canonical reference documents at build time | accepted |
+| [SLOP-0041](0041-standalone-cli-runs-the-native-remark-engine.md) | The standalone CLI runs the native remark engine with explicit write controls | accepted |
 # By group
 
 ## architecture
@@ -50,9 +52,15 @@
 * [SLOP-0003](0003-shared-document-context-per-round.md) - Every enabled policy in a reporting round reads one DocumentContext, so derived data is computed once and agrees
 * [SLOP-0009](0009-one-module-per-rule.md) - A prose policy is one file under src/prose/rules that returns diagnostics with any edit, listed in one registry
 * [SLOP-0010](0010-shared-code-groups-by-the-data-it-takes.md) - src/document takes source and trees and imports no policy, and policies import the document layer, never the reverse
+## cli
+
+* [SLOP-0041](0041-standalone-cli-runs-the-native-remark-engine.md) - A scoped binary supplies the remark engine, default policies and verified source edits
 ## config
 
 * [SLOP-0006](0006-configuration-is-remark-plugin-options.md) - Policies are switched and tuned through the plugin's options in the host's remark config, with no config file of its own
+## documentation
+
+* [SLOP-0040](0040-mkdocs-includes-canonical-reference-documents.md) - Task guides live in docs-site, while a build hook exposes the existing reference documents without duplicate sources
 ## fixing
 
 * [SLOP-0012](0012-edits-splice-source-never-stringify.md) - An edit replaces a source range, the compiler returns the edited source, and rounds repeat until no edit remains

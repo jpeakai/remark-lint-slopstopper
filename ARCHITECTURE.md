@@ -4,7 +4,22 @@ This package separates its Markdown policies from shared document models, langua
 The [remark adapter](src/remark/plugin.ts) owns configuration, native suppression and optional source edits.
 All models and caches are transient process memory.
 See [contributing](CONTRIBUTING.md) to add a policy.
-The [root export](index.ts) is a separate upstream recommended remark preset; custom policies require `remark-lint-slopstopper/remark`.
+The [root export](index.ts) is a separate upstream recommended remark preset; custom policies require `@jpeakai/remark-lint-slopstopper/remark`.
+
+## Standalone CLI
+
+The [CLI entry point](src/cli/main.ts) supplies both the recommended preset and Custom Policies through `unified-engine`.
+The engine owns file and glob discovery, native remark configuration, ignore files and reporting.
+Convenience flags map into existing plugin options rather than defining another policy configuration format.
+
+Check mode pins `fix: false` even when a configuration requests edits.
+Explicit fix mode persists the adapter's verified source after processing, including when unfixable findings remain.
+A processing exception blocks writes for that file.
+The CLI resolves each output path against its VFile working directory.
+
+`bun run build` compiles the standalone entry point into JavaScript with external runtime dependencies.
+The npm package includes that binary and the existing TypeScript library entry points.
+See [the CLI reference](docs/cli.md) for user-facing contracts.
 
 ## Package boundaries
 

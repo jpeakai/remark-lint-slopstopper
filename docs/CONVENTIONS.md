@@ -37,6 +37,10 @@ Lines marked *(defaulted)* come from the `standard` flavour rather than from wha
 | `adrs/record.schema.json`, `adrs/okf_render.py`, `adrs/templates/` | The bundle's schema, templates and generator | Contributors | The record shape or rendering changes |
 | `adrs/*.md`, `adrs/graph.*` | Generated reading surface for those records | Both | Never edited, only regenerated |
 | `docs/CONVENTIONS.md` | This dialect declaration | Both | A documentation convention changes |
+| `docs/documentation-site.md` | How to build, preview and edit the documentation site | Contributors | The documentation workflow changes |
+| `docs/cli.md` | Standalone CLI flags, inputs, output and exit codes | Consumers | The CLI contract changes |
+| `docs-site/docs/` | Site landing page, task guides, examples and API summaries | Consumers | A user workflow or public contract changes |
+| `docs-site/mkdocs.yml`, `docs-site/hooks.py` | Site navigation and inclusion of canonical repository documents | Contributors | The reading surface changes |
 | `CHANGELOG.md` | Missing: release notes, required at the first external consumer | Consumers | A version is released |
 | `LICENSE` | Missing: the licence the package ships under | Consumers | The licence changes |
 | `SECURITY.md` | Missing: how to report a vulnerability | Consumers | The reporting route changes |
@@ -51,7 +55,7 @@ Lines marked *(defaulted)* come from the `standard` flavour rather than from wha
 ## Pointers
 
 - ADR directory: `adrs/`
-- Docs site source: none
+- Docs site source: `docs-site/docs/`, with canonical reference documents included at build time by `docs-site/hooks.py`
 - Project vocabulary for the prose policies: `CONCEPTS.md` in the working directory, per `CONTRIBUTING.md`
 
 ## Required cross-links

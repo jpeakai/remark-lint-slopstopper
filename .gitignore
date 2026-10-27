@@ -1,4 +1,6 @@
 node_modules/
+dist/
+__pycache__/
 tmp/
 .claude/
 .codex/

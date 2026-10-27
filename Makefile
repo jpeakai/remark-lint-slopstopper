@@ -1,11 +1,15 @@
-.PHONY: fix ci
+.PHONY: fix ci site site-serve
 
-# The bundle's own okf-yaml generator (SLOP-0001). It runs
-# without a Python project, so this bun repo carries no pyproject.toml.
-RENDER := uv run --no-project --with PyYAML --with Jinja2 --with jsonschema adrs/okf_render.py
+# Keep tool caches inside the checkout, including when run from a fresh shell.
+export UV_CACHE_DIR := $(CURDIR)/node_modules/.cache/uv
+export UV_PROJECT_ENVIRONMENT := $(CURDIR)/node_modules/.cache/docs-venv
+export TMPDIR := $(CURDIR)/node_modules/.cache/tmp
+
+RENDER := uv run --locked --only-group adr python adrs/okf_render.py
+MKDOCS := uv run --locked --only-group docs mkdocs
 
 # Regenerate everything that is generated. Safe to run at any time.
-fix:
+fix: | tooling-dirs
 	$(RENDER) adrs --schema adrs/record.schema.json
 
 # Assert the tree is clean after a regenerate: a generated file that differs
@@ -15,3 +19,13 @@ ci: fix
 		git status --short; \
 		echo "ERROR: regenerate left the tree dirty - commit the generated files"; \
 		exit 1; }
+
+.PHONY: tooling-dirs
+tooling-dirs:
+	mkdir -p $(TMPDIR) $(UV_CACHE_DIR)
+
+site: | tooling-dirs
+	$(MKDOCS) build --strict --config-file docs-site/mkdocs.yml
+
+site-serve: | tooling-dirs
+	$(MKDOCS) serve --config-file docs-site/mkdocs.yml

@@ -173,7 +173,7 @@ The complexity policy formats the accepted plan into a diagnostic; it does not a
 
 ## Verification
 
-Run the [package checks](../../../README.md#validate-the-package) on Bun and Node.
+Run the [package checks](../../../README.md#develop) on Bun and Node.
 Exercise multiple fences and the realistic [input corpus](../../../examples/multiple-diagrams.md) and [revised corpus](../../../examples/multiple-diagrams-fixed.md).
 When changing scoring, grouping, labels, serialization or contract checks, compare complete outcomes including emitted source, loss, ladders, alternatives and refusals.
 Preserve facts across corpus revisions and record any diagram-family change required by a renderer limitation.

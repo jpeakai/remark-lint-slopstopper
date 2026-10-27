@@ -1,6 +1,6 @@
 # Glossary
 
-The ubiquitous language for `remark-lint-slopstopper`.
+The ubiquitous language for `@jpeakai/remark-lint-slopstopper`.
 Each term is written in Title Case wherever it is used, to mark it as this glossary's meaning rather than the plain-language one.
 When a new domain term enters the code or the conversation, add it here in the same change.
 Give it its own H2 and a place in the diagram.
@@ -68,7 +68,7 @@ Only the term names are read, and a missing file is not an error.
 
 ## Custom Policy
 
-One of this package's own lint rules, enabled through `remark-lint-slopstopper/remark`.
+One of this package's own lint rules, enabled through `@jpeakai/remark-lint-slopstopper/remark`.
 Each has a full identifier such as `prose/sentence-one-per-line`, listed in [`src/rules.ts`](src/rules.ts).
 
 ## Decision Record

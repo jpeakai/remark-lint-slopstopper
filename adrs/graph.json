@@ -9,72 +9,86 @@
     },
     {
       "data": {
+        "id": "group-cli",
+        "label": "cli",
+        "colour": "#0891b2"
+      }
+    },
+    {
+      "data": {
         "id": "group-config",
         "label": "config",
-        "colour": "#0891b2"
+        "colour": "#059669"
+      }
+    },
+    {
+      "data": {
+        "id": "group-documentation",
+        "label": "documentation",
+        "colour": "#d97706"
       }
     },
     {
       "data": {
         "id": "group-fixing",
         "label": "fixing",
-        "colour": "#059669"
+        "colour": "#db2777"
       }
     },
     {
       "data": {
         "id": "group-mermaid",
         "label": "mermaid",
-        "colour": "#d97706"
+        "colour": "#7c3aed"
       }
     },
     {
       "data": {
         "id": "group-model",
         "label": "model",
-        "colour": "#db2777"
+        "colour": "#0284c7"
       }
     },
     {
       "data": {
         "id": "group-parsing",
         "label": "parsing",
-        "colour": "#7c3aed"
+        "colour": "#65a30d"
       }
     },
     {
       "data": {
         "id": "group-policy",
         "label": "policy",
-        "colour": "#0284c7"
+        "colour": "#6366f1"
       }
     },
     {
       "data": {
         "id": "group-quality",
         "label": "quality",
-        "colour": "#65a30d"
+        "colour": "#0891b2"
       }
     },
     {
       "data": {
         "id": "group-rules",
         "label": "rules",
-        "colour": "#6366f1"
+        "colour": "#059669"
       }
     },
     {
       "data": {
         "id": "group-testing",
         "label": "testing",
-        "colour": "#0891b2"
+        "colour": "#d97706"
       }
     },
     {
       "data": {
         "id": "group-tooling",
         "label": "tooling",
-        "colour": "#059669"
+        "colour": "#db2777"
       }
     },
     {
@@ -82,7 +96,7 @@
         "id": "SLOP-0001",
         "label": "0001",
         "parent": "group-tooling",
-        "colour": "#059669",
+        "colour": "#db2777",
         "file": "0001-vendor-the-generator-into-the-bundle.md",
         "title": "The bundle carries its own copy of the okf-yaml generator, schema and templates",
         "description": "The adr skill's renderer is vendored into adrs/ and run by uv, so the bundle renders from a clone alone",
@@ -95,7 +109,7 @@
         "id": "SLOP-0002",
         "label": "0002",
         "parent": "group-parsing",
-        "colour": "#7c3aed",
+        "colour": "#65a30d",
         "file": "0002-host-tree-is-the-document.md",
         "title": "Every policy reads the mdast tree the remark host already parsed",
         "description": "The adapter hands the host's own tree to createDocument, and only string callers parse, once, with the shared parser",
@@ -121,7 +135,7 @@
         "id": "SLOP-0004",
         "label": "0004",
         "parent": "group-model",
-        "colour": "#db2777",
+        "colour": "#0284c7",
         "file": "0004-lazy-language-view-on-nodes.md",
         "title": "Paragraph and text nodes carry a language view that analyses on first read",
         "description": "node.data.language exposes projected text at once and one memoised sentence Promise only when a rule asks for it",
@@ -134,7 +148,7 @@
         "id": "SLOP-0005",
         "label": "0005",
         "parent": "group-model",
-        "colour": "#db2777",
+        "colour": "#0284c7",
         "file": "0005-concepts-file-is-project-vocabulary.md",
         "title": "A project's CONCEPTS.md supplies the term names the language view tags as nouns",
         "description": "Each defined heading in CONCEPTS.md in the working directory becomes a literal noun phrase for that context's sentences",
@@ -147,7 +161,7 @@
         "id": "SLOP-0006",
         "label": "0006",
         "parent": "group-config",
-        "colour": "#0891b2",
+        "colour": "#059669",
         "file": "0006-configuration-is-remark-plugin-options.md",
         "title": "Configuration is remark plugin options, and a disabled policy never runs",
         "description": "Policies are switched and tuned through the plugin's options in the host's remark config, with no config file of its own",
@@ -160,7 +174,7 @@
         "id": "SLOP-0007",
         "label": "0007",
         "parent": "group-policy",
-        "colour": "#0284c7",
+        "colour": "#6366f1",
         "file": "0007-a-finding-fails-or-the-policy-is-off.md",
         "title": "A custom policy's finding is a fatal error, or the policy is off",
         "description": "Custom severities accept only error or off, and a Mermaid diagram that cannot be evaluated is an error too",
@@ -173,7 +187,7 @@
         "id": "SLOP-0008",
         "label": "0008",
         "parent": "group-rules",
-        "colour": "#6366f1",
+        "colour": "#059669",
         "file": "0008-rule-id-is-subsystem-category-and-short-name.md",
         "title": "A policy identifier is its subsystem, then a category word and a short name",
         "description": "Identifiers read subsystem/category-short-name, such as prose/sentence-one-per-line, never a number",
@@ -212,7 +226,7 @@
         "id": "SLOP-0011",
         "label": "0011",
         "parent": "group-quality",
-        "colour": "#65a30d",
+        "colour": "#0891b2",
         "file": "0011-code-complexity-is-gated-by-biome.md",
         "title": "Code complexity is gated by Biome rules that fail the build",
         "description": "Every Biome complexity rule runs at error, with cognitive complexity capped at 10, and bun run check fails past it",
@@ -225,7 +239,7 @@
         "id": "SLOP-0012",
         "label": "0012",
         "parent": "group-fixing",
-        "colour": "#059669",
+        "colour": "#db2777",
         "file": "0012-edits-splice-source-never-stringify.md",
         "title": "Fixes splice source ranges and the adapter never stringifies the tree",
         "description": "An edit replaces a source range, the compiler returns the edited source, and rounds repeat until no edit remains",
@@ -238,7 +252,7 @@
         "id": "SLOP-0013",
         "label": "0013",
         "parent": "group-fixing",
-        "colour": "#059669",
+        "colour": "#db2777",
         "file": "0013-a-fixer-refuses-when-unsure.md",
         "title": "A fixer offers no edit whenever the input is ambiguous",
         "description": "An unfixable case leaves the source untouched and the finding reported, never a best guess",
@@ -251,7 +265,7 @@
         "id": "SLOP-0014",
         "label": "0014",
         "parent": "group-fixing",
-        "colour": "#059669",
+        "colour": "#db2777",
         "file": "0014-every-edit-is-verified-before-it-is-exposed.md",
         "title": "Every edit is reparsed and compared with the original before a finding may carry it",
         "description": "An edit that changes visible words or structure beyond its declared change is withdrawn, alone and as a batch",
@@ -264,7 +278,7 @@
         "id": "SLOP-0015",
         "label": "0015",
         "parent": "group-fixing",
-        "colour": "#059669",
+        "colour": "#db2777",
         "file": "0015-every-edit-rides-on-a-visible-finding.md",
         "title": "An edit is applied only through a visible finding of a fixable policy",
         "description": "A fix travels on the diagnostic its check reports, so a passing or suppressed passage is never rewritten",
@@ -277,7 +291,7 @@
         "id": "SLOP-0016",
         "label": "0016",
         "parent": "group-testing",
-        "colour": "#0891b2",
+        "colour": "#d97706",
         "file": "0016-fix-behaviour-is-tested-on-real-inputs.md",
         "title": "Fix behaviour is proven by real-input tests of edits, refusals and stability",
         "description": "A fixer change is tested for its edit, untouched bytes, refusals, recheck and idempotence, with no mocks",
@@ -290,7 +304,7 @@
         "id": "SLOP-0017",
         "label": "0017",
         "parent": "group-rules",
-        "colour": "#6366f1",
+        "colour": "#059669",
         "file": "0017-budget-findings-are-never-autofixed.md",
         "title": "Sentence and paragraph budget findings are reported and never autofixed",
         "description": "The word and sentence budget policies have no fixer, because shortening or breaking prose is a decision about meaning",
@@ -303,7 +317,7 @@
         "id": "SLOP-0018",
         "label": "0018",
         "parent": "group-rules",
-        "colour": "#6366f1",
+        "colour": "#059669",
         "file": "0018-sentence-budget-finding-estimates-clauses.md",
         "title": "A sentence budget finding estimates clauses to guide a split",
         "description": "The clause count is the larger of marker words and Compromise verbs, and the message names a target sentence count",
@@ -316,7 +330,7 @@
         "id": "SLOP-0019",
         "label": "0019",
         "parent": "group-rules",
-        "colour": "#6366f1",
+        "colour": "#059669",
         "file": "0019-paragraph-budget-finding-suggests-breaks.md",
         "title": "A paragraph budget finding suggests breaks from lexical cohesion",
         "description": "Paragraphs over the sentence budget report topic groups, break points and content terms per sentence",
@@ -329,7 +343,7 @@
         "id": "SLOP-0020",
         "label": "0020",
         "parent": "group-rules",
-        "colour": "#6366f1",
+        "colour": "#059669",
         "file": "0020-em-dash-becomes-parentheses-or-colon.md",
         "title": "An em-dash pair becomes parentheses and a lone em-dash becomes a colon",
         "description": "punctuation-em-dash-in-prose rewrites only the two dash shapes whose replacement punctuation is unambiguous",
@@ -342,7 +356,7 @@
         "id": "SLOP-0021",
         "label": "0021",
         "parent": "group-rules",
-        "colour": "#6366f1",
+        "colour": "#059669",
         "file": "0021-comma-run-of-code-spans-is-a-hidden-list.md",
         "title": "A comma-joined run of three or more inline code spans is a hidden list",
         "description": "list-comma-code-run flags the run anywhere, and its fix promotes it only when it closes a sentence after a lead-in",
@@ -355,7 +369,7 @@
         "id": "SLOP-0022",
         "label": "0022",
         "parent": "group-mermaid",
-        "colour": "#d97706",
+        "colour": "#7c3aed",
         "file": "0022-diagrams-are-measured-by-mermaids-own-parsers.md",
         "title": "Every diagram is read through Mermaid's own parsers, never by scanning its text",
         "description": "Mermaid policies take nodes, edges, styles and shapes from Mermaid core and @mermaid-js/parser results",
@@ -368,7 +382,7 @@
         "id": "SLOP-0023",
         "label": "0023",
         "parent": "group-mermaid",
-        "colour": "#d97706",
+        "colour": "#7c3aed",
         "file": "0023-a-diagram-is-a-mermaid-code-node-of-the-host-tree.md",
         "title": "A diagram is a mermaid code node of the host's tree, mapped back to the source by line",
         "description": "Fences come from the mdast tree the remark host supplies, and findings map to absolute Markdown offsets",
@@ -381,7 +395,7 @@
         "id": "SLOP-0024",
         "label": "0024",
         "parent": "group-mermaid",
-        "colour": "#d97706",
+        "colour": "#7c3aed",
         "file": "0024-gaps-in-mermaids-parsers-get-the-narrowest-workaround.md",
         "title": "Where Mermaid exposes nothing, the narrowest workaround is used and refuses when it would guess",
         "description": "Source alignment, the zenuml detector and declaration reading are small workarounds that place only what is certain",
@@ -394,7 +408,7 @@
         "id": "SLOP-0025",
         "label": "0025",
         "parent": "group-mermaid",
-        "colour": "#d97706",
+        "colour": "#7c3aed",
         "file": "0025-colour-and-contrast-come-from-colorjs.md",
         "title": "Colour parsing, compositing and WCAG contrast come only from colorjs.io",
         "description": "No hand-written colour parser, luminance formula, alpha blend or contrast ratio",
@@ -407,7 +421,7 @@
         "id": "SLOP-0026",
         "label": "0026",
         "parent": "group-mermaid",
-        "colour": "#d97706",
+        "colour": "#7c3aed",
         "file": "0026-theme-colours-come-from-mermaids-theme-engine.md",
         "title": "Theme colours come from Mermaid's own theme engine on a pinned Mermaid version",
         "description": "Both light and dark theme variables are resolved by Mermaid itself, never copied into the package",
@@ -420,7 +434,7 @@
         "id": "SLOP-0027",
         "label": "0027",
         "parent": "group-mermaid",
-        "colour": "#d97706",
+        "colour": "#7c3aed",
         "file": "0027-the-page-canvas-is-a-rule-option-that-defaults-to-github.md",
         "title": "The page canvas is a contrast rule option that defaults to GitHub's light and dark pages",
         "description": "Page-backed surfaces are scored on an opaque canvas.light and canvas.dark the host may set",
@@ -433,7 +447,7 @@
         "id": "SLOP-0028",
         "label": "0028",
         "parent": "group-mermaid",
-        "colour": "#d97706",
+        "colour": "#7c3aed",
         "file": "0028-unmodelled-styling-is-an-error-never-a-guess.md",
         "title": "Styling the contrast audit cannot model is reported as an error, never scored by a guess",
         "description": "Custom themeCSS, unsupported modes and unmodelled surfaces report unauditable instead of passing silently",
@@ -446,7 +460,7 @@
         "id": "SLOP-0029",
         "label": "0029",
         "parent": "group-mermaid",
-        "colour": "#d97706",
+        "colour": "#7c3aed",
         "file": "0029-thresholds-are-rule-options-not-environment.md",
         "title": "Complexity thresholds are remark rule options, never environment variables",
         "description": "A density preset and numeric overrides come only from the plugin options a remark configuration commits",
@@ -459,7 +473,7 @@
         "id": "SLOP-0030",
         "label": "0030",
         "parent": "group-mermaid",
-        "colour": "#d97706",
+        "colour": "#7c3aed",
         "file": "0030-the-score-counts-what-a-reader-must-read.md",
         "title": "The visual complexity score counts what a reader must read, not every record the parser keeps",
         "description": "Markers, notes and control lines are left out, and boxes, blocks and attribute rows are counted",
@@ -472,7 +486,7 @@
         "id": "SLOP-0031",
         "label": "0031",
         "parent": "group-mermaid",
-        "colour": "#d97706",
+        "colour": "#7c3aed",
         "file": "0031-mermaid-policies-report-and-never-edit-a-diagram.md",
         "title": "Mermaid policies report findings with guidance and never edit a diagram",
         "description": "Contrast and complexity expose no fix, and a split plan is a recommendation a human applies",
@@ -485,7 +499,7 @@
         "id": "SLOP-0032",
         "label": "0032",
         "parent": "group-mermaid",
-        "colour": "#d97706",
+        "colour": "#7c3aed",
         "file": "0032-a-split-plan-is-verified-independently-and-by-reparse.md",
         "title": "A split plan is offered only after an independent contract and a reparse of every emitted source",
         "description": "The verifier recomputes the expected facts and parses each overview and detail again with Mermaid's parsers",
@@ -498,7 +512,7 @@
         "id": "SLOP-0033",
         "label": "0033",
         "parent": "group-mermaid",
-        "colour": "#d97706",
+        "colour": "#7c3aed",
         "file": "0033-a-split-plan-follows-the-authors-structure.md",
         "title": "A split plan folds the author's own structure first and refuses what it cannot draw faithfully",
         "description": "Author regions, decision regions, aggregates, echoing regions and twin lanes fold whole, and concurrency is refused",
@@ -511,7 +525,7 @@
         "id": "SLOP-0034",
         "label": "0034",
         "parent": "group-mermaid",
-        "colour": "#d97706",
+        "colour": "#7c3aed",
         "file": "0034-a-refused-plan-offers-the-list-or-matrix-that-reads-better.md",
         "title": "A dense mesh or an unsorted star gets no plan, and the finding offers the matrix or list that reads better",
         "description": "Shapes no fold can summarise are refused with a reason and a list or matrix built from the whole graph",
@@ -524,7 +538,7 @@
         "id": "SLOP-0035",
         "label": "0035",
         "parent": "group-mermaid",
-        "colour": "#d97706",
+        "colour": "#7c3aed",
         "file": "0035-a-plan-makes-the-fewest-folds-and-says-why-it-was-flagged.md",
         "title": "A split plan makes the fewest folds that meet its target, keeps groups even, and says why it was flagged",
         "description": "Rows drop before nodes fold, overviews stay above an even floor, and each plan states its measured size and target",
@@ -537,7 +551,7 @@
         "id": "SLOP-0036",
         "label": "0036",
         "parent": "group-mermaid",
-        "colour": "#d97706",
+        "colour": "#7c3aed",
         "file": "0036-author-families-keep-groups-apart.md",
         "title": "Label families the author wrote keep a suggested group to one family under the strict rules",
         "description": "Dotted namespaces, id prefixes and shared status stems are read as the author's grouping and are not mixed first",
@@ -550,7 +564,7 @@
         "id": "SLOP-0037",
         "label": "0037",
         "parent": "group-mermaid",
-        "colour": "#d97706",
+        "colour": "#7c3aed",
         "file": "0037-a-group-is-named-by-what-it-holds.md",
         "title": "A split plan names each group by what it holds, never by one arbitrary member",
         "description": "Regions, heads, families, lanes, ranges, fans, spans and member lists name a group before any single member does",
@@ -563,7 +577,7 @@
         "id": "SLOP-0038",
         "label": "0038",
         "parent": "group-mermaid",
-        "colour": "#d97706",
+        "colour": "#7c3aed",
         "file": "0038-a-stub-names-exactly-one-thing-and-draws-each-edge-once.md",
         "title": "A detail's stub text has exactly one reading, and each edge it stands for is drawn once",
         "description": "Stubs name their group as the overview shows it, share a box in flowcharts, and never repeat an edge",
@@ -576,12 +590,38 @@
         "id": "SLOP-0039",
         "label": "0039",
         "parent": "group-rules",
-        "colour": "#6366f1",
+        "colour": "#059669",
         "file": "0039-plain-word-runs-and-min-items.md",
         "title": "A long plain-word run is a hidden list, and every run rule takes a minItems option",
         "description": "list-comma-plain-run reports plain series from five items, and minItems sets each run rule's threshold",
         "status": "accepted",
         "tags": "rules, list, fixing, configuration"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0040",
+        "label": "0040",
+        "parent": "group-documentation",
+        "colour": "#d97706",
+        "file": "0040-mkdocs-includes-canonical-reference-documents.md",
+        "title": "The MkDocs site includes canonical reference documents at build time",
+        "description": "Task guides live in docs-site, while a build hook exposes the existing reference documents without duplicate sources",
+        "status": "accepted",
+        "tags": "documentation, tooling"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0041",
+        "label": "0041",
+        "parent": "group-cli",
+        "colour": "#0891b2",
+        "file": "0041-standalone-cli-runs-the-native-remark-engine.md",
+        "title": "The standalone CLI runs the native remark engine with explicit write controls",
+        "description": "A scoped binary supplies the remark engine, default policies and verified source edits",
+        "status": "accepted",
+        "tags": "cli, configuration, packaging, fixing"
       }
     },
     {

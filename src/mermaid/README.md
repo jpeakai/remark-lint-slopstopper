@@ -138,6 +138,6 @@ Sequence diagrams remain lintable but are not split because a graph projection w
 
 ## Verification
 
-Run the [package checks](../../README.md#validate-the-package) and inspect the [multiple-diagram corpus](../../examples/multiple-diagrams.md).
+Run the [package checks](../../README.md#develop) and inspect the [multiple-diagram corpus](../../examples/multiple-diagrams.md).
 Parser, contrast and queue changes need behaviour coverage for multiple fences, source positions, malformed diagrams and style isolation.
 Use the [revised corpus](../../examples/multiple-diagrams-fixed.md) to verify complete-document behaviour.

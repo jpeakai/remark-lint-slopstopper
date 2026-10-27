@@ -1,0 +1,33 @@
+id: SLOP-0040
+slug: mkdocs-includes-canonical-reference-documents
+plan_id: null
+title: The MkDocs site includes canonical reference documents at build time
+description: Task guides live in docs-site, while a build hook exposes the existing reference documents without duplicate sources
+status: accepted
+accepted_on: 2026-10-26
+last_changed_on: 2026-10-26
+tags: [documentation, tooling]
+
+enforced_in:
+  - docs-site/mkdocs.yml, which defines the reading order and strict link validation
+  - docs-site/hooks.py, which exposes canonical repository documents as build-time files
+  - pyproject.toml and uv.lock, which resolve the documentation and decision-rendering dependencies
+  - the site and site-serve targets in Makefile
+
+relates_to: []
+
+decision:
+  given: consumers need a navigable local site, while the rule and architecture references already have canonical homes
+  we_prefer: authored MkDocs guides under docs-site and build-time inclusion of canonical reference documents, with locked Python tooling
+  because: readers get a curated path from first use to reference without maintaining competing copies of the same contracts
+  unless: a document gains a different audience or purpose that warrants an independently authored page
+
+consequences:
+  pros:
+    - A strict build rejects missing internal pages and anchors.
+    - The local preview watches both guides and canonical reference documents.
+    - Existing relative document links remain local, while implementation links reach the repository browser.
+    - The Python project supplies decision-rendering dependencies through its own dependency group.
+  cons:
+    - Building the site needs uv and Python as well as the package's TypeScript tooling.
+    - The inclusion hook must be updated when a canonical reference document is added or moved.
