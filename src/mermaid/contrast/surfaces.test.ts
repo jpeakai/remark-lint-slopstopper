@@ -47,7 +47,7 @@ const fixtures: FamilyFixture[] = [
 for (const [family, body, themeVariables, settings = {}] of fixtures) {
   test(`${family} actual parser model and configured text surfaces`, async () => {
     const config = { ...settings, themeVariables };
-    const source = "```mermaid\n---\nconfig: " + JSON.stringify(config) + "\n---\n" + body + "\n```";
+    const source = `\`\`\`mermaid\n---\nconfig: ${JSON.stringify(config)}\n---\n${body}\n\`\`\``;
 
     const found = await analyzeMermaid(source);
 

@@ -1,7 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Readable, Writable } from "node:stream";
 import { test } from "node:test";
@@ -9,11 +8,19 @@ import { fileURLToPath } from "node:url";
 import { argumentsOf } from "./arguments.ts";
 import { run } from "./run.ts";
 
+const scratchRoot = fileURLToPath(new URL("../../tmp/", import.meta.url));
+
+async function scratchDir(prefix: string) {
+  await mkdir(scratchRoot, { recursive: true });
+
+  return mkdtemp(join(scratchRoot, prefix));
+}
+
 const main = fileURLToPath(new URL("./main.ts", import.meta.url));
 const plugin = new URL("../remark/plugin.ts", import.meta.url).href;
 
 async function fixture(work: (cwd: string) => Promise<void>) {
-  const cwd = await mkdtemp(join(tmpdir(), "slopstopper-cli-"));
+  const cwd = await scratchDir("slopstopper-cli-");
 
   try {
     await work(cwd);

@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { test } from "node:test";
+import { fileURLToPath } from "node:url";
 import type { Root } from "mdast";
 import remarkParse from "remark-parse";
 import remarkStringify from "remark-stringify";
@@ -12,8 +12,16 @@ import remarkSlopstopper from "../remark/plugin.ts";
 import { conceptVocabulary } from "./concepts.ts";
 import { createDocument } from "./context.ts";
 
+const scratchRoot = fileURLToPath(new URL("../../tmp/", import.meta.url));
+
+async function scratchDir(prefix: string) {
+  await mkdir(scratchRoot, { recursive: true });
+
+  return mkdtemp(join(scratchRoot, prefix));
+}
+
 test("only concept headings teach nouns; tables, definitions and code examples are ignored", async () => {
-  const cwd = await mkdtemp(join(tmpdir(), "slopstopper-concepts-"));
+  const cwd = await scratchDir("slopstopper-concepts-");
 
   try {
     await writeFile(
@@ -70,9 +78,9 @@ test("only concept headings teach nouns; tables, definitions and code examples a
 });
 
 test("concurrent project vocabularies do not mutate Compromise globally", async () => {
-  const cwd = await mkdtemp(join(tmpdir(), "slopstopper-concepts-"));
+  const cwd = await scratchDir("slopstopper-concepts-");
 
-  const empty = await mkdtemp(join(tmpdir(), "slopstopper-empty-"));
+  const empty = await scratchDir("slopstopper-empty-");
 
   try {
     await writeFile(join(cwd, "CONCEPTS.md"), "## CAN\n\nA transport envelope.\n");
@@ -94,7 +102,7 @@ test("concurrent project vocabularies do not mutate Compromise globally", async 
 });
 
 test("vocabulary reads are lazy, shared per context, and refreshed for new contexts", async () => {
-  const cwd = await mkdtemp(join(tmpdir(), "slopstopper-concepts-"));
+  const cwd = await scratchDir("slopstopper-concepts-");
 
   try {
     const document = createDocument("can handles requests.\n\nmay stores records.", { cwd });
@@ -121,7 +129,7 @@ test("vocabulary reads are lazy, shared per context, and refreshed for new conte
 });
 
 test("absent concepts are optional while real file access failures remain visible", async () => {
-  const cwd = await mkdtemp(join(tmpdir(), "slopstopper-concepts-"));
+  const cwd = await scratchDir("slopstopper-concepts-");
 
   try {
     assert.deepEqual(await conceptVocabulary(cwd)(), {});
@@ -137,7 +145,7 @@ test("absent concepts are optional while real file access failures remain visibl
 });
 
 test("remark uses VFile.cwd and keeps project vocabulary on reparsed fixer nodes", async () => {
-  const cwd = await mkdtemp(join(tmpdir(), "slopstopper-concepts-"));
+  const cwd = await scratchDir("slopstopper-concepts-");
 
   try {
     await writeFile(join(cwd, "CONCEPTS.md"), "## CAN\n\nA transport envelope.\n");
@@ -174,7 +182,7 @@ test("remark uses VFile.cwd and keeps project vocabulary on reparsed fixer nodes
 });
 
 test("disabled prose policies never read concepts and concurrent node requests share the vocabulary promise", async () => {
-  const cwd = await mkdtemp(join(tmpdir(), "slopstopper-concepts-"));
+  const cwd = await scratchDir("slopstopper-concepts-");
 
   try {
     const invalid = join(cwd, "not-a-directory");

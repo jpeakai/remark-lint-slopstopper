@@ -44,7 +44,7 @@ test("VCS includes official parser row, edge, group, and depth counts", async ()
   assert.equal(calculateComplexity(stats, thresholdsFrom({})).visual_complexity_score, 6.05);
 });
 test("over-threshold complexity includes verified split-plan recommendations", async () => {
-  const graph = "flowchart LR\n" + Array.from({ length: 25 }, (_, i) => `N${i}-->N${i + 1}`).join("\n");
+  const graph = `flowchart LR\n${Array.from({ length: 25 }, (_, i) => `N${i}-->N${i + 1}`).join("\n")}`;
 
   const found = await analyzeMermaid(fenced(graph), {
     complexity: { preset: "low-density" },
