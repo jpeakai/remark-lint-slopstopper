@@ -15,7 +15,7 @@ Lines marked *(defaulted)* come from the `standard` flavour rather than from wha
 - **Regenerate:** `make fix`, and `make ci` asserts the tree is clean afterwards
 - **Agent files:** `AGENTS.md` at root is canonical, and `CLAUDE.md` beside it holds only `@AGENTS.md`; no nested agent files
 - **Ticketing:** GitHub Issues, per `TICKETING.md`
-- **Changelog:** `CHANGELOG.md` at root, Keep a Changelog with SemVer, required at the first external consumer *(defaulted)*
+- **Changelog:** `CHANGELOG.md` at root, Keep a Changelog with SemVer, and its section for a version is that release's notes
 - **Proposals and RFCs:** not used *(defaulted)*
 
 ## Layout map
@@ -41,8 +41,8 @@ Lines marked *(defaulted)* come from the `standard` flavour rather than from wha
 | `docs/cli.md` | Standalone CLI flags, inputs, output and exit codes | Consumers | The CLI contract changes |
 | `docs-site/docs/` | Site landing page, task guides, examples and API summaries | Consumers | A user workflow or public contract changes |
 | `docs-site/mkdocs.yml`, `docs-site/hooks.py` | Site navigation and inclusion of canonical repository documents | Contributors | The reading surface changes |
-| `CHANGELOG.md` | Missing: release notes, required at the first external consumer | Consumers | A version is released |
-| `LICENSE` | Missing: the licence the package ships under | Consumers | The licence changes |
+| `CHANGELOG.md` | Release notes, one section per version | Consumers | A version is released |
+| `LICENSE` | The MIT licence the package ships under | Consumers | The licence changes |
 | `SECURITY.md` | Missing: how to report a vulnerability | Consumers | The reporting route changes |
 
 ## Naming

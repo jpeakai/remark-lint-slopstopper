@@ -151,3 +151,15 @@ For Mermaid changes, use the multi-diagram corpus and independently verify compl
 For documentation diagrams, run the published Mermaid parse, complexity and dual-theme contrast gate.
 
 Update the [package architecture](ARCHITECTURE.md) for shared contract changes, the [Mermaid README](src/mermaid/README.md) for subsystem changes, and the [splitting README](src/mermaid/splitting/README.md) for planner changes.
+
+## Release a version
+
+Releases publish to npm from GitHub Actions through Trusted Publishing, so no npm token is stored anywhere.
+
+1. Bump `version` in `package.json`.
+2. Move the `Unreleased` entries in `CHANGELOG.md` under a `## x.y.z - date` heading.
+3. Merge both to `main`.
+4. Run `gh workflow run publish.yml --ref main`.
+
+The workflow refuses a version that is already tagged or already on npm.
+It drafts a GitHub release from the version's changelog section, publishes to npm, then publishes the release.
