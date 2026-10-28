@@ -72,7 +72,7 @@
     "lint": "biome check --error-on-warnings . && bun run lint:spacing",
     "lint:spacing": "eslint index.ts src --max-warnings 0",
     "lint:dead-code": "knip --config config/knip.json && knip --config config/knip.json --production --strict",
-    "check": "bun run typecheck && bun run lint && bun run lint:dead-code && bun run test"
+    "check": "bun run typecheck && bun run build && bun run lint && bun run lint:dead-code && bun run test"
   },
   "dependencies": {
     "@mermaid-js/parser": "1.2.1",
