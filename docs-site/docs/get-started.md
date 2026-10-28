@@ -1,16 +1,15 @@
 # Check your first Markdown file
 
 Run the standalone CLI, then apply a verified sentence-layout edit.
-You need Bun 1.3 or newer and a local checkout of this package.
+You need Node.js or Bun, and a project to lint.
 
-## 1. Build the CLI
+## 1. Install the CLI
 
-From the checkout root, run:
+From your project root, run:
 
 ```sh
-bun install
-bun run build
-node dist/cli.js --help
+npm install --save-dev @jpeakai/remark-lint-slopstopper
+npx remark-lint-slopstopper --help
 ```
 
 The CLI supplies its remark engine and default policies.
@@ -27,7 +26,7 @@ The parser reads the file. The reporter prints a finding.
 Run:
 
 ```sh
-node dist/cli.js --no-config sample.md
+npx remark-lint-slopstopper --no-config sample.md
 ```
 
 The command exits with code `1` and reports `sentence-one-per-line`.
@@ -39,8 +38,8 @@ The finding includes the file position and rule name.
 Run:
 
 ```sh
-node dist/cli.js --no-config --fix sample.md
-node dist/cli.js --no-config sample.md
+npx remark-lint-slopstopper --no-config --fix sample.md
+npx remark-lint-slopstopper --no-config sample.md
 ```
 
 The second command exits with code `0`.
@@ -53,10 +52,9 @@ The reporter prints a finding.
 
 The source line changes while the rendered paragraph stays together.
 
-## Use the packaged command
+## Run without installing
 
-The scoped package is not yet published to npm.
-After publication, you can run the same CLI without a checkout:
+The scoped name runs the same CLI without adding it to a project:
 
 ```sh
 bunx @jpeakai/remark-lint-slopstopper --help

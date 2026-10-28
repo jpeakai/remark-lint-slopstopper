@@ -8,13 +8,11 @@ Requires Node.js 24 or newer, or Bun 1.3 or newer.
 
 ## Install
 
-The package is not currently published to npm.
-Build the local checkout first:
+Add the package to the project you want to lint:
 
 ```sh
-bun install
-bun run build
-node dist/cli.js --help
+npm install --save-dev @jpeakai/remark-lint-slopstopper
+bun add --dev @jpeakai/remark-lint-slopstopper
 ```
 
 ## Run the standalone CLI
@@ -22,15 +20,16 @@ node dist/cli.js --help
 The standalone CLI enables the recommended Markdown rules and all Custom Policies without a config:
 
 ```sh
-node dist/cli.js docs/
-node dist/cli.js --fix docs/
-node dist/cli.js --prose-only --max-words 20 --json README.md
+npx remark-lint-slopstopper docs/
+npx remark-lint-slopstopper --fix docs/
+npx remark-lint-slopstopper --prose-only --max-words 20 --json README.md
 ```
 
-After publication, run the package directly:
+Run it without installing through the scoped name:
 
 ```sh
 bunx @jpeakai/remark-lint-slopstopper --help
+npx @jpeakai/remark-lint-slopstopper --help
 ```
 
 See [the CLI reference](docs/cli.md) for flags, configuration precedence, input discovery and exit codes.
@@ -72,16 +71,17 @@ See [RULES.md](RULES.md) for policy behaviour, defaults and fixer limits.
 
 ## Run through remark-cli
 
-The package ships TypeScript source, so pass `--bun` to run `remark-cli` on the Bun runtime:
+The package ships JavaScript builds, so `remark-cli` runs it on Node or Bun:
 
 ```sh
-bunx --bun remark-cli --no-stdout --frail docs/
+npx remark-cli --no-stdout --frail docs/
 ```
 
-remark loads `.remarkrc.mjs` from the working directory. Pass `--rc-path` to use another config, and `--output` to write fixes back to the files:
+remark loads `.remarkrc.mjs` from the working directory.
+Pass `--rc-path` to use another config, and `--output` to write fixes back to the files:
 
 ```sh
-bunx --bun remark-cli --rc-path examples/remark-fix.config.mjs --output docs/
+npx remark-cli --rc-path examples/remark-fix.config.mjs --output docs/
 ```
 
 This optional route needs both this package and `remark-cli` installed in the linted project.

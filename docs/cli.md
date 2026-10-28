@@ -5,30 +5,26 @@ It supplies the engine itself, so a separate `remark-cli` installation is option
 
 ## Run the CLI
 
-From this checkout, build and inspect the CLI:
+Install the package, then run its binary:
 
 ```sh
-bun install
-bun run build
-node dist/cli.js --help
+npm install --save-dev @jpeakai/remark-lint-slopstopper
+npx remark-lint-slopstopper --help
 ```
 
-After the scoped package is published to npm, the equivalent standalone command is:
+Run it without installing through the scoped name:
 
 ```sh
-bunx @jpeakai/remark-lint-slopstopper --help
 bunx @jpeakai/remark-lint-slopstopper docs/
+npx @jpeakai/remark-lint-slopstopper docs/
 ```
-
-The package is not yet published.
-You can install a locally packed tarball to try the package binary before publication.
 
 ## Select inputs
 
 Pass files, directories or quoted globs:
 
 ```sh
-node dist/cli.js README.md docs/ "guides/**/*.md"
+npx remark-lint-slopstopper README.md docs/ "guides/**/*.md"
 ```
 
 Directory discovery includes Markdown extensions and uses `.remarkignore`.
@@ -37,7 +33,7 @@ With no file arguments, the CLI reads standard input.
 Use `--stdin-filepath` to give that input a path for diagnostics and configuration lookup:
 
 ```sh
-printf 'First sentence. Second sentence.\n' | node dist/cli.js --json --stdin-filepath draft.md
+printf 'First sentence. Second sentence.\n' | npx remark-lint-slopstopper --json --stdin-filepath draft.md
 ```
 
 Standard input is check-only.
@@ -82,7 +78,7 @@ Native lint comments suppress both findings and their edit eligibility.
 Run a fix and review its diff:
 
 ```sh
-node dist/cli.js --fix docs/
+npx remark-lint-slopstopper --fix docs/
 git diff -- docs/
 ```
 

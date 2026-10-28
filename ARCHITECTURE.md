@@ -17,8 +17,8 @@ Explicit fix mode persists the adapter's verified source after processing, inclu
 A processing exception blocks writes for that file.
 The CLI resolves each output path against its VFile working directory.
 
-`bun run build` compiles the standalone entry point into JavaScript with external runtime dependencies.
-The npm package includes that binary and the existing TypeScript library entry points.
+`bun run build` compiles the CLI and every library entry point into JavaScript with external runtime dependencies, and emits their type declarations.
+Each `exports` entry sends Bun to the TypeScript source, and sends Node and TypeScript to the build.
 See [the CLI reference](docs/cli.md) for user-facing contracts.
 
 ## Package boundaries
