@@ -7,6 +7,13 @@ Anything under `Unreleased` is on `main` but not yet released.
 
 ## Unreleased
 
+## 0.1.1 - 2026-10-28
+
+### Fixed
+
+- The `bin` entry is written in the form npm expects, so publishing no longer rewrites it.
+- The package's own test suite no longer writes scratch files to the system temp directory.
+
 ## 0.1.0 - 2026-10-28
 
 ### Added
