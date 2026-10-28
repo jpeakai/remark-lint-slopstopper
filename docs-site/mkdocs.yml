@@ -1,5 +1,8 @@
 site_name: Slopstopper
 site_description: Markdown policies for concise prose and readable Mermaid diagrams.
+site_url: https://jpeakai.github.io/remark-lint-slopstopper/
+repo_url: https://github.com/jpeakai/remark-lint-slopstopper
+repo_name: jpeakai/remark-lint-slopstopper
 docs_dir: docs
 site_dir: ../tmp/site
 strict: true

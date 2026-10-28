@@ -94,10 +94,11 @@ bun install
 bun run check
 ```
 
-## Preview the documentation
+## Read the documentation
 
-Run `make site-serve` and open <http://127.0.0.1:8010/>.
-The site includes guides, examples, rules, architecture and Decision Records.
+The [documentation site](https://jpeakai.github.io/remark-lint-slopstopper/) describes the latest release.
+It includes guides, examples, rules, architecture and Decision Records.
+To preview local edits, run `make site-serve` and open <http://127.0.0.1:8010/>.
 See [the site workflow](docs/documentation-site.md) for build and editing commands.
 
 See [architecture](ARCHITECTURE.md), [contributing](CONTRIBUTING.md), [Mermaid analysis](src/mermaid/README.md), and [split planning](src/mermaid/splitting/README.md).

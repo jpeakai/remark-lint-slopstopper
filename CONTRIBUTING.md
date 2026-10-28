@@ -163,3 +163,4 @@ Releases publish to npm from GitHub Actions through Trusted Publishing, so no np
 
 The workflow refuses a version that is already tagged or already on npm.
 It drafts a GitHub release from the version's changelog section, publishes to npm, then publishes the release.
+A successful release then deploys the documentation site.

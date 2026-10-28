@@ -27,6 +27,12 @@ Open <http://127.0.0.1:8010/>.
 The server watches authored site pages and the canonical documents it includes.
 Stop it with Control-C.
 
+## Publish the site
+
+The `Docs` workflow builds the site on every push and pull request, as a check.
+It deploys to GitHub Pages only after the `Publish` workflow releases a version, so the live site always matches the latest release.
+To redeploy without a release, run `gh workflow run docs.yml --ref main`.
+
 ## Choose the source to edit
 
 | Content | Edit here |

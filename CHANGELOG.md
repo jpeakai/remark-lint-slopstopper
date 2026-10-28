@@ -7,6 +7,13 @@ Anything under `Unreleased` is on `main` but not yet released.
 
 ## Unreleased
 
+## 0.1.2 - 2026-10-28
+
+### Changed
+
+- The README and CLI guides describe installing the published package, and `remark-cli` runs it on Node without `--bun`.
+- The package homepage is the documentation site, which now deploys with each release.
+
 ## 0.1.1 - 2026-10-28
 
 ### Fixed
