@@ -60,7 +60,7 @@ async function renderDiagram(diagram, version) {
 function scheduleRender() {
   const version = ++revision;
 
-  dialog.close();
+  closeDiagram();
   queue = queue.then(async () => {
     if (version !== revision) {
       return;
@@ -133,12 +133,14 @@ function openDiagram(preview, invoker) {
   fit();
 }
 
-dialog.addEventListener("close", () => {
+function restoreActiveDiagram() {
   if (!active) {
     return;
   }
 
   const { svg, preview, invoker, style } = active;
+
+  active = undefined;
 
   if (style === null) {
     svg.removeAttribute("style");
@@ -148,7 +150,17 @@ dialog.addEventListener("close", () => {
 
   preview.replaceChildren(svg);
   invoker.focus({ preventScroll: true });
-  active = undefined;
+}
+
+function closeDiagram() {
+  dialog.close();
+  restoreActiveDiagram();
+}
+
+dialog.addEventListener("close", () => {
+  if (!dialog.open) {
+    restoreActiveDiagram();
+  }
 });
 
 const actions = {
@@ -156,7 +168,7 @@ const actions = {
   out: () => zoom(scale / 1.25),
   fit,
   actual: () => zoom(1),
-  close: () => dialog.close(),
+  close: closeDiagram,
 };
 
 for (const button of dialog.querySelectorAll("[data-action]")) {
