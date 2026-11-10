@@ -1,6 +1,6 @@
 # Mermaid findings
 
-Browse the [diagram gallery](gallery/index.md) for individual before/after pages grouped by diagram family.
+Browse [Examples](../examples/index.md) for individual visual Before/After pages.
 
 Mermaid policies check diagram code nodes in the host tree.
 Their findings provide guidance while leaving diagram source unchanged.

@@ -113,10 +113,10 @@ nav:
       - Teach project vocabulary: guides/vocabulary.md
       - Run checks in CI: guides/ci.md
       - Troubleshoot findings: guides/troubleshooting.md
+      - Read diagram findings: guides/diagram-findings.md
   - Examples:
       - examples/index.md
       - Prose before and after: examples/prose.md
-      - Mermaid findings: examples/mermaid.md
   - Reference:
       - reference/index.md
       - Standalone CLI: docs/cli.md
