@@ -42,7 +42,7 @@ export default [
     ],
   },
   {
-    files: ["index.ts", "src/**/*.ts"],
+    files: ["index.ts", "src/**/*.ts", "examples/scripts/**/*.ts"],
     languageOptions: { parser },
     plugins: { "@stylistic": stylistic },
     // Only blank-line placement belongs here. Biome owns every other rule.

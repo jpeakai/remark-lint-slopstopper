@@ -1,9 +1,11 @@
-.PHONY: fix ci site site-serve
+.PHONY: fix ci site site-serve site-assets
 
 # Keep tool caches inside the checkout, including when run from a fresh shell.
 export UV_CACHE_DIR := $(CURDIR)/node_modules/.cache/uv
 export UV_PROJECT_ENVIRONMENT := $(CURDIR)/node_modules/.cache/docs-venv
 export TMPDIR := $(CURDIR)/node_modules/.cache/tmp
+export BUN_INSTALL_CACHE_DIR := $(CURDIR)/node_modules/.cache/bun
+export npm_config_cache := $(CURDIR)/node_modules/.cache/npm
 
 RENDER := uv run --locked --only-group adr python adrs/okf_render.py
 MKDOCS := uv run --locked --only-group docs mkdocs
@@ -24,8 +26,12 @@ ci: fix
 tooling-dirs:
 	mkdir -p $(TMPDIR) $(UV_CACHE_DIR)
 
-site: | tooling-dirs
+site-assets: | tooling-dirs
+	bun build docs-site/diagrams.js --outdir tmp/site-assets --target browser --splitting --minify
+	cp node_modules/mermaid-site/LICENSE tmp/site-assets/mermaid-LICENSE.txt
+
+site: site-assets
 	$(MKDOCS) build --strict --config-file docs-site/mkdocs.yml
 
-site-serve: | tooling-dirs
+site-serve: site-assets
 	$(MKDOCS) serve --config-file docs-site/mkdocs.yml

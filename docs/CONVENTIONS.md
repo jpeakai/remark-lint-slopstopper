@@ -32,7 +32,9 @@ Lines marked *(defaulted)* come from the `standard` flavour rather than from wha
 | `RULES.md` | Reference for every lint rule, its options and its verified examples | Consumers | A rule, option or default changes |
 | `TICKETING.md` | How work is tracked in GitHub Issues | Contributors and Agents | The ticketing workflow changes |
 | `src/**/README.md` | Architecture of the subsystem in that directory | Contributors | That subsystem's design changes |
-| `examples/` | Runnable remark configs and sample markdown fixtures | Consumers | An entry point or option changes |
+| `examples/` | Runnable remark configs, numbered diagram comparisons and repair guidance | Consumers | An entry point, option or example changes |
+| `examples/scripts/` | Diagram repair runner and local skill selection | Contributors | The repair workflow changes |
+| `src/mermaid/fixtures/` | Aggregate regression inputs for whole-document analysis | Contributors | A tested contract changes |
 | `adrs/*.yml` | Immutable accepted decisions, authored as data | Both | A binding decision is made |
 | `adrs/record.schema.json`, `adrs/okf_render.py`, `adrs/templates/` | The bundle's schema, templates and generator | Contributors | The record shape or rendering changes |
 | `adrs/*.md`, `adrs/graph.*` | Generated reading surface for those records | Both | Never edited, only regenerated |
@@ -41,6 +43,7 @@ Lines marked *(defaulted)* come from the `standard` flavour rather than from wha
 | `docs/cli.md` | Standalone CLI flags, inputs, output and exit codes | Consumers | The CLI contract changes |
 | `docs-site/docs/` | Site landing page, task guides, examples and API summaries | Consumers | A user workflow or public contract changes |
 | `docs-site/mkdocs.yml`, `docs-site/hooks.py` | Site navigation and inclusion of canonical repository documents | Contributors | The reading surface changes |
+| `docs-site/diagrams.js` | Browser rendering and the enlarged diagram viewer | Consumers | Diagram interaction changes |
 | `CHANGELOG.md` | Release notes, one section per version | Consumers | A version is released |
 | `LICENSE` | The MIT licence the package ships under | Consumers | The licence changes |
 | `SECURITY.md` | Missing: how to report a vulnerability | Consumers | The reporting route changes |

@@ -5,7 +5,7 @@ import { calculateComplexity, configFromPreset } from "../complexity/metrics.ts"
 import { extractStats } from "../parsing/statistics.ts";
 import { type SplitPlan, splitOutcome } from "./index.ts";
 
-const document = readFileSync(new URL("../../../examples/multiple-diagrams.md", import.meta.url), "utf8");
+const document = readFileSync(new URL("../fixtures/multiple-diagrams.md", import.meta.url), "utf8");
 const [architecture, decisions] = [...document.matchAll(/^```mermaid\n([\s\S]*?)\n```/gm)].map((m) => m[1]);
 
 // Independent expected values from the upstream summarisation page and its

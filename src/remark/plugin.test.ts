@@ -240,7 +240,7 @@ test("frontmatter comment text cannot suppress document policies", async () => {
 });
 
 test("multiple realistic diagrams retain separate scores, positions and styles", async () => {
-  const source = readFileSync(new URL("../../examples/multiple-diagrams.md", import.meta.url), "utf8");
+  const source = readFileSync(new URL("../mermaid/fixtures/multiple-diagrams.md", import.meta.url), "utf8");
   const rules = Object.fromEntries(RULES.map((id) => [id.split("/")[1], id.startsWith("mermaid/")]));
 
   const file = await processor(false, rules).process(source);

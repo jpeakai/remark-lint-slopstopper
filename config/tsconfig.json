@@ -12,6 +12,6 @@
     "resolveJsonModule": true,
     "types": ["node", "bun"]
   },
-  "include": ["../index.ts", "../src/**/*.ts"],
+  "include": ["../index.ts", "../src/**/*.ts", "../examples/scripts/**/*.ts"],
   "exclude": ["../node_modules"]
 }
