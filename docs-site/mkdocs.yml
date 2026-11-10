@@ -23,6 +23,8 @@ watch:
   - ../src/mermaid/README.md
   - ../src/mermaid/splitting/README.md
   - ../adrs
+  - ../examples
+  - ../tmp/site-assets
 
 theme:
   name: material
@@ -66,6 +68,10 @@ extra:
 extra_css:
   - assets/site.css
 
+extra_javascript:
+  - path: assets/diagrams.js
+    type: module
+
 markdown_extensions:
   admonition:
   attr_list:
@@ -82,6 +88,9 @@ markdown_extensions:
       - name: mermaid
         class: mermaid
         format: !!python/name:pymdownx.superfences.fence_code_format
+      - name: example-mermaid
+        class: example-mermaid
+        format: !!python/name:pymdownx.superfences.fence_code_format
   pymdownx.tabbed:
     alternate_style: true
 
@@ -96,6 +105,7 @@ validation:
 nav:
   - Home: index.md
   - Get started: get-started.md
+  - Rules: RULES.md
   - Guides:
       - guides/index.md
       - Configure policies: guides/configuration.md
@@ -110,7 +120,6 @@ nav:
   - Reference:
       - reference/index.md
       - Standalone CLI: docs/cli.md
-      - Rules: RULES.md
       - Configuration: reference/configuration.md
       - Document API: reference/document-api.md
       - Glossary: GLOSSARY.md

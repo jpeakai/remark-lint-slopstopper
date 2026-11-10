@@ -157,3 +157,118 @@ body {
     margin-bottom: 0.5rem;
   }
 }
+
+/* Comparison diagrams keep their own theme-resolved text and canvas. */
+[data-md-color-scheme="default"] {
+  --diagram-canvas: #fff;
+}
+[data-md-color-scheme="slate"] {
+  --diagram-canvas: #0d1117;
+}
+.md-typeset .example-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  align-items: start;
+}
+.md-typeset .example-panel {
+  min-width: 0;
+  padding: 0.8rem;
+  border: 1px solid var(--site-border);
+  border-radius: 0.6rem;
+}
+.md-typeset .example-panel > h2:first-child {
+  margin-top: 0;
+}
+.md-typeset .example-figure {
+  display: block;
+  margin: 1rem 0;
+  text-align: left;
+}
+.diagram-preview {
+  min-height: 4rem;
+  padding: 0.5rem;
+  overflow: auto;
+  background: var(--diagram-canvas);
+  border: 1px solid var(--site-border);
+  border-radius: 0.4rem;
+}
+.diagram-preview svg {
+  display: block;
+  margin: auto;
+}
+.diagram-error {
+  color: var(--md-default-fg-color);
+  font-size: 0.7rem;
+  white-space: pre-wrap;
+}
+.diagram-expand,
+.diagram-toolbar button {
+  padding: 0.45rem 0.65rem;
+  border: 1px solid var(--site-border);
+  border-radius: 0.3rem;
+  color: var(--md-default-fg-color);
+  background: var(--site-panel);
+  cursor: pointer;
+  font: inherit;
+}
+.diagram-expand {
+  margin: 0.4rem 0;
+}
+.diagram-expand:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.diagram-expand:focus-visible,
+.diagram-toolbar button:focus-visible {
+  outline: 2px solid var(--site-heading);
+  outline-offset: 2px;
+}
+.diagram-dialog {
+  width: 94vw;
+  height: 92vh;
+  max-width: none;
+  max-height: none;
+  padding: 0;
+  border: 1px solid var(--site-border);
+  border-radius: 0.6rem;
+  color: var(--md-default-fg-color);
+  background: var(--diagram-canvas);
+}
+.diagram-dialog[open] {
+  display: flex;
+  flex-direction: column;
+}
+.diagram-dialog::backdrop {
+  background: rgb(0 0 0 / 65%);
+}
+.diagram-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem;
+  border-bottom: 1px solid var(--site-border);
+  background: var(--site-panel);
+}
+.diagram-toolbar output {
+  min-width: 4ch;
+  text-align: center;
+}
+.diagram-toolbar button:last-child {
+  margin-left: auto;
+}
+.diagram-viewport {
+  flex: 1;
+  min-height: 0;
+  padding: 1rem;
+  overflow: auto;
+}
+.diagram-content {
+  margin: auto;
+}
+@media (max-width: 60em) {
+  .md-typeset .example-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

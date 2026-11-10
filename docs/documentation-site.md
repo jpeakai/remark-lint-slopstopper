@@ -14,6 +14,8 @@ make site
 The strict build writes to `tmp/site/`.
 Broken page links and missing anchors fail the build.
 Python dependencies are resolved from `uv.lock`.
+The build bundles Mermaid 12.2.0 for the comparison gallery from the public `mermaid-site` development dependency.
+This browser renderer is independent of the package's pinned analysis engine.
 
 ## Serve a local preview
 
@@ -23,9 +25,24 @@ Run:
 make site-serve
 ```
 
-Open <http://127.0.0.1:8010/>.
+Open <http://127.0.0.1:8010/remark-lint-slopstopper/>.
 The server watches authored site pages and the canonical documents it includes.
 Stop it with Control-C.
+Changes to `examples/` regenerate the gallery pages automatically.
+After editing `docs-site/diagrams.js`, run `make site-assets`; the preview watches the resulting bundle.
+
+## Review diagram examples
+
+Open **Examples → Diagram gallery** for the family index and individual comparison pages.
+Each page shows the original and revision, Markdown downloads, source disclosure and an enlarged viewer with zoom controls.
+The page theme selects the light or dark Mermaid theme unless a diagram pins its own theme.
+The gallery uses Mermaid's own SVG styling rather than Material's text-colour overrides.
+Deliberately malformed originals display a rendering error while leaving their source available.
+
+The numbered folders under `examples/` are canonical gallery inputs.
+The build generates pages in memory; edit `diagram.md` or `diagram-fixed.md`, not generated HTML.
+Use **jpai-essentials:mermaidjs-diagrams** from **jpeakai/skills** for repair guidance.
+See [the example guide](../examples/README.md) for the repair workflow and skill selection.
 
 ## Publish the site
 
@@ -44,6 +61,8 @@ To redeploy without a release, run `gh workflow run docs.yml --ref main`.
 | Accepted decisions | The YAML sources under `adrs/`, then `make fix` |
 | Navigation and Markdown extensions | `docs-site/mkdocs.yml` |
 | Theme colours and layout | `docs-site/docs/assets/site.css` |
+| Diagram comparisons and source downloads | `examples/*/diagram.md` and `diagram-fixed.md` |
+| Diagram rendering and zoom controls | `docs-site/diagrams.js` |
 
 The `docs-site/hooks.py` hook exposes canonical pages as build-time files while preserving their relative paths.
 Links to other published documents stay local.

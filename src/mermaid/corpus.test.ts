@@ -17,7 +17,7 @@ import { extractGraph } from "./parsing/graph.ts";
 import { extractStats } from "./parsing/statistics.ts";
 import { type SplitPlan, splitOutcome } from "./splitting/index.ts";
 
-const read = (name: string) => readFileSync(new URL(`../../examples/${name}`, import.meta.url), "utf8");
+const read = (name: string) => readFileSync(new URL(`./fixtures/${name}`, import.meta.url), "utf8");
 const initial = read("multiple-diagrams.md");
 const improved = read("multiple-diagrams-fixed.md");
 const before = fences(createDocument(initial));
