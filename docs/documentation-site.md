@@ -33,7 +33,7 @@ After editing `docs-site/diagrams.js`, run `make site-assets`; the preview watch
 
 ## Review diagram examples
 
-Open **Examples → Diagram gallery** for the family index and individual comparison pages.
+Open **Examples** for the diagram index and its individual comparison subpages.
 Each page shows the original and revision, Markdown downloads, source disclosure and an enlarged viewer with zoom controls.
 The page theme selects the light or dark Mermaid theme unless a diagram pins its own theme.
 The gallery uses Mermaid's own SVG styling rather than Material's text-colour overrides.

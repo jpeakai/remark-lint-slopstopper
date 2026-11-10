@@ -1,7 +1,6 @@
 """Expose canonical repository documents without maintaining a second copy."""
 
 from pathlib import Path
-from collections import defaultdict
 import re
 from urllib.parse import urlsplit
 
@@ -71,21 +70,24 @@ def example_panel(path, side):
 def example_page(folder, previous, following):
     title = (folder / "diagram.md").read_text().splitlines()[0].removeprefix("# ")
     aspect = folder.name.split("--", 2)[2].replace("-", " ")
-    links = ["[All diagrams](index.md)"]
+    links = ["[All examples](index.md)"]
     for label, name in (("Previous", previous), ("Next", following)):
         if name:
             links.append(f"[{label}]({name}.md)")
     downloads = []
     for side, file in (("before", "diagram.md"), ("after", "diagram-fixed.md")):
-        downloads.append(f'[Download {side} Markdown](../../assets/examples/{folder.name}/{file}.txt)'
+        downloads.append(f'[Download {side} Markdown](../assets/examples/{folder.name}/{file}.txt)'
                          f'{{ download="{file}" }}')
-    return f"""# {title}
+    return f"""---
+hide:
+  - toc
+---
+
+# {title}
 
 {' · '.join(links)}
 
 Demonstrates **{aspect}**.
-The original deliberately exercises lint findings. The comparison is a manual revision for review.
-Rendering uses Mermaid 12.2.0, separately from the package's analysis engine.
 
 {' · '.join(downloads)}
 
@@ -100,34 +102,39 @@ Rendering uses Mermaid 12.2.0, separately from the package's analysis engine.
 
 
 def add_examples(files, config):
-    groups = defaultdict(list)
     folders = example_folders()
-    index = ["# Diagram gallery", "",
-             "Compare original and revised diagrams by family. Open a diagram to zoom, or expand its source.", "",
-             "The original fixtures intentionally include failures. Rendering errors remain visible beside their source.", "",
-             "Use **jpai-essentials:mermaidjs-diagrams** from **jpeakai/skills** for repair and styling guidance.", "",
-             "The [example guide](../README.md) describes the files and repair workflow.", ""]
+    navigation = []
     for position, folder in enumerate(folders):
-        family = folder.name.split("--")[0].split("-", 1)[1]
         title = (folder / "diagram.md").read_text().splitlines()[0].removeprefix("# ")
-        path = f"examples/gallery/{folder.name}.md"
-        groups[family].append({title: path})
+        path = f"examples/{folder.name}.md"
+        navigation.append({title: path})
         previous = folders[position - 1].name if position else None
         following = folders[position + 1].name if position + 1 < len(folders) else None
         files.append(File.generated(config, path, content=example_page(folder, previous, following)))
+        files.append(File.generated(config, f"examples/gallery/{folder.name}/index.html",
+                                    content=redirect(f"../../{folder.name}/")))
         for name in ("diagram.md", "diagram-fixed.md"):
             files.append(File.generated(config, f"assets/examples/{folder.name}/{name}.txt",
                                         content=(folder / name).read_bytes()))
-    for family, entries in groups.items():
-        index.extend([f"## {family}", ""])
-        for entry in entries:
-            title, path = next(iter(entry.items()))
-            index.append(f"- [{title}]({Path(path).name})")
-        index.append("")
-    files.append(File.generated(config, "examples/gallery/index.md", content="\n".join(index)))
-    files.append(File.generated(config, "examples/README.md",
-                                content=source_links((ROOT / "examples/README.md").read_text(), "examples/README.md", set())))
+    files.append(File.generated(config, "examples/gallery/index.html", content=redirect("../")))
+    files.append(File.generated(config, "examples/mermaid/index.html", content=redirect("../")))
     examples = next(section["Examples"] for section in config["nav"] if "Examples" in section)
-    examples[:] = [section for section in examples if not isinstance(section, dict) or "Diagram gallery" not in section]
-    examples.append({"Diagram gallery": ["examples/gallery/index.md",
-                                        *({family: entries} for family, entries in groups.items())]})
+    examples[:] = ["examples/index.md", {"Prose before and after": "examples/prose.md"}, *navigation]
+
+
+def redirect(target):
+    return (f'<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="0;url={target}">'
+            f'<title>Examples</title><a href="{target}">Open examples</a>')
+
+
+def on_page_markdown(markdown, page, **kwargs):
+    if page.file.src_uri != "examples/index.md":
+        return markdown
+    cards = ['<div class="grid cards" markdown>', ""]
+    for folder in example_folders():
+        title = (folder / "diagram.md").read_text().splitlines()[0].removeprefix("# ")
+        family, _, aspect = folder.name.split("--", 2)
+        cards.extend([f'- **[{title}]({folder.name}.md)**', "",
+                      f'    {family.split("-", 1)[1]}: {aspect.replace("-", " ")}.', ""])
+    cards.append('</div>')
+    return markdown + "\n\n" + "\n".join(cards)

@@ -79,7 +79,7 @@ Mermaid policies inspect text contrast in light and dark themes and measure visu
 A finding can include a verified Split Plan when a diagram has useful internal boundaries.
 Diagrams remain unchanged in fix mode.
 
-See [Mermaid findings](examples/mermaid.md) for examples and the [rule reference](RULES.md#mermaid-text-contrast) for limits.
+See [diagram examples](examples/index.md) for visual Before/After pairs and the [rule reference](RULES.md#mermaid-text-contrast) for limits.
 
 ## Runtime and scope
 

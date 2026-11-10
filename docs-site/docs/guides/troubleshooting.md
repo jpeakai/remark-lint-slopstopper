@@ -28,4 +28,4 @@ A Split Plan is offered only when its checks pass.
 Some graphs are clearer as lists or matrices.
 Sequence diagrams retain message order and are not split.
 
-See [Mermaid findings](../examples/mermaid.md) and [split planning](../src/mermaid/splitting/README.md) for the supported boundaries.
+See [diagram findings](diagram-findings.md) and [split planning](../src/mermaid/splitting/README.md) for the supported boundaries.

@@ -1,14 +1,8 @@
 # Examples
 
-Compare an input with its result before applying fixes to your documents.
+Choose a diagram below to open its **Before** and **After** views side by side.
+Each example has its own page directly under Examples.
+Use **Enlarge diagram** to zoom, or expand **Mermaid source** to inspect its definition.
+Switch the site theme to compare light and dark rendering.
 
-| Topic | What the examples show |
-| --- | --- |
-| [Prose before and after](prose.md) | Sentence layout, hidden lists, punctuation and refused edits |
-| [Mermaid findings](mermaid.md) | Contrast and complexity findings with manual corrections |
-| [Diagram gallery](gallery/index.md) | 31 original and revised pairs, grouped by Mermaid family |
-
-Prose examples use `fix: true`.
-Mermaid examples show manual changes because the plugin never edits diagram source.
-The gallery includes source downloads and an enlarged, zoomable viewer.
-Change the site's light/dark setting to compare each diagram in both themes.
+For prose edits, see [Prose before and after](prose.md).
