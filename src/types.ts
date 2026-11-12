@@ -37,6 +37,8 @@ export interface RuleOptions {
   minItems?: number;
   preset?: string;
   canvas?: { light?: string; dark?: string };
+  viewer?: "github" | "mkdocs-material";
+  host?: Readonly<Record<string, Readonly<Record<string, string>>>>;
   complexity?: Readonly<Record<string, unknown>>;
   [key: string]: unknown;
 }

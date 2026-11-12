@@ -10,7 +10,8 @@ import {
   type SequenceRegion,
   sequenceFeatures,
 } from "./sequence-model.ts";
-import { type Canvas, GITHUB_CANVAS, resolveThemes, THEMES, type Theme, themeProblem } from "./theme.ts";
+import { GITHUB_CANVAS, resolveThemes, THEMES, type Theme, themeProblem } from "./theme.ts";
+import { type HostColours, modeThemes, type Viewer } from "./viewer.ts";
 
 // Sequence surfaces resolved through Mermaid's parser and theme engine.
 // Text and connector surfaces are returned; policies own every WCAG decision.
@@ -207,7 +208,7 @@ const scoreAuthorSequence = (pair: SequencePair, features: SequenceFeatures, lin
   measure({ foreground: "noteTextColor", background: "noteBkgColor" }, features.notes);
   measure({ foreground: "labelTextColor", background: "labelBoxBkgColor" }, features.frameLabels);
   measure({ foreground: "loopTextColor" }, features.frameTexts);
-  measure({ foreground: "sequenceNumberColor", background: "signalColor" }, features.numbers);
+  measure({ foreground: "sequenceNumberColor", background: "sequenceNumberBkg" }, features.numbers);
   measure({ foreground: "signalColor", kind: "connector" }, features.messageLines, " (message line)");
   measure({ foreground: "actorLineColor", kind: "connector" }, features.lifelines, " (lifeline)");
 };
@@ -276,7 +277,27 @@ function omitUnmeasurableLabels(
   features.lifelines = [];
 }
 
-export const scoreSequence = async (source: string, canvas: Canvas = GITHUB_CANVAS): Promise<ContrastResult> => {
+// Material's sequence rules, measured on Mermaid 11.17.2. They beat theme
+// variables; its lifeline rule matches nothing, so lifelines keep the theme.
+const materialVariables = (host: HostColours): Variables => ({
+  actorBkg: host.canvas,
+  actorTextColor: host.text,
+  signalTextColor: host.edge,
+  signalColor: host.edge,
+  noteBkgColor: host.canvas,
+  noteTextColor: host.edge,
+  loopTextColor: host.edge,
+  labelTextColor: host.accent,
+  labelBoxBkgColor: host.nodeFill,
+  textColor: host.edge,
+  sequenceNumberBkg: host.accent,
+  ...(host.accentText === undefined ? {} : { sequenceNumberColor: host.accentText }),
+});
+
+const GITHUB: Viewer = { name: "github", canvas: GITHUB_CANVAS };
+
+export const scoreSequence = async (source: string, viewer: Viewer = GITHUB): Promise<ContrastResult> => {
+  const { canvas } = viewer;
   const out: ContrastResult = { pairs: [], skipped: [] };
   const mermaid = await getMermaidCore();
   const parsed = await parseSequence(mermaid, source);
@@ -315,24 +336,60 @@ export const scoreSequence = async (source: string, canvas: Canvas = GITHUB_CANV
   let variables: Record<Theme, Variables>;
 
   try {
-    variables = resolveThemes(mermaid, config).themes;
+    variables = resolveThemes(mermaid, config, modeThemes(viewer)).themes;
   } catch (err) {
     // A colour the theme derives others from, such as actorBorder, fails here.
     return block("themeVariables", `Mermaid could not resolve the theme: ${message(err)}`);
   }
 
-  for (const t of THEMES) {
-    const page = canvas[t];
-    const pair = sequencePair({
-      theme: t,
-      page,
-      vars: variables[t],
-      lineOf,
-      out,
-    });
+  const host = viewer.name === "mkdocs-material" ? viewer.host : undefined;
 
-    scoreAuthorSequence(pair, features, { rects: rectLines, boxes: boxLines });
+  requireBadgeText(host, features, block);
+
+  for (const t of THEMES) {
+    const vars = modeVariables(variables[t], host?.[t]);
+    const themed = host ? hostFeatures(db, host[t], features) : features;
+    const pair = sequencePair({ theme: t, page: canvas[t], vars, lineOf, out });
+
+    scoreAuthorSequence(pair, themed, { rects: rectLines, boxes: boxLines });
   }
 
   return out;
 };
+
+// The number badge sits on the message colour unless a host repaints it.
+const modeVariables = (vars: Variables, host: HostColours | undefined): Variables =>
+  host ? { ...vars, ...materialVariables(host) } : { ...vars, sequenceNumberBkg: vars.signalColor };
+
+// Material's number badge text is a palette colour only the host can supply.
+function requireBadgeText(
+  host: Readonly<Record<Theme, HostColours>> | undefined,
+  features: SequenceFeatures,
+  block: (selector: string, reason: string) => ContrastResult,
+): void {
+  if (host && features.numbers.length && THEMES.some((t) => host[t].accentText === undefined)) {
+    block(
+      "autonumber",
+      "mkdocs-material needs host.light.accentText and host.dark.accentText to measure sequence numbers",
+    );
+    features.numbers = [];
+  }
+}
+
+// Material repaints every group box and rect with its node fill, so the model
+// is rebuilt per mode, dropping whatever the shared model already dropped.
+function hostFeatures(db: SequenceDB, host: HostColours, shared: SequenceFeatures): SequenceFeatures {
+  const themed = sequenceFeatures(db, host.nodeFill);
+  const omitted = (labels: unknown[], kept: unknown[]) => (kept.length ? labels : []);
+
+  return {
+    ...themed,
+    signals: omitted(themed.signals, shared.signals) as SequenceBackdrop[],
+    notes: omitted(themed.notes, shared.notes) as SequenceBackdrop[],
+    frameLabels: omitted(themed.frameLabels, shared.frameLabels) as SequenceBackdrop[],
+    frameTexts: omitted(themed.frameTexts, shared.frameTexts) as SequenceBackdrop[],
+    numbers: omitted(themed.numbers, shared.numbers) as SequenceBackdrop[],
+    messageLines: omitted(themed.messageLines, shared.messageLines) as SequenceBackdrop[],
+    lifelines: omitted(themed.lifelines, shared.lifelines) as SequenceBackdrop[],
+  };
+}

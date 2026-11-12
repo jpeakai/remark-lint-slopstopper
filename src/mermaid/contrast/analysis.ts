@@ -19,6 +19,7 @@ import {
   type ThemeVariables,
   themeProblem,
 } from "./theme.ts";
+import { type HostColours, MATERIAL_FAMILIES, modeThemes, type Viewer } from "./viewer.ts";
 
 // Shared rendered-surface analysis. It discovers what Mermaid paints in each
 // theme and reports styling it cannot model; policies own every threshold.
@@ -100,11 +101,11 @@ function classifyConnectors(kind: string, analysis: SurfaceAnalysis): void {
 
 // Callers must hold the serial Mermaid queue; theme resolution restores the
 // site configuration even when discovery fails part way.
-export async function analyzeSurfaces(source: string, stats: DiagramStats, canvas: Canvas): Promise<SurfaceAnalysis> {
+export async function analyzeSurfaces(source: string, stats: DiagramStats, viewer: Viewer): Promise<SurfaceAnalysis> {
   const analysis: SurfaceAnalysis = { surfaces: [], unsupported: [] };
 
   try {
-    await discover(source, stats, canvas, analysis);
+    await discover(source, stats, viewer, analysis);
   } catch (error) {
     analysis.unsupported.push({ reason: error instanceof Error ? error.message : String(error) });
   }
@@ -127,7 +128,8 @@ const collector =
     });
   };
 
-async function discover(source: string, stats: DiagramStats, canvas: Canvas, analysis: SurfaceAnalysis): Promise<void> {
+async function discover(source: string, stats: DiagramStats, viewer: Viewer, analysis: SurfaceAnalysis): Promise<void> {
+  const { canvas } = viewer;
   const mermaid = await getMermaidCore();
   const parsed = await mermaid.parse(source);
   const config = parsed.config as MermaidConfig;
@@ -149,8 +151,9 @@ async function discover(source: string, stats: DiagramStats, canvas: Canvas, ana
   }
 
   const diagram = (await mermaid.mermaidAPI.getDiagramFromText(source)) as Diagram;
-  const { themes, defaults } = resolveThemes(mermaid, config);
-  const run: SurfaceRun = { diagram, kind, config, themes, defaults, canvas, styles };
+  const { themes, defaults } = resolveThemes(mermaid, config, modeThemes(viewer));
+  const host = viewer.name === "mkdocs-material" && MATERIAL_FAMILIES.has(kind) ? viewer.host : undefined;
+  const run: SurfaceRun = { diagram, kind, config, themes, defaults, canvas, styles, host };
   const collect = collector(analysis);
 
   collectTitles(diagramTitle(source, diagram), run, collect);
@@ -158,7 +161,7 @@ async function discover(source: string, stats: DiagramStats, canvas: Canvas, ana
   if (kind === "sequence") {
     rejectSequenceHtml(diagram);
 
-    return collectSequence(source, canvas, analysis, collect);
+    return collectSequence(source, viewer, analysis, collect);
   }
 
   await collectFamily(run, analysis, collect);
@@ -179,6 +182,7 @@ type SurfaceRun = {
   defaults: ThemeVariables;
   canvas: Canvas;
   styles: Awaited<ReturnType<typeof readStyles>>;
+  host: Readonly<Record<Theme, HostColours>> | undefined;
 };
 
 function rejectUnmodelledConfig(config: MermaidConfig): void {
@@ -215,20 +219,28 @@ function collectTitles(title: unknown, run: SurfaceRun, collect: Collect): void 
     return;
   }
 
-  const { kind, themes, defaults, canvas } = run;
+  const { kind, themes, defaults, canvas, host } = run;
 
   for (const theme of THEMES) {
-    collect("title", { name: "diagram title", ...titleSurface(kind, themes[theme], defaults, canvas[theme]) }, theme);
+    const surface =
+      host && HOST_TITLES.has(kind)
+        ? { foreground: host[theme].text, background: canvas[theme] }
+        : titleSurface(kind, themes[theme], defaults, canvas[theme]);
+
+    collect("title", { name: "diagram title", ...surface }, theme);
   }
 }
 
+// Material's flowchartTitleText, classDiagramTitleText and statediagramTitleText rules.
+const HOST_TITLES = new Set(["flowchart", "classDiagram", "stateDiagram"]);
+
 async function collectSequence(
   source: string,
-  canvas: Canvas,
+  viewer: Viewer,
   analysis: SurfaceAnalysis,
   collect: Collect,
 ): Promise<void> {
-  const result = await scoreSequence(source, canvas);
+  const result = await scoreSequence(source, viewer);
 
   for (const skipped of result.skipped.filter((item) => item.blocking)) {
     analysis.unsupported.push({ reason: skipped.reason, selector: skipped.selector, line: skipped.line });
@@ -262,7 +274,7 @@ async function collectFamily(run: SurfaceRun, analysis: SurfaceAnalysis, collect
     };
 
     if (data) {
-      const styled = { ...ctx, data, directives: run.styles.directives };
+      const styled = { ...ctx, data, directives: run.styles.directives, host: run.host?.[theme] };
 
       collectLabels(styledSurfaces(styled), theme, collect);
       collectConnectors(styledConnectors(styled), theme, { analysis, collect });

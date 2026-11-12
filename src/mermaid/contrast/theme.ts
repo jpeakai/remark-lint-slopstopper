@@ -98,9 +98,11 @@ export function themeProblem(mermaid: MermaidCore, theme: string | undefined, ki
     : null;
 }
 
+// Each viewer mode renders with its own Mermaid theme unless the diagram pins one.
 export function resolveThemes(
   mermaid: MermaidCore,
   config: MermaidConfig,
+  modes: Readonly<Record<Theme, string>> = { light: "default", dark: "dark" },
 ): { themes: Record<Theme, ThemeVariables>; defaults: ThemeVariables } {
   const prior = mermaid.mermaidAPI.getSiteConfig();
   const themes = {} as Record<Theme, ThemeVariables>;
@@ -113,7 +115,7 @@ export function resolveThemes(
     for (const theme of THEMES) {
       mermaid.initialize({
         ...structuredClone(config),
-        theme: config.theme ?? (theme === "light" ? "default" : "dark"),
+        theme: config.theme ?? (modes[theme] as NonNullable<MermaidConfig["theme"]>),
         themeVariables: { ...config.themeVariables },
       });
       themes[theme] = {
