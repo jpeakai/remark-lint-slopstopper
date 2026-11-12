@@ -5,9 +5,10 @@
     "src/cli/main.ts!",
     "examples/*.mjs",
     "examples/scripts/*.test.ts",
+    "scripts/*.test.ts",
     "docs-site/diagrams.js"
   ],
-  "project": ["src/**/*.ts!", "!src/**/*.test.ts!", "examples/*.mjs", "examples/scripts/**/*.ts"],
+  "project": ["src/**/*.ts!", "!src/**/*.test.ts!", "examples/*.mjs", "examples/scripts/**/*.ts", "scripts/**/*.ts"],
   "ignoreBinaries": ["codex"],
   "ignoreExportsUsedInFile": true
 }
