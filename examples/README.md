@@ -6,6 +6,8 @@ The documentation site groups the same folders by diagram type and shows each pa
 
 Originals deliberately exercise complexity, contrast, compatibility and style isolation.
 The comparison files are reviewable examples, not a promise that every policy passes.
+Each remaining diagram finding must fit the example's Finding Budget in [finding-budgets.yml](finding-budgets.yml), which names its rule, surface, theme, allowance and reason.
+A finding without a budget, or over its allowance, fails the package checks; fewer findings pass.
 The site uses Mermaid 12.2.0; the package's analysis engine keeps its separately pinned version.
 
 Use **jpai-essentials:mermaidjs-diagrams** from the **jpeakai/skills** plugin for repair and styling guidance.

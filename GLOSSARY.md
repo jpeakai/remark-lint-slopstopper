@@ -30,6 +30,7 @@ flowchart LR
     VSC["Viewer Scenario"]:::info
     CNC["Connector"]:::info
     VPR["Viewer Profile"]:::rule
+    FBG["Finding Budget"]:::rule
 
     MNT -- states --> REQ
     REQ -- binds --> AGT
@@ -47,6 +48,7 @@ flowchart LR
     MNT -- reviews --> VSC
     SFA -- lists --> CNC
     VPR -- shapes --> SFA
+    FBG -- bounds --> DIG
 
     linkStyle default color:#0f172a
 
@@ -103,6 +105,12 @@ This repo's declared documentation conventions, in [docs/CONVENTIONS.md](docs/CO
 
 The shared, lazily built view of one markdown document that every Custom Policy reads.
 It is created by [`createDocument`](src/document/context.ts).
+
+## Finding Budget
+
+The most Diagnostics one diagram example may report for a rule, surface and theme, with the reason for the known limitation.
+Budgets bound regression tests only; the plugin still reports every finding.
+They live in [finding-budgets.yml](examples/finding-budgets.yml).
 
 ## Generated File
 
