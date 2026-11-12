@@ -77,3 +77,26 @@ The verifier uses the site's pinned Mermaid and Playwright's Chromium.
 Install that browser once with `bunx playwright install chromium`, or set `CHROME_PATH` to an installed Chrome or Chromium executable.
 `bun run test:render` checks the verifier itself against real renders, and needs the same browser.
 The documentation site's CI build runs both and uploads the renders as the `diagram-renders` artifact.
+
+## Accept comparisons
+
+An aggregate pass can hide one comparison's regression, so each comparison is accepted on its own evidence:
+
+```sh
+make site
+bun run accept:examples
+```
+
+For each selected example, the Acceptance Record in `tmp/acceptance/` records five checks:
+
+- **family:** it keeps its family, or makes an approved Portable Translation that keeps its facts
+- **facts:** a same-family comparison keeps every label, relationship, message order and number of its original
+- **findings:** every package policy passes, except diagram findings within its Finding Budget
+- **renders:** every artifact in the full matrix renders and validates
+- **site:** the built site has its page, and both downloads match their sources
+
+The record also lists the budgeted limitations it still shows and any translation it keeps.
+The run also checks that a combined document of the selected comparisons reports exactly what each reports alone.
+Pass folder names to accept only those examples, and `--site DIR` for a site built elsewhere.
+The documentation site's CI build runs acceptance and uploads the records with the renders.
+

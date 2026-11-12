@@ -70,10 +70,11 @@ jobs:
       - name: Check the render verifier
         run: bun run test:render
 
-      # Every comparison must render in each viewer scenario; originals are
-      # rendered separately so their deliberate failures stay recorded.
-      - name: Render diagram comparisons
-        run: bun run render:examples
+      # Each comparison is accepted on its own evidence, including renders
+      # across the full matrix; originals are rendered separately so their
+      # deliberate failures stay recorded.
+      - name: Accept diagram comparisons
+        run: bun run accept:examples
 
       - name: Render diagram originals
         run: bun run render:examples --originals
@@ -82,7 +83,9 @@ jobs:
         if: always()
         with:
           name: diagram-renders
-          path: tmp/renders
+          path: |
+            tmp/renders
+            tmp/acceptance
           if-no-files-found: error
 
       - uses: actions/configure-pages@v6
