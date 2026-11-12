@@ -34,6 +34,30 @@ Unsupported styling can make a diagram unauditable.
 Such input reports an error instead of silently passing.
 See [Mermaid text contrast](../RULES.md#mermaid-text-contrast).
 
+## Make connectors visible
+
+`contrast-connectors-below-minimum` requires connecting lines and arrowheads to reach 3:1 against their background.
+
+=== "Failing source"
+
+    ```text
+    flowchart LR
+      Cart --> Payment
+      linkStyle 0 stroke:#dddddd
+    ```
+
+=== "Manual correction"
+
+    ```text
+    flowchart LR
+      Cart --> Payment
+      linkStyle 0 stroke:#64748b
+    ```
+
+The pale stroke nearly vanishes on a white page, and the mid-tone correction passes on both canvases.
+Lines inside a dark subgraph need a light stroke instead.
+See [Mermaid connector contrast](../RULES.md#mermaid-connector-contrast) for supported families.
+
 ## Reduce a diagram with excessive fan-out
 
 With the `low-density` Complexity Preset, this graph scores 28 against an acceptable score of 25:

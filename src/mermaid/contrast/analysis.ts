@@ -257,34 +257,34 @@ async function collectFamily(run: SurfaceRun, analysis: SurfaceAnalysis, collect
       source: run.diagram.text,
       page: run.canvas[theme],
     };
-    const surfaces = data
-      ? styledSurfaces({ ...ctx, data, directives: run.styles.directives })
-      : await familySurfaces(ctx);
-
-    if (surfaces === null) {
-      throw new Error(`${run.kind} text surfaces are not yet modeled`);
-    }
-
-    for (const surface of surfaces) {
-      collect("label", surface, theme);
-    }
 
     if (data) {
-      collectConnectors(
-        styledConnectors({ ...ctx, data, directives: run.styles.directives }),
-        theme,
-        analysis,
-        collect,
-      );
+      const styled = { ...ctx, data, directives: run.styles.directives };
+
+      collectLabels(styledSurfaces(styled), theme, collect);
+      collectConnectors(styledConnectors(styled), theme, { analysis, collect });
+    } else {
+      const surfaces = await familySurfaces(ctx);
+
+      if (surfaces === null) {
+        throw new Error(`${run.kind} text surfaces are not yet modeled`);
+      }
+
+      collectLabels(surfaces, theme, collect);
     }
+  }
+}
+
+function collectLabels(surfaces: TextSurface[], theme: Theme, collect: Collect): void {
+  for (const surface of surfaces) {
+    collect("label", surface, theme);
   }
 }
 
 function collectConnectors(
   connectors: ReturnType<typeof styledConnectors>,
   theme: Theme,
-  analysis: SurfaceAnalysis,
-  collect: Collect,
+  { analysis, collect }: { analysis: SurfaceAnalysis; collect: Collect },
 ): void {
   for (const surface of connectors.surfaces) {
     collect("connector", surface, theme);

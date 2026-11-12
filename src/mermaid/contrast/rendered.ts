@@ -3,7 +3,7 @@ import type { MermaidConfig } from "mermaid";
 import type { Edge, LayoutData, Node } from "mermaid/dist/rendering-util/types.js";
 import { propertiesOf } from "../styling/properties.ts";
 import type { StyleDirective } from "../styling/types.ts";
-import { compositeOver, withOpacity } from "./colors.ts";
+import { alphaOf, compositeOver, withOpacity } from "./colors.ts";
 import type { TextSurface, ThemeVariables } from "./theme.ts";
 
 type RenderNode = Node & { styles?: string[]; attributes?: readonly unknown[] };
@@ -306,17 +306,23 @@ function edgeName(nodes: Map<string, RenderNode>, edge: Edge): string {
   return `edge ${label(edge.start)} → ${label(edge.end)}`;
 }
 
-function edgeConnectors(
-  edge: Edge,
-  index: number,
-  ctx: PaintContext,
-  nodes: Map<string, RenderNode>,
-  background: (id?: string) => string,
-): TextSurface[] {
+interface Scene {
+  ctx: PaintContext;
+  nodes: Map<string, RenderNode>;
+  background: (id?: string) => string;
+}
+
+function edgeConnectors(edge: Edge, index: number, { ctx, nodes, background }: Scene): TextSurface[] {
   const { stroke, dim, whole } = strokeOf(edge, ctx);
 
   if (edge.thickness === "invisible" || HIDDEN.has(stroke.trim().toLowerCase())) {
     return [];
+  }
+
+  try {
+    alphaOf(stroke);
+  } catch {
+    throw new Error(`edge ${edge.id} stroke ${stroke} is not a CSS colour`);
   }
 
   const directive = ctx.directives.find(
@@ -354,7 +360,7 @@ export function styledConnectors(ctx: PaintContext): Connectors {
 
   for (const [index, edge] of ctx.data.edges.entries()) {
     try {
-      out.surfaces.push(...edgeConnectors(edge, index, ctx, nodes, background));
+      out.surfaces.push(...edgeConnectors(edge, index, { ctx, nodes, background }));
     } catch (error) {
       out.unsupported.push(error instanceof Error ? error.message : String(error));
     }

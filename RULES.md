@@ -37,6 +37,7 @@ Configuration uses the short policy name after the slash.
 | `prose/punctuation-em-dash-in-prose` | An em-dash in prose | None specific | Parentheses for a pair, a colon for a lone dash |
 | `prose/punctuation-interpunct-in-prose` | A stray interpunct outside a claimed run | None specific | A comma for each spaced interpunct |
 | `mermaid/contrast-text-below-aa` | Rendered text below 4.5:1 or styling that cannot be audited | `canvas: {light, dark}` | None |
+| `mermaid/contrast-connectors-below-minimum` | Connecting lines and arrowheads below 3:1, or connectors that cannot be audited | `canvas: {light, dark}` | None |
 | `mermaid/complexity-visual-score-acceptable-exceeded` | Visual complexity exceeding the acceptable score | `preset`, `complexity` overrides | None |
 
 ### Sentence layout
@@ -364,6 +365,34 @@ In a diagram with coloured participant groups (`box`), each label is measured on
 
 Named group titles are measured in the theme's `textColor` on their own fill.
 A group whose participants are declared apart, or a frame with no messages, reports an unauditable error.
+
+### Mermaid connector contrast
+
+[`contrast/connectors.ts`](src/mermaid/contrast/connectors.ts) requires connecting lines and arrowheads to reach 3:1 against what lies behind them, in both themes.
+It reads the same rendered surfaces as text contrast but reports independently, so either policy can be disabled alone.
+This pale link fails on a white page:
+
+```text
+flowchart LR
+  Cart --> Payment
+  linkStyle 0 stroke:#dddddd
+```
+
+A mid-tone stroke stays visible on both the light and the dark page:
+
+```text
+flowchart LR
+  Cart --> Payment
+  linkStyle 0 stroke:#64748b
+```
+
+Each edge is measured over every container it crosses, from each end up to their closest shared container.
+`stroke-opacity` dims only the line, while `opacity` dims the line and its arrowhead.
+Invisible layout links (`~~~`), hidden strokes and node or container borders are not connectors.
+
+Flowchart, class, state and ER edges are supported, as are sequence message lines and lifelines.
+Families that draw no relationship lines, such as pie, gantt and xychart, pass without findings.
+Every other family reports that its connectors cannot be audited.
 
 ### Mermaid visual complexity
 

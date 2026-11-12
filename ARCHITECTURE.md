@@ -67,6 +67,7 @@ Prose-only configurations do not initialise Mermaid or install its browser globa
 | [`prose/rules/punctuation-interpunct-in-prose.ts`](src/prose/rules/punctuation-interpunct-in-prose.ts) | Detect stray interpuncts outside claimed runs and swap spaced ones for commas |
 | [`mermaid/contrast/analysis.ts`](src/mermaid/contrast/analysis.ts) | Build the Surface Analysis of rendered surfaces in both themes |
 | [`mermaid/contrast/policy.ts`](src/mermaid/contrast/policy.ts) | Apply the text contrast threshold to the Surface Analysis |
+| [`mermaid/contrast/connectors.ts`](src/mermaid/contrast/connectors.ts) | Apply the 3:1 Connector threshold to the Surface Analysis |
 | [`mermaid/complexity/policy.ts`](src/mermaid/complexity/policy.ts) | Calculate VCS and report verified split recommendations |
 
 [`types.ts`](src/types.ts) defines common options, diagnostics and edits.

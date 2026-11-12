@@ -7,10 +7,16 @@ Anything under `Unreleased` is on `main` but not yet released.
 
 ## Unreleased
 
+### Added
+
+- `mermaid/contrast-connectors-below-minimum` requires connecting lines and arrowheads to reach 3:1 in both themes.
+  It covers graph edges and sequence message lines and lifelines.
+  It is enabled with the other custom policies; families whose connectors are not modelled report an unauditable error.
+
 ### Fixed
 
-- `mermaid/contrast-text-below-aa` measures sequence labels in coloured participant groups against the group fill, page gaps and rect overlays they actually sit on, instead of reporting the whole diagram as unauditable.
-  Named group titles are now checked too.
+- `mermaid/contrast-text-below-aa` measures labels in coloured sequence participant groups against what they actually sit on.
+  It no longer reports the whole diagram as unauditable, and it now checks named group titles.
 
 ## 0.1.2 - 2026-10-28
 
