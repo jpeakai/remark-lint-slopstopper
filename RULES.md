@@ -356,6 +356,14 @@ The rule resolves supported styles, theme colours and translucent backgrounds us
 The default page canvas follows GitHub; pass the host's opaque `canvas.light` and `canvas.dark` values when different.
 Unsupported CSS or unmodelled surfaces produce unauditable errors instead of passing silently.
 Sequence diagrams are checked through their theme and ordered surface model.
+In a diagram with coloured participant groups (`box`), each label is measured on every backdrop it can overlap:
+
+- the group fill beneath it
+- the page gap a message crosses between groups
+- the page beside a group's edge participant, for self messages and side notes
+
+Named group titles are measured in the theme's `textColor` on their own fill.
+A group whose participants are declared apart, or a frame with no messages, reports an unauditable error.
 
 ### Mermaid visual complexity
 

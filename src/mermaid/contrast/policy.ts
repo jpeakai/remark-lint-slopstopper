@@ -17,7 +17,7 @@ export async function reportContrast(
 ): Promise<void> {
   const analysis = await analyzeSurfaces(source, stats, resolvedCanvas(options));
 
-  for (const surface of analysis.surfaces) {
+  for (const surface of analysis.surfaces.filter((item) => item.kind !== "connector")) {
     checkText(surface, report);
   }
 

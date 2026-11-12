@@ -23,7 +23,8 @@ import {
 // Shared rendered-surface analysis. It discovers what Mermaid paints in each
 // theme and reports styling it cannot model; policies own every threshold.
 
-export type SurfaceKind = "title" | "label";
+// Titles and labels are text; a connector is a line stroke such as a lifeline.
+export type SurfaceKind = "title" | "label" | "connector";
 
 export interface AnalyzedSurface {
   kind: SurfaceKind;
@@ -197,7 +198,7 @@ async function collectSequence(
 
   for (const pair of result.pairs) {
     collect(
-      "label",
+      pair.kind === "connector" ? "connector" : "label",
       { name: pair.selector, foreground: pair.foreground, background: pair.background, line: pair.line },
       pair.theme,
     );

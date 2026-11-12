@@ -127,6 +127,9 @@ sequenceDiagram
 
 Surface adapters account for supported node styles, text backgrounds, translucent fills and the configured page canvas.
 Sequence diagrams have an ordered message model for participant groups, frames, notes and message backgrounds.
+[`contrast/sequence-model.ts`](contrast/sequence-model.ts) places each label over the participant columns it spans: a group's fill, the page gap between groups, or the page beside an edge participant.
+Rect fills composite over that region in statement order.
+Lifelines and message lines are exposed as connector surfaces, which the text policy ignores.
 Custom `themeCSS`, unsupported rendering modes and unmodelled surfaces report unauditable errors rather than guessed contrast.
 Theme transactions restore Mermaid configuration between theme resolutions.
 

@@ -42,12 +42,18 @@ test("diagram-wide unsupported styling is explicit and yields no surfaces", asyn
 });
 
 test("declaration-level unsupported styling carries its selector and line", async () => {
-  const source = "sequenceDiagram\n  box Aqua Group\n  participant A\n  end\n  A->>A: hi";
+  const source =
+    "sequenceDiagram\n  participant A\n  participant C\n  box Aqua Shop\n  participant B\n  participant A\n  end\n  A->>B: hi";
 
   const analysis = await analyze(source);
 
-  assert.ok(analysis.unsupported.length > 0);
-  assert.ok(analysis.unsupported.every((item) => item.selector === "box" && item.line === 1));
+  assert.deepEqual(analysis.unsupported, [
+    {
+      reason: "participant group Shop has members declared apart, so its painted extent cannot be measured",
+      selector: "box",
+      line: 1,
+    },
+  ]);
   assert.ok(analysis.surfaces.some((surface) => surface.name === "actorTextColor" && surface.theme === "dark"));
 });
 
