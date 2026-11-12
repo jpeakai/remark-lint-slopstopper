@@ -56,6 +56,18 @@ function setting(value: RemarkRuleSetting | undefined): Setting | null {
 
 const shortName = (ruleId: PolicyRuleId): ShortRuleId => ruleId.split("/")[1] as ShortRuleId;
 
+// Mermaid installs browser globals, so it loads only when a Mermaid policy
+// runs. Its module awaits Mermaid at the top level, and Bun hands a second,
+// overlapping import() the namespace before evaluation finishes, so every
+// caller shares the first import.
+let mermaidAnalysis: Promise<typeof import("../mermaid/analyze.ts")> | undefined;
+
+const loadMermaidAnalysis = () => {
+  mermaidAnalysis ??= import("../mermaid/analyze.ts");
+
+  return mermaidAnalysis;
+};
+
 function configuredRules(options: RemarkSlopstopperOptions): RuleConfiguration[] {
   return RULES.flatMap((ruleId) => {
     const config = setting(options.rules?.[shortName(ruleId)]);
@@ -80,7 +92,7 @@ async function diagnostics(
   };
   const findings = PROSE_RULES.includes(config.ruleId)
     ? await analyzeProse(document, options)
-    : await (await import("../mermaid/analyze.ts")).analyzeMermaid(document, options);
+    : await (await loadMermaidAnalysis()).analyzeMermaid(document, options);
 
   return findingsForRule(findings, config.ruleId);
 }

@@ -67,6 +67,32 @@ test("prose-only remark execution does not install Mermaid's browser globals", (
   assert.equal(result, "");
 });
 
+test("files whose first Mermaid policy load overlaps all complete in a fresh process", () => {
+  const result = execFileSync(
+    process.execPath,
+    [
+      "--input-type=module",
+      "-e",
+      `
+    import assert from "node:assert/strict";
+    import remarkParse from "remark-parse";
+    import { unified } from "unified";
+    import { VFile } from "vfile";
+    import plugin from ${JSON.stringify(new URL("./plugin.ts", import.meta.url).href)};
+    const lint = async (value) => {
+      const file = new VFile({ value });
+      const processor = unified().use(remarkParse).use(plugin);
+      await processor.run(processor.parse(file), file);
+    };
+    await Promise.all([lint("First file."), lint("Second file."), lint("Third file.")]);
+  `,
+    ],
+    { encoding: "utf8" },
+  );
+
+  assert.equal(result, "");
+});
+
 function processor(fix = false, rules?: RemarkSlopstopperOptions["rules"]) {
   return unified().use(remarkParse).use(remarkStringify).use(remarkSlopstopper, { fix, options, rules });
 }
