@@ -8,7 +8,7 @@ description: Every typed edge between the bundle's decision records
 
 # Decision relationship graph
 
-43 decision records, 90 typed edges, in 13 groups.
+44 decision records, 92 typed edges, in 13 groups.
 Every edge comes from a record's `relates_to` block, so this view cannot drift from the records.
 
 For an interactive view of the same graph, open [graph.html](graph.html).
@@ -33,4 +33,5 @@ For an interactive view of the same graph, open [graph.html](graph.html).
 An edge whose inverse is missing on the far record.
 These are gaps in the record set, not rendering artifacts.
 
-None: every edge has its inverse.
+* `SLOP-0044` declares `see_also SLOP-0026`, but `SLOP-0026` has no `see_also SLOP-0044`
+* `SLOP-0044` declares `see_also SLOP-0028`, but `SLOP-0028` has no `see_also SLOP-0044`

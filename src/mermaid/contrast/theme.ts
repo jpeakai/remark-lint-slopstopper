@@ -47,9 +47,56 @@ export const canvasColourProblem = (value: unknown): string | null => {
   return alpha < 1 ? "is translucent, and a page canvas must be opaque" : null;
 };
 
-type MermaidTheme = NonNullable<MermaidConfig["theme"]>;
+// Renderers in the pinned Mermaid that paint differently by theme name, beyond
+// the theme variables they resolve. A family's surface adapter does not model
+// these branches, so the named themes are unauditable for that family only.
+const COLOUR_THEMES = ["redux-color", "redux-dark-color"];
+const REDUX_THEMES = ["redux", "redux-dark", ...COLOUR_THEMES];
 
-export const SUPPORTED_THEMES: readonly MermaidTheme[] = ["base", "default", "dark", "forest", "neutral"];
+export const THEME_BRANCHES: Readonly<Record<string, readonly string[]>> = {
+  sequence: COLOUR_THEMES,
+  erDiagram: COLOUR_THEMES,
+  gitGraph: REDUX_THEMES,
+  mindmap: REDUX_THEMES,
+  timeline: REDUX_THEMES,
+};
+
+// Mermaid resolves a name it does not define to its default variables without
+// complaint, so a theme other than `default` that resolves identically is unknown.
+function definesTheme(mermaid: MermaidCore, theme: string): boolean {
+  if (theme === "default") {
+    return true;
+  }
+
+  const prior = mermaid.mermaidAPI.getSiteConfig();
+
+  try {
+    mermaid.initialize({ theme: "default" });
+
+    const fallback = JSON.stringify(mermaid.mermaidAPI.getSiteConfig().themeVariables);
+
+    mermaid.initialize({ theme: theme as NonNullable<MermaidConfig["theme"]> });
+
+    return JSON.stringify(mermaid.mermaidAPI.getSiteConfig().themeVariables) !== fallback;
+  } finally {
+    mermaid.initialize(prior);
+  }
+}
+
+// Why a pinned theme cannot be audited for this family, or null when it can.
+export function themeProblem(mermaid: MermaidCore, theme: string | undefined, kind: string): string | null {
+  if (theme === undefined) {
+    return null;
+  }
+
+  if (!definesTheme(mermaid, theme)) {
+    return `Mermaid does not define a ${theme} theme`;
+  }
+
+  return THEME_BRANCHES[kind]?.includes(theme)
+    ? `${kind} renders the ${theme} theme with paint the audit does not model`
+    : null;
+}
 
 export function resolveThemes(
   mermaid: MermaidCore,

@@ -356,6 +356,10 @@ flowchart LR
 The rule resolves supported styles, theme colours and translucent backgrounds using Color.js.
 The default page canvas follows GitHub; pass the host's opaque `canvas.light` and `canvas.dark` values when different.
 Unsupported CSS or unmodelled surfaces produce unauditable errors instead of passing silently.
+
+A diagram that pins a theme is checked in that theme in both viewer modes, if the pinned Mermaid defines it.
+An unknown theme name is an error rather than a silent fallback to the default colours.
+A few renderers paint redux themes differently by name; those themes are unauditable for the sequence, ER, gitGraph, mindmap and timeline families.
 Sequence diagrams are checked through their theme and ordered surface model.
 In a diagram with coloured participant groups (`box`), each label is measured on every backdrop it can overlap:
 

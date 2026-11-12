@@ -13,11 +13,11 @@ import { familySurfaces, titleSurface } from "./surfaces.ts";
 import {
   type Canvas,
   resolveThemes,
-  SUPPORTED_THEMES,
   type TextSurface,
   THEMES,
   type Theme,
   type ThemeVariables,
+  themeProblem,
 } from "./theme.ts";
 
 // Shared rendered-surface analysis. It discovers what Mermaid paints in each
@@ -132,7 +132,15 @@ async function discover(source: string, stats: DiagramStats, canvas: Canvas, ana
   const parsed = await mermaid.parse(source);
   const config = parsed.config as MermaidConfig;
 
+  const kind = normalKind(stats.diagram_type);
+
   rejectUnmodelledConfig(config);
+
+  const theme = themeProblem(mermaid, config.theme, kind);
+
+  if (theme) {
+    throw new Error(theme);
+  }
 
   const styles = await readStyles(source);
 
@@ -141,7 +149,6 @@ async function discover(source: string, stats: DiagramStats, canvas: Canvas, ana
   }
 
   const diagram = (await mermaid.mermaidAPI.getDiagramFromText(source)) as Diagram;
-  const kind = normalKind(stats.diagram_type);
   const { themes, defaults } = resolveThemes(mermaid, config);
   const run: SurfaceRun = { diagram, kind, config, themes, defaults, canvas, styles };
   const collect = collector(analysis);
@@ -181,10 +188,6 @@ function rejectUnmodelledConfig(config: MermaidConfig): void {
 
   if (config.look && config.look !== "classic") {
     throw new Error(`${config.look} rendering is not modeled`);
-  }
-
-  if (config.theme && !SUPPORTED_THEMES.includes(config.theme)) {
-    throw new Error(`${config.theme} theme geometry is not modeled`);
   }
 }
 
