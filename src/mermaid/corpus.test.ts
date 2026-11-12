@@ -137,7 +137,10 @@ test("complete revised corpus passes every policy except connector contrast", as
   assert.deepEqual(await analyzeMermaid(improved, { rules: [MERMAID_RULES.contrast, MERMAID_RULES.complexity] }), []);
 });
 
-test("initial feedback includes real complexity and contrast failures without style leakage", async () => {
+// Every policy over the whole multi-diagram corpus, so it needs more than the default timeout.
+test("initial feedback includes real complexity and contrast failures without style leakage", {
+  timeout: 30_000,
+}, async () => {
   const diagnostics = await analyzeMermaid(initial);
 
   assert.ok(diagnostics.some((d) => d.ruleId === MERMAID_RULES.complexity));

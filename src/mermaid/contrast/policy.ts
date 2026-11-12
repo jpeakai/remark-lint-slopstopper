@@ -1,22 +1,12 @@
-import type { RuleOptions } from "../../types.ts";
-import type { DiagramStats } from "../parsing/statistics.ts";
 import type { Report } from "../report.ts";
-import { type AnalyzedSurface, analyzeSurfaces, type UnsupportedStyling } from "./analysis.ts";
+import type { AnalyzedSurface, SurfaceAnalysis, UnsupportedStyling } from "./analysis.ts";
 import { compositeOver, wcagRatio } from "./colors.ts";
-import { resolveViewer } from "./viewer.ts";
 
 export const CONTRAST_RULE = "mermaid/contrast-text-below-aa";
 
 const TEXT_AA = 4.5;
 
-export async function reportContrast(
-  source: string,
-  stats: DiagramStats,
-  options: RuleOptions,
-  report: Report,
-): Promise<void> {
-  const analysis = await analyzeSurfaces(source, stats, resolveViewer(options));
-
+export function reportContrast(analysis: SurfaceAnalysis, report: Report): void {
   for (const surface of analysis.surfaces.filter((item) => item.kind !== "connector")) {
     checkText(surface, report);
   }
