@@ -40,7 +40,8 @@ It does not infer diagrams from Markdown-looking text inside other code blocks.
 | [`parsing/statistics.ts`](parsing/statistics.ts) | Official grammar/database adapters and common statistics |
 | [`parsing/graph.ts`](parsing/graph.ts) | Canonical graph projections for supported diagram families |
 | [`styling/declarations.ts`](styling/declarations.ts) | Official parser callbacks, supported declarations and source alignment |
-| [`contrast/policy.ts`](contrast/policy.ts) | Resolve text surfaces, audit both themes and report unauditable styling |
+| [`contrast/analysis.ts`](contrast/analysis.ts) | Surface Analysis: resolve text surfaces in both themes and list unauditable styling |
+| [`contrast/policy.ts`](contrast/policy.ts) | Apply the 4.5:1 text threshold and word unauditable findings |
 | [`contrast/colors.ts`](contrast/colors.ts) | Color.js conversion, compositing and WCAG ratios |
 | [`complexity/metrics.ts`](complexity/metrics.ts) | Visual complexity formula, presets and targets |
 | [`complexity/policy.ts`](complexity/policy.ts) | Complexity errors and verified recommendation formatting |

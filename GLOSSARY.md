@@ -26,6 +26,7 @@ flowchart LR
     SPL["Split Plan"]:::info
     IPR["Interpunct Run"]:::info
     LPR["List Promotion"]:::info
+    SFA["Surface Analysis"]:::pipeline
 
     MNT -- states --> REQ
     REQ -- binds --> AGT
@@ -39,6 +40,7 @@ flowchart LR
     DIG -- may carry --> SPL
     DOC -- derives --> IPR
     DIG -- may carry --> LPR
+    SFA -- serves --> POL
 
     linkStyle default color:#0f172a
 
@@ -119,3 +121,9 @@ Something the Maintainer has stated the project must do or must never do.
 
 A verified recommendation for breaking one over-complex Mermaid diagram into smaller ones.
 See [the splitting README](src/mermaid/splitting/README.md).
+
+## Surface Analysis
+
+The theme-by-theme list of text surfaces Mermaid paints in one diagram, with each foreground, background and source line.
+Styling it cannot model is listed explicitly instead of guessed.
+Mermaid policies read it and own their thresholds; [`analyzeSurfaces`](src/mermaid/contrast/analysis.ts) builds it.

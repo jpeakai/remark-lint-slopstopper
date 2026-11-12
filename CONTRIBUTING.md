@@ -102,7 +102,8 @@ Document the policy's identifier, options, example findings, corrections and fix
 
 Keep official parser access within the serial Mermaid job.
 Do not extract diagram syntax with regular expressions when the canonical parser model supplies it.
-Reuse the contrast surface and Color.js layers for colour assertions.
+For colour assertions, read the Surface Analysis from `analyzeSurfaces` in [`contrast/analysis.ts`](src/mermaid/contrast/analysis.ts) and keep thresholds in the policy.
+Report its `unsupported` entries rather than treating a partial analysis as a pass.
 Consult the [Mermaid README](src/mermaid/README.md) and [split planner README](src/mermaid/splitting/README.md) for their local contracts.
 
 ## Add an automatic edit deliberately

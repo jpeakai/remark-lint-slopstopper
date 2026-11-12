@@ -65,7 +65,8 @@ Prose-only configurations do not initialise Mermaid or install its browser globa
 | [`prose/rules/list-stacked-interpunct-runs.ts`](src/prose/rules/list-stacked-interpunct-runs.ts) | Detect stacked Interpunct Runs and promote labelled lines to a nested list |
 | [`prose/rules/punctuation-em-dash-in-prose.ts`](src/prose/rules/punctuation-em-dash-in-prose.ts) | Detect em-dashes and swap unambiguous ones for parentheses or a colon |
 | [`prose/rules/punctuation-interpunct-in-prose.ts`](src/prose/rules/punctuation-interpunct-in-prose.ts) | Detect stray interpuncts outside claimed runs and swap spaced ones for commas |
-| [`mermaid/contrast/policy.ts`](src/mermaid/contrast/policy.ts) | Audit rendered text surfaces in both themes |
+| [`mermaid/contrast/analysis.ts`](src/mermaid/contrast/analysis.ts) | Build the Surface Analysis of rendered surfaces in both themes |
+| [`mermaid/contrast/policy.ts`](src/mermaid/contrast/policy.ts) | Apply the text contrast threshold to the Surface Analysis |
 | [`mermaid/complexity/policy.ts`](src/mermaid/complexity/policy.ts) | Calculate VCS and report verified split recommendations |
 
 [`types.ts`](src/types.ts) defines common options, diagnostics and edits.
