@@ -4,14 +4,20 @@ import { getMermaidCore, type MermaidCore } from "../parsing/engine.ts";
 import { parseTraced } from "../styling/declarations.ts";
 import { frontmatterLine } from "../styling/source.ts";
 import { compositeOver } from "./colors.ts";
-import { type SequenceBackdrop, type SequenceFeatures, sequenceFeatures } from "./sequence-model.ts";
+import {
+  type SequenceBackdrop,
+  type SequenceFeatures,
+  type SequenceRegion,
+  sequenceFeatures,
+} from "./sequence-model.ts";
 import { type Canvas, GITHUB_CANVAS, resolveThemes, SUPPORTED_THEMES, THEMES, type Theme } from "./theme.ts";
 
-// Sequence label surfaces resolved through Mermaid's parser and theme engine.
-// Only text surfaces are returned; the contrast rule owns the WCAG decision.
+// Sequence surfaces resolved through Mermaid's parser and theme engine.
+// Text and connector surfaces are returned; policies own every WCAG decision.
 
 interface SequenceSurface {
-  kind: "text";
+  // A connector is a lifeline or message line stroke, not text.
+  kind: "text" | "connector";
   selector: string;
   foreground: string;
   background: string;
@@ -40,6 +46,7 @@ interface ParsedSequence {
   db: SequenceDB;
   lineOf: (key: string) => number;
   rectLines: number[];
+  boxLines: number[];
 }
 
 const parseSequence = async (mermaid: MermaidCore, source: string): Promise<ParsedSequence | null> => {
@@ -74,9 +81,10 @@ const parseSequence = async (mermaid: MermaidCore, source: string): Promise<Pars
     return line;
   };
 
-  const rectLines = tokens.filter((t) => t.name === "rect").map((t) => sourceLine(t.line, t.endColumn) ?? keywordLine);
+  const linesOf = (name: string): number[] =>
+    tokens.filter((t) => t.name === name).map((t) => sourceLine(t.line, t.endColumn) ?? keywordLine);
 
-  return { config, db: db as unknown as SequenceDB, lineOf, rectLines };
+  return { config, db: db as unknown as SequenceDB, lineOf, rectLines: linesOf("rect"), boxLines: linesOf("box") };
 };
 
 const unmodelled = (config: MermaidConfig): { selector: string; reason: string } | null => {
@@ -116,9 +124,11 @@ type SequencePair = (
     suffix?: string;
     at?: number | undefined;
     fills?: readonly string[];
+    kind?: SequenceSurface["kind"];
   },
 ) => void;
 
+// A stack's first fill is the painted region beneath any rect overlays.
 function pairBackground(
   bg: SequenceBackground,
   color: (key: string) => string,
@@ -136,7 +146,7 @@ function pairBackground(
 
 const sequencePair =
   ({ theme, page, vars, lineOf, out }: SequenceTheme): SequencePair =>
-  (fgKey, bg, { suffix = "", at, fills = [] } = {}) => {
+  (fgKey, bg, { suffix = "", at, fills = [], kind = "text" } = {}) => {
     const color = (key: string): string => {
       const value = vars[key];
 
@@ -154,7 +164,7 @@ const sequencePair =
       const background = pairBackground(bg, color, page, fills);
 
       out.pairs.push({
-        kind: "text",
+        kind,
         selector,
         foreground: compositeOver(color(fgKey), background),
         background,
@@ -171,7 +181,12 @@ const sequencePair =
     }
   };
 
-const scoreAuthorSequence = (pair: SequencePair, features: SequenceFeatures, rectLines: number[]): void => {
+interface SourceLines {
+  rects: number[];
+  boxes: number[];
+}
+
+const scoreAuthorSequence = (pair: SequencePair, features: SequenceFeatures, lines: SourceLines): void => {
   for (const fills of features.boxedActors) {
     pair("actorTextColor", { key: "actorBkg" }, { fills });
   }
@@ -186,52 +201,86 @@ const scoreAuthorSequence = (pair: SequencePair, features: SequenceFeatures, rec
     );
   }
 
-  pairBackdrops(pair, { foreground: "signalTextColor" }, features.signals, rectLines);
-  pairBackdrops(pair, { foreground: "noteTextColor", background: "noteBkgColor" }, features.notes, rectLines);
-  pairBackdrops(pair, { foreground: "labelTextColor", background: "labelBoxBkgColor" }, features.frames, rectLines);
-  pairBackdrops(pair, { foreground: "loopTextColor" }, features.frames, rectLines);
-  pairBackdrops(pair, { foreground: "sequenceNumberColor", background: "signalColor" }, features.numbers, rectLines);
+  // A group title is drawn in the root text colour on its own group fill.
+  features.groups.forEach((group, index) => {
+    if (group.name.trim()) {
+      pair("textColor", { stack: [group.fill] }, { suffix: ` (group ${group.name} title)`, at: lines.boxes[index] });
+    }
+  });
+
+  const measure = measurer(pair, features, lines);
+
+  measure({ foreground: "signalTextColor" }, features.signals);
+  measure({ foreground: "noteTextColor", background: "noteBkgColor" }, features.notes);
+  measure({ foreground: "labelTextColor", background: "labelBoxBkgColor" }, features.frameLabels);
+  measure({ foreground: "loopTextColor" }, features.frameTexts);
+  measure({ foreground: "sequenceNumberColor", background: "signalColor" }, features.numbers);
+  measure({ foreground: "signalColor", kind: "connector" }, features.messageLines, " (message line)");
+  measure({ foreground: "actorLineColor", kind: "connector" }, features.lifelines, " (lifeline)");
 };
 
-function pairBackdrops(
-  pair: SequencePair,
-  keys: { foreground: string; background?: string },
+type Measure = (
+  keys: { foreground: string; background?: string; kind?: SequenceSurface["kind"] },
   backdrops: SequenceBackdrop[],
-  rectLines: number[],
-): void {
-  for (const { fills, rect } of backdrops) {
-    const where = {
-      fills,
-      suffix: rect === undefined ? "" : " (rect)",
-      at: rect === undefined ? undefined : rectLines[rect],
-    };
-    const background: SequenceBackground = keys.background ? { key: keys.background } : { stack: fills };
+  label?: string,
+) => void;
 
-    pair(keys.foreground, background, where);
+// Unnamed groups are numbered from one in declaration order.
+function groupSuffix(features: SequenceFeatures, region: SequenceRegion): string {
+  if (region.group === undefined) {
+    return "";
   }
+
+  return ` (in group ${features.groups[region.group]?.name || region.group + 1})`;
 }
 
-function omitUnplacedLabels(
+// Each backdrop is measured once per region it can overlap: the region's
+// fill composited over the page, then any rect fills in statement order.
+const measurer =
+  (pair: SequencePair, features: SequenceFeatures, lines: SourceLines): Measure =>
+  (keys, backdrops, label = "") => {
+    const placed = backdrops.flatMap(({ regions, fills, rect }) => regions.map((region) => ({ region, fills, rect })));
+
+    for (const { region, fills, rect } of placed) {
+      const stack = [region.fill, ...fills];
+      const background: SequenceBackground = keys.background ? { key: keys.background } : { stack };
+
+      const placement = rectPlacement(rect, lines);
+
+      pair(keys.foreground, background, {
+        fills: stack,
+        suffix: `${label}${placement.suffix}${groupSuffix(features, region)}`,
+        at: placement.at,
+        kind: keys.kind ?? "text",
+      });
+    }
+  };
+
+// Labels inside a rect report at the rect's source line.
+function rectPlacement(rect: number | undefined, lines: SourceLines): { suffix: string; at: number | undefined } {
+  return rect === undefined ? { suffix: "", at: undefined } : { suffix: " (rect)", at: lines.rects[rect] };
+}
+
+// Geometry that cannot be placed blocks every label that depends on it.
+function omitUnmeasurableLabels(
   features: SequenceFeatures,
   block: (selector: string, reason: string) => ContrastResult,
 ): void {
-  if (features.namedBoxes) {
-    block("box", "participant group title text styling is not modeled");
-  }
-
-  const uncertain =
-    features.paintedBoxes &&
-    [features.signals, features.notes, features.frames, features.numbers].some((labels) => labels.length > 0);
-
-  if (!uncertain) {
+  if (!features.unmeasurable.length) {
     return;
   }
 
-  block("box", "text placement across painted participant groups cannot be audited without rendered geometry");
+  for (const { selector, reason } of features.unmeasurable) {
+    block(selector, reason);
+  }
+
   features.signals = [];
   features.notes = [];
-  features.frames = [];
+  features.frameLabels = [];
+  features.frameTexts = [];
   features.numbers = [];
+  features.messageLines = [];
+  features.lifelines = [];
 }
 
 export const scoreSequence = async (source: string, canvas: Canvas = GITHUB_CANVAS): Promise<ContrastResult> => {
@@ -243,7 +292,7 @@ export const scoreSequence = async (source: string, canvas: Canvas = GITHUB_CANV
     return out;
   }
 
-  const { config, db, lineOf, rectLines } = parsed;
+  const { config, db, lineOf, rectLines, boxLines } = parsed;
 
   const block = (selector: string, reason: string): ContrastResult => {
     out.skipped.push({
@@ -268,7 +317,7 @@ export const scoreSequence = async (source: string, canvas: Canvas = GITHUB_CANV
     return block("actor", `participant label geometry is not modeled for ${features.unsupportedActorTypes.join(", ")}`);
   }
 
-  omitUnplacedLabels(features, block);
+  omitUnmeasurableLabels(features, block);
 
   let variables: Record<Theme, Variables>;
 
@@ -289,7 +338,7 @@ export const scoreSequence = async (source: string, canvas: Canvas = GITHUB_CANV
       out,
     });
 
-    scoreAuthorSequence(pair, features, rectLines);
+    scoreAuthorSequence(pair, features, { rects: rectLines, boxes: boxLines });
   }
 
   return out;

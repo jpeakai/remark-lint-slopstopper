@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import { test } from "node:test";
 import { analyzeMermaid } from "../analyze.ts";
 import { scoreSequence } from "./sequence.ts";
@@ -194,14 +195,113 @@ test("translucent participant labels composite over their group fill", async () 
   assert(findings.every((finding) => finding.message.includes("1.00:1")));
 });
 
-test("painted group message placement is explicitly unauditable", async () => {
+const messages = (findings: { message: string }[]) => findings.map((finding) => finding.message.split(":")[0]);
+
+test("a message within one opaque group is measured on the group fill, not the page", async () => {
   const findings = await audit(
-    "sequenceDiagram\nbox rgb(255,255,255)\nparticipant A\nend\nparticipant B\nA->>B: hello",
-    safeActors,
+    "sequenceDiagram\nbox rgb(0,0,0) Shop\nparticipant A\nparticipant B\nend\nA->>B: hello",
+    { ...safeActors, textColor: "#ffffff", signalTextColor: "#000000" },
+  );
+
+  assert.deepEqual(messages(findings), Array(2).fill("signalTextColor (in group Shop)"));
+  assert(findings.every((finding) => finding.message.includes("on #000000") && finding.message.includes("1.00:1")));
+});
+
+test("a message crossing groups is measured on each group it spans and the page gap", async () => {
+  const findings = await audit(
+    "sequenceDiagram\nbox rgb(0,0,0)\nparticipant A\nend\nbox rgb(255,255,255)\nparticipant B\nend\nA->>B: hello",
+    { ...safeActors, signalTextColor: "#ffffff" },
+  );
+
+  assert.deepEqual(messages(findings), [
+    "signalTextColor (in group 2)",
+    "signalTextColor",
+    "signalTextColor (in group 2)",
+    "signalTextColor",
+  ]);
+});
+
+test("self messages reach the page beside an edge participant but not beside an inner one", async () => {
+  const group = "sequenceDiagram\nbox rgb(0,0,0) Shop\nparticipant A\nparticipant B\nparticipant C\nend\n";
+  const variables = { ...safeActors, textColor: "#ffffff", signalTextColor: "#ffffff" };
+
+  assert.deepEqual(await audit(`${group}B->>B: recompute`, variables), []);
+  assert.deepEqual(messages(await audit(`${group}C->>C: recompute`, variables)), Array(2).fill("signalTextColor"));
+  assert.deepEqual(messages(await audit(`${group}A->>A: recompute`, variables)), Array(2).fill("signalTextColor"));
+});
+
+test("notes beside an edge participant reach the page, and notes over the group stay inside", async () => {
+  const group = "sequenceDiagram\nbox rgb(0,0,0) Shop\nparticipant A\nparticipant B\nend\n";
+  const variables = {
+    ...safeActors,
+    textColor: "#ffffff",
+    noteTextColor: "#ffffff",
+    noteBkgColor: "rgba(0,0,0,0)",
+  };
+
+  assert.deepEqual(await audit(`${group}Note over A,B: inside`, variables), []);
+  assert.deepEqual(messages(await audit(`${group}Note left of A: outside`, variables)), Array(2).fill("noteTextColor"));
+  assert.deepEqual(messages(await audit(`${group}Note right of A: between`, variables)), []);
+});
+
+test("nested translucent rects composite over the group fill in statement order", async () => {
+  const findings = await audit(
+    [
+      "sequenceDiagram",
+      "box rgb(0,0,255) Shop",
+      "participant A",
+      "participant B",
+      "end",
+      "rect rgba(255,0,0,0.5)",
+      "rect rgba(0,255,0,0.5)",
+      "A->>B: nested",
+      "end",
+      "end",
+    ].join("\n"),
+    { ...safeActors, textColor: "#ffffff", signalTextColor: "#408040" },
+  );
+
+  // White page, then blue, then half red, then half green: (64, 128, 64).
+  assert.deepEqual(messages(findings), Array(2).fill("signalTextColor (rect) (in group Shop)"));
+  assert(findings.every((finding) => finding.message.includes("on #408040")));
+});
+
+test("a group that is not adjacent in participant order is precisely unmeasurable", async () => {
+  const findings = await audit(
+    "sequenceDiagram\nparticipant A\nparticipant C\nbox rgb(0,0,0) Shop\nparticipant B\nparticipant A\nend\nA->>B: hi",
+    { ...safeActors, textColor: "#ffffff" },
   );
 
   assert.equal(findings.length, 1);
-  assert(findings[0]?.message.includes("without rendered geometry"));
+  assert.match(findings[0]?.message ?? "", /group Shop has members declared apart/);
+});
+
+test("a frame without messages beside painted groups is precisely unmeasurable", async () => {
+  const findings = await audit("sequenceDiagram\nbox rgb(0,0,0) Shop\nparticipant A\nend\nloop forever\nend", {
+    ...safeActors,
+    textColor: "#ffffff",
+  });
+
+  assert.equal(findings.length, 1);
+  assert.match(findings[0]?.message ?? "", /frame without messages has no measurable position/);
+});
+
+test("lifelines and message lines are exposed as connectors, never as text findings", async () => {
+  const source = "sequenceDiagram\nbox rgb(0,0,0) Shop\nparticipant A\nparticipant B\nend\nA->>B: hi";
+  const variables = { signalColor: "#000000", actorLineColor: "#000000", textColor: "#ffffff" };
+
+  const result = await scoreSequence(`---\nconfig: ${JSON.stringify({ themeVariables: variables })}\n---\n${source}`);
+  const connectors = result.pairs.filter((pair) => pair.kind === "connector" && pair.theme === "light");
+
+  assert.deepEqual(
+    connectors.map((pair) => [pair.selector, pair.foreground, pair.background]),
+    [
+      ["signalColor (message line) (in group Shop)", "#000000", "#000000"],
+      ["actorLineColor (lifeline) (in group Shop)", "#000000", "#000000"],
+      ["actorLineColor (lifeline) (in group Shop)", "#000000", "#000000"],
+    ],
+  );
+  assert.deepEqual(await audit(source, { ...safeActors, ...variables, signalTextColor: "#ffffff" }), []);
 });
 
 test("transparent participant groups preserve auditable page message labels", async () => {
@@ -214,13 +314,21 @@ test("transparent participant groups preserve auditable page message labels", as
   assert(findings.every((finding) => finding.message.startsWith("signalTextColor:")));
 });
 
-test("named participant groups explicitly report unmodeled title styling", async () => {
-  assert.deepEqual(await audit("sequenceDiagram\nbox rgb(255,255,255)\nparticipant A\nend", safeActors), []);
+test("named group titles are measured in the root text colour on their own fill", async () => {
+  assert.deepEqual(await audit("sequenceDiagram\nbox rgb(0,0,0)\nparticipant A\nend", safeActors), []);
 
-  const findings = await audit("sequenceDiagram\nbox rgb(255,255,255) Group\nparticipant A\nend", safeActors);
+  const findings = await audit("sequenceDiagram\nbox rgb(0,0,0) Group\nparticipant A\nend", {
+    ...safeActors,
+    textColor: "#000000",
+  });
 
-  assert.equal(findings.length, 1);
-  assert(findings[0]?.message.includes("group title text styling is not modeled"));
+  assert.deepEqual(messages(findings), Array(2).fill("textColor (group Group title)"));
+  assert(findings.every((finding) => finding.message.includes("on #000000")));
+
+  assert.deepEqual(
+    await audit("sequenceDiagram\nbox rgb(0,0,0) Group\nparticipant A\nend", { ...safeActors, textColor: "#ffffff" }),
+    [],
+  );
 });
 
 const withConfig = (config: Record<string, unknown>) =>
@@ -255,4 +363,20 @@ test("source Mermaid cannot parse yields no pairs and no skipped surfaces", asyn
     pairs: [],
     skipped: [],
   });
+});
+
+test("the participant group fixture fails only where a label really sits on the page", async () => {
+  const markdown = await readFile(new URL("../fixtures/sequence-groups.md", import.meta.url), "utf8");
+  const section = (offset: number) =>
+    [...markdown.slice(0, offset).matchAll(/^## (.+)$/gm)].at(-1)?.[1] ?? "before any section";
+
+  const findings = await analyzeMermaid(markdown, { rules: ["mermaid/contrast-text-below-aa"] });
+
+  assert.deepEqual(
+    findings.map((finding) => [section(finding.start), finding.message.split(" in the ")[0]]),
+    [
+      ["Transparent group", "signalTextColor: text #64748b resolves to #64748b on #0d1117"],
+      ["Self message on an edge participant", "signalTextColor: text #ffffff resolves to #ffffff on #ffffff"],
+    ],
+  );
 });

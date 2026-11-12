@@ -7,6 +7,11 @@ Anything under `Unreleased` is on `main` but not yet released.
 
 ## Unreleased
 
+### Fixed
+
+- `mermaid/contrast-text-below-aa` measures sequence labels in coloured participant groups against the group fill, page gaps and rect overlays they actually sit on, instead of reporting the whole diagram as unauditable.
+  Named group titles are now checked too.
+
 ## 0.1.2 - 2026-10-28
 
 ### Changed
