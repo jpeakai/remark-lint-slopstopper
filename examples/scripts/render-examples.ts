@@ -15,6 +15,7 @@ validated, and a manifest.json records sources, scenarios, paths and sizes.
 Options:
   --originals  Render diagram.md originals instead of diagram-fixed.md
                comparisons. Their render errors are recorded, not fatal.
+  --matched    Render each theme on its own page colour only, as a fast check
   --out DIR    Output directory (default: tmp/renders)
   -h, --help   Show this help and exit
 
@@ -25,6 +26,7 @@ async function main(): Promise<void> {
     args: process.argv.slice(2),
     options: {
       originals: { type: "boolean", default: false },
+      matched: { type: "boolean", default: false },
       out: { type: "string", default: join(ROOT, "tmp", "renders") },
       help: { type: "boolean", short: "h", default: false },
     },
@@ -43,6 +45,7 @@ async function main(): Promise<void> {
     examples: positionals,
     out: values.out,
     executablePath: await resolveBrowser(process.env.CHROME_PATH),
+    matrix: values.matched ? "matched" : "full",
   });
   const where = join(values.out, manifest.set, "manifest.json");
 

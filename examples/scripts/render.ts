@@ -67,8 +67,15 @@ export interface FileRecord {
   fences: Omit<DiagramSource, "source">[];
 }
 
+// The full matrix renders every theme on every background; the matched one
+// renders each theme on its own page colour only, as a fast check.
+export type Matrix = "full" | "matched";
+
+const MATCHED: Record<ThemeName, BackgroundName> = { light: "white", dark: "black" };
+
 export interface Manifest {
   set: ExampleSet;
+  matrix: Matrix;
   renderer: { mermaid: string; browser: string };
   files: FileRecord[];
   expected: number;
@@ -82,6 +89,7 @@ export interface RenderOptions {
   examples?: string[];
   out: string;
   executablePath?: string;
+  matrix?: Matrix;
 }
 
 const sha256 = (value: string | Uint8Array): string => createHash("sha256").update(value).digest("hex");
@@ -144,10 +152,13 @@ export function diagramSources(markdown: string): DiagramSource[] {
   }));
 }
 
-export function scenarios(example: string, sources: readonly DiagramSource[]): Scenario[] {
+export function scenarios(example: string, sources: readonly DiagramSource[], matrix: Matrix = "full"): Scenario[] {
+  const backgrounds = (theme: ThemeName): BackgroundName[] =>
+    matrix === "matched" ? [MATCHED[theme]] : (Object.keys(BACKGROUNDS) as BackgroundName[]);
+
   return sources.flatMap(({ index }) =>
     (Object.keys(THEMES) as ThemeName[]).flatMap((theme) =>
-      (Object.keys(BACKGROUNDS) as BackgroundName[]).flatMap((background) =>
+      backgrounds(theme).flatMap((background) =>
         FORMATS.map((format) => ({
           id: `${example}#${index}/${theme}/${background}/${format}`,
           example,
@@ -345,6 +356,7 @@ export async function renderExamples(root: string, options: RenderOptions): Prom
   const browser = await chromium.launch(options.executablePath ? { executablePath: options.executablePath } : {});
   const manifest: Manifest = {
     set: options.set,
+    matrix: options.matrix ?? "full",
     renderer: { mermaid, browser: browser.version() },
     files: [],
     expected: 0,
@@ -360,7 +372,7 @@ export async function renderExamples(root: string, options: RenderOptions): Prom
       const path = join(root, "examples", example, SET_FILES[options.set]);
       const markdown = await readFile(path, "utf8");
       const sources = diagramSources(markdown);
-      const expected = scenarios(example, sources);
+      const expected = scenarios(example, sources, manifest.matrix);
 
       manifest.files.push({
         example,

@@ -3,7 +3,7 @@ import { mkdir, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises"
 import { join } from "node:path";
 import { test } from "node:test";
 import { type Manifest, pngDimensions, renderExamples, resolveBrowser, verifyRenderer } from "../render.ts";
-import { repairExamples } from "../repair.ts";
+import { repairExamples, verifyRepairRenders } from "../repair.ts";
 
 // Real Chromium renders. Playwright's browser is used unless CHROME_PATH names one.
 const executablePath = process.env.CHROME_PATH;
@@ -118,4 +118,26 @@ test("a repair passes the browser preflight before failing on its own login", as
     /ENOENT.*missing-auth\.json/,
   );
   assert.equal(await readFile(join(root, "examples", "01-valid", "diagram-fixed.md"), "utf8"), "reviewed");
+});
+
+test("verified repair renders write a manifest and fail on a comparison that cannot render", async (t) => {
+  const root = await scratchRoot(t, {
+    "01-valid/diagram-fixed.md": VALID,
+    "02-broken/diagram-fixed.md": BROKEN,
+    "03-unselected/diagram-fixed.md": VALID,
+  });
+  const out = join(root, "renders");
+  const render = { executablePath: await resolveBrowser(executablePath), out, matrix: "matched" as const };
+
+  await verifyRepairRenders(root, ["01-valid"], render);
+
+  const manifest = JSON.parse(await readFile(join(out, "comparison", "manifest.json"), "utf8")) as Manifest;
+
+  assert.equal(manifest.matrix, "matched");
+  assert.equal(manifest.artifacts.length, 8);
+  await assert.rejects(stat(join(out, "comparison", "03-unselected")));
+  await assert.rejects(
+    verifyRepairRenders(root, ["02-broken"], render),
+    /failed render verification:\n02-broken#1\/light\/white\/png: /,
+  );
 });

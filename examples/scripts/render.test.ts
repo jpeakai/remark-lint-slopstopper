@@ -108,3 +108,15 @@ test("example selection rejects paths, unknown folders and empty trees", async (
   await mkdir(join(root, "examples"));
   await assert.rejects(exampleNames(root), /No examples found/);
 });
+
+test("the matched matrix renders each theme on its own page colour only", () => {
+  const sources = diagramSources("```mermaid\npie\n```\n");
+
+  const matched = scenarios("01-pie", sources, "matched");
+
+  assert.deepEqual(
+    matched.map((scenario) => scenario.id),
+    ["01-pie#1/light/white/png", "01-pie#1/light/white/svg", "01-pie#1/dark/black/png", "01-pie#1/dark/black/svg"],
+  );
+  assert.equal(scenarios("01-pie", sources, "full").length, 12);
+});

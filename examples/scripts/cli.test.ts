@@ -3,7 +3,7 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { test } from "node:test";
 import { parseOptions } from "./cli.ts";
-import { repairExamples } from "./repair.ts";
+import { failureExitCode, repairExamples } from "./repair.ts";
 
 test("the example selector and installed skill path reach the runner separately", () => {
   const options = parseOptions(["03-flowchart", "--skill", "./plugin/mermaidjs-diagrams", "--model", "chosen-model"]);
@@ -81,4 +81,17 @@ test("an unavailable explicit browser stops the run before any reset or login co
     "reviewed comparison",
   );
   await assert.rejects(readFile(join(root, "tmp", "codex-runs")), /ENOENT/);
+});
+
+test("the render option selects the full or matched matrix", () => {
+  assert.equal(parseOptions(["--render", "matched"]).render, "matched");
+  assert.equal(parseOptions(["--render", "full"]).render, "full");
+  assert.throws(() => parseOptions(["--render", "fast"]), /Expected full or matched/);
+});
+
+test("a failed later check keeps the agent's own nonzero exit status", () => {
+  assert.equal(failureExitCode(3), 3);
+  assert.equal(failureExitCode(0), 1);
+  assert.equal(failureExitCode(undefined), 1);
+  assert.equal(failureExitCode(null), 1);
 });

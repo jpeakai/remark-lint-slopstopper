@@ -42,6 +42,11 @@ Codex then receives the verified browser as `CHROME_PATH` and a `tmp/` folder in
 After Codex finishes, the runner checks each selected comparison's diagram family.
 A family change fails the run, naming the file, unless [translations.yml](../translations.yml) approves it as a Portable Translation and its facts survive.
 
+When Codex succeeds, the runner then renders the selected comparisons, as described below, into `renders/` inside its run directory.
+A missing, empty or invalid artifact fails the run, and the manifest stays there as evidence.
+`--render matched` checks each theme on its own page colour only; the default `--render full` keeps the whole matrix.
+If Codex fails, the run keeps Codex's exit status even when a later check also fails, and nothing is rendered.
+
 Run `make site` after repairs, or `make site-serve` to review them in the local site.
 
 ## Verify renders
@@ -64,6 +69,7 @@ Each failure names its scenario as `example#fence/theme/background/format`.
 Results go to `tmp/renders/comparison/`, with a `manifest.json` recording source hashes, scenarios, artifact paths, sizes and dimensions.
 Use `--out DIR` for another location.
 
+Pass `--matched` for the fast matched-background matrix.
 Comparisons must render.
 Originals can fail on purpose, so `--originals` renders them into `tmp/renders/original/` and records their render errors instead of failing.
 
