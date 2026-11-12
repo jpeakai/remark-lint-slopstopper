@@ -7,7 +7,7 @@ import { createDocument } from "../../document/context.ts";
 import { getMermaidCore } from "../parsing/engine.ts";
 import type { DiagramStats } from "../parsing/statistics.ts";
 import { readStyles } from "../styling/declarations.ts";
-import { styledSurfaces } from "./rendered.ts";
+import { styledConnectors, styledSurfaces } from "./rendered.ts";
 import { scoreSequence } from "./sequence.ts";
 import { familySurfaces, titleSurface } from "./surfaces.ts";
 import {
@@ -48,6 +48,9 @@ export interface UnsupportedStyling {
   // Present when a specific declaration, rather than the whole diagram, is unmodelled.
   selector?: string;
   line?: number;
+
+  // "connector" when only connector surfaces are incomplete; otherwise every policy is affected.
+  scope?: "connector";
 }
 
 export interface SurfaceAnalysis {
@@ -69,6 +72,31 @@ const ALIASES: Record<string, string> = {
 };
 
 const STYLED_FAMILIES = ["flowchart", "classDiagram", "stateDiagram", "erDiagram"];
+
+// Families whose connectors are modelled, and families that draw none: their
+// lines are axes, borders or decoration rather than relationships.
+const CONNECTOR_FAMILIES = new Set([...STYLED_FAMILIES, "sequence"]);
+const CONNECTOR_FREE = new Set([
+  "info",
+  "pie",
+  "quadrantChart",
+  "treemap",
+  "packet",
+  "kanban",
+  "journey",
+  "timeline",
+  "venn",
+  "cynefin",
+  "radar",
+  "xychart",
+  "gantt",
+]);
+
+function classifyConnectors(kind: string, analysis: SurfaceAnalysis): void {
+  if (!(CONNECTOR_FAMILIES.has(kind) || CONNECTOR_FREE.has(kind))) {
+    analysis.unsupported.push({ reason: `${kind} connectors are not modeled`, scope: "connector" });
+  }
+}
 
 // Callers must hold the serial Mermaid queue; theme resolution restores the
 // site configuration even when discovery fails part way.
@@ -113,21 +141,28 @@ async function discover(source: string, stats: DiagramStats, canvas: Canvas, ana
   }
 
   const diagram = (await mermaid.mermaidAPI.getDiagramFromText(source)) as Diagram;
-  const kind = ALIASES[stats.diagram_type] ?? stats.diagram_type;
+  const kind = normalKind(stats.diagram_type);
   const { themes, defaults } = resolveThemes(mermaid, config);
   const run: SurfaceRun = { diagram, kind, config, themes, defaults, canvas, styles };
   const collect = collector(analysis);
 
   collectTitles(diagramTitle(source, diagram), run, collect);
 
-  if (kind === "sequence" || kind === "sequenceDiagram") {
+  if (kind === "sequence") {
     rejectSequenceHtml(diagram);
 
     return collectSequence(source, canvas, analysis, collect);
   }
 
-  await collectFamily(run, collect);
+  await collectFamily(run, analysis, collect);
+  classifyConnectors(kind, analysis);
 }
+
+const normalKind = (type: string): string => {
+  const kind = ALIASES[type] ?? type;
+
+  return kind === "sequenceDiagram" ? "sequence" : kind;
+};
 
 type SurfaceRun = {
   diagram: Diagram;
@@ -205,7 +240,7 @@ async function collectSequence(
   }
 }
 
-async function collectFamily(run: SurfaceRun, collect: Collect): Promise<void> {
+async function collectFamily(run: SurfaceRun, analysis: SurfaceAnalysis, collect: Collect): Promise<void> {
   const data = STYLED_FAMILIES.includes(run.kind) ? (run.diagram.db as FlowDB).getData() : undefined;
 
   if (data) {
@@ -232,6 +267,32 @@ async function collectFamily(run: SurfaceRun, collect: Collect): Promise<void> {
 
     for (const surface of surfaces) {
       collect("label", surface, theme);
+    }
+
+    if (data) {
+      collectConnectors(
+        styledConnectors({ ...ctx, data, directives: run.styles.directives }),
+        theme,
+        analysis,
+        collect,
+      );
+    }
+  }
+}
+
+function collectConnectors(
+  connectors: ReturnType<typeof styledConnectors>,
+  theme: Theme,
+  analysis: SurfaceAnalysis,
+  collect: Collect,
+): void {
+  for (const surface of connectors.surfaces) {
+    collect("connector", surface, theme);
+  }
+
+  for (const reason of connectors.unsupported) {
+    if (!analysis.unsupported.some((item) => item.reason === reason)) {
+      analysis.unsupported.push({ reason, scope: "connector" });
     }
   }
 }

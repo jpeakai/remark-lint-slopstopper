@@ -21,7 +21,7 @@ export async function reportContrast(
     checkText(surface, report);
   }
 
-  for (const unsupported of analysis.unsupported) {
+  for (const unsupported of analysis.unsupported.filter((item) => item.scope !== "connector")) {
     reportUnsupported(unsupported, report);
   }
 }
@@ -59,7 +59,7 @@ function checkText(surface: AnalyzedSurface, report: Report): void {
   );
 }
 
-function resolvedCanvas(options: RuleOptions): Canvas {
+export function resolvedCanvas(options: RuleOptions): Canvas {
   const canvas = { ...GITHUB_CANVAS, ...options.canvas };
 
   for (const [theme, color] of Object.entries(canvas)) {

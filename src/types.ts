@@ -12,6 +12,7 @@ export type PolicyRuleId =
   | "prose/punctuation-em-dash-in-prose"
   | "prose/punctuation-interpunct-in-prose"
   | "mermaid/contrast-text-below-aa"
+  | "mermaid/contrast-connectors-below-minimum"
   | "mermaid/complexity-visual-score-acceptable-exceeded";
 
 export type RuleId = PolicyRuleId | "mermaid/parse-diagram-unparseable";

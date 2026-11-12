@@ -1,6 +1,7 @@
 import { createDocument, type DocumentContext } from "../document/context.ts";
 import type { Diagnostic, PolicyRuleId, RuleOptions } from "../types.ts";
 import { COMPLEXITY_RULE, reportComplexity } from "./complexity/policy.ts";
+import { CONNECTOR_RULE, reportConnectors } from "./contrast/connectors.ts";
 import { CONTRAST_RULE, reportContrast } from "./contrast/policy.ts";
 import { type Fence, fences, sourceLocation } from "./markdown.ts";
 import { extractStats } from "./parsing/statistics.ts";
@@ -8,6 +9,7 @@ import type { Report } from "./report.ts";
 
 export const MERMAID_RULES = {
   contrast: CONTRAST_RULE,
+  connectors: CONNECTOR_RULE,
   complexity: COMPLEXITY_RULE,
   parse: "mermaid/parse-diagram-unparseable",
 } as const;
@@ -15,6 +17,8 @@ export const MERMAID_RULES = {
 export interface MermaidOptions extends RuleOptions {
   rules?: readonly PolicyRuleId[];
 }
+
+const ANALYSED = new Set<PolicyRuleId>([CONTRAST_RULE, CONNECTOR_RULE, COMPLEXITY_RULE]);
 
 let queue: Promise<unknown> = Promise.resolve();
 
@@ -30,7 +34,7 @@ export function analyzeMermaid(input: string | DocumentContext, options: Mermaid
 async function analyze(document: DocumentContext, options: MermaidOptions): Promise<Diagnostic[]> {
   const out: Diagnostic[] = [];
 
-  if (options.rules && !options.rules.some((rule) => rule === CONTRAST_RULE || rule === COMPLEXITY_RULE)) {
+  if (options.rules && !options.rules.some((rule) => ANALYSED.has(rule))) {
     return out;
   }
 
@@ -66,5 +70,9 @@ async function analyzeFence(node: Fence, options: MermaidOptions, report: Report
 
   if (!options.rules || options.rules.includes(CONTRAST_RULE)) {
     await reportContrast(node.value, stats, options, report);
+  }
+
+  if (!options.rules || options.rules.includes(CONNECTOR_RULE)) {
+    await reportConnectors(node.value, stats, options, report);
   }
 }
