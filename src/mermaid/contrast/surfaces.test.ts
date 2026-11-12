@@ -3,6 +3,8 @@ import { test } from "node:test";
 import type { MermaidConfig } from "mermaid";
 import { analyzeMermaid, MERMAID_RULES } from "../analyze.ts";
 
+const TEXT_ONLY = { rules: [MERMAID_RULES.contrast] };
+
 type FamilyFixture = [string, string, NonNullable<MermaidConfig["themeVariables"]>, MermaidConfig?];
 
 const fixtures: FamilyFixture[] = [
@@ -49,7 +51,7 @@ for (const [family, body, themeVariables, settings = {}] of fixtures) {
     const config = { ...settings, themeVariables };
     const source = `\`\`\`mermaid\n---\nconfig: ${JSON.stringify(config)}\n---\n${body}\n\`\`\``;
 
-    const found = await analyzeMermaid(source);
+    const found = await analyzeMermaid(source, TEXT_ONLY);
 
     assert(!found.some((d) => /cannot be audited|cannot parse/.test(d.message)), JSON.stringify(found));
     assert(
@@ -63,7 +65,7 @@ test("Venn region text resolves overlapping translucent set fills", async () => 
   const source =
     '```mermaid\n---\nconfig:\n  themeVariables:\n    vennSetTextColor: "#ffffff"\n    venn1: "#ffffff"\n    venn2: "#ffffff"\n---\nvenn-beta\nset A: 10\nset B: 20\nunion A,B: 5\n```';
 
-  const found = await analyzeMermaid(source);
+  const found = await analyzeMermaid(source, TEXT_ONLY);
 
   assert(!found.some((d) => /cannot be audited|cannot parse/.test(d.message)), JSON.stringify(found));
   assert(found.some((d) => d.message.includes("region A|B") && d.message.includes("light theme")));
@@ -73,13 +75,13 @@ test("Venn single-set labels use renderer-derived colors instead of the intersec
   const source =
     '```mermaid\n---\nconfig:\n  themeVariables:\n    vennSetTextColor: "#ffffff"\n    venn1: "#2563eb"\n---\nvenn-beta\nset A: 10\n```';
 
-  assert.deepEqual(await analyzeMermaid(source), []);
+  assert.deepEqual(await analyzeMermaid(source, TEXT_ONLY), []);
 });
 
 test("unsupported Venn style statements remain explicit errors", async () => {
   const source = "```mermaid\nvenn-beta\nset A: 10\nstyle A fill:#ffffff,color:#ffffff,fill-opacity:1\n```";
 
-  const findings = await analyzeMermaid(source);
+  const findings = await analyzeMermaid(source, TEXT_ONLY);
 
   assert.equal(findings.length, 1);
   assert.match(findings[0]?.message ?? "", /cannot be audited.*style statements/);
@@ -95,7 +97,7 @@ test("family-specific title colors are audited with YAML metadata", async () => 
   const source =
     '```mermaid\n---\ntitle: Invisible\nconfig:\n  themeVariables:\n    treemap:\n      titleColor: "#ffffff"\n---\ntreemap-beta\n"Root"\n  "Leaf":10\n```';
 
-  const found = await analyzeMermaid(source);
+  const found = await analyzeMermaid(source, TEXT_ONLY);
 
   assert(found.some((d) => d.message.includes("diagram title") && d.message.includes("light theme")));
 });
@@ -103,7 +105,7 @@ test("hidden chart titles cannot create false-positive title contrast errors", a
   const source =
     '```mermaid\n---\nconfig:\n  themeVariables:\n    xyChart:\n      titleColor: "#ffffff"\n      backgroundColor: "#ffffff"\n---\nxychart-beta\nx-axis [a,b]\nbar [1,2]\n```';
 
-  assert(!(await analyzeMermaid(source)).some((d) => d.message.includes("titleColor")));
+  assert(!(await analyzeMermaid(source, TEXT_ONLY)).some((d) => d.message.includes("titleColor")));
 });
 test("selected pie highlight uses actual opaque fill instead of default opacity", async () => {
   const source =
@@ -119,6 +121,7 @@ test("selected pie highlight uses actual opaque fill instead of default opacity"
 test("info version text inherits the diagram text color", async () => {
   const found = await analyzeMermaid(
     '```mermaid\n---\nconfig:\n  themeVariables:\n    textColor: "#ffffff"\n---\ninfo\n```',
+    TEXT_ONLY,
   );
 
   assert(found.some((d) => d.message.includes("Mermaid version") && d.message.includes("light theme")));
@@ -134,6 +137,7 @@ test("swimlane uses official flowchart parser styles and nested backgrounds", as
 test("railroad terminal colors use normalized official IR", async () => {
   const found = await analyzeMermaid(
     '```mermaid\n---\nconfig:\n  railroad:\n    terminalFill: "#ffffff"\n    terminalTextColor: "#ffffff"\n---\nrailroad-beta\nmain = sequence(terminal("x"), nonterminal("value"));\n```',
+    TEXT_ONLY,
   );
 
   assert(!found.some((d) => /cannot parse|cannot be audited/.test(d.message)), JSON.stringify(found));
@@ -142,6 +146,7 @@ test("railroad terminal colors use normalized official IR", async () => {
 test("cynefin labels use layered domain fills in both themes", async () => {
   const found = await analyzeMermaid(
     '```mermaid\n---\nconfig:\n  themeVariables:\n    cynefin:\n      complexBg: "#ffffff"\n      labelColor: "#ffffff"\n      textColor: "#ffffff"\n---\ncynefin-beta\ncomplex\n"Work"\n```',
+    TEXT_ONLY,
   );
 
   assert(!found.some((d) => /cannot parse|cannot be audited/.test(d.message)), JSON.stringify(found));
@@ -150,6 +155,7 @@ test("cynefin labels use layered domain fills in both themes", async () => {
 test("eventmodeling uses official AST frame type colors", async () => {
   const found = await analyzeMermaid(
     '```mermaid\n---\nconfig:\n  themeVariables:\n    emUiFill: "#ffffff"\n    textColor: "#ffffff"\n---\neventmodeling\ntf 01 ui CartUI\ntf 02 cmd AddItem\ntf 03 evt ItemAdded\n```',
+    TEXT_ONLY,
   );
 
   assert(!found.some((d) => /cannot parse|cannot be audited/.test(d.message)), JSON.stringify(found));

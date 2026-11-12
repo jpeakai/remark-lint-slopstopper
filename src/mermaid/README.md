@@ -42,6 +42,7 @@ It does not infer diagrams from Markdown-looking text inside other code blocks.
 | [`styling/declarations.ts`](styling/declarations.ts) | Official parser callbacks, supported declarations and source alignment |
 | [`contrast/analysis.ts`](contrast/analysis.ts) | Surface Analysis: resolve text surfaces in both themes and list unauditable styling |
 | [`contrast/policy.ts`](contrast/policy.ts) | Apply the 4.5:1 text threshold and word unauditable findings |
+| [`contrast/connectors.ts`](contrast/connectors.ts) | Apply the 3:1 Connector threshold to edges, arrowheads, message lines and lifelines |
 | [`contrast/colors.ts`](contrast/colors.ts) | Color.js conversion, compositing and WCAG ratios |
 | [`complexity/metrics.ts`](complexity/metrics.ts) | Visual complexity formula, presets and targets |
 | [`complexity/policy.ts`](complexity/policy.ts) | Complexity errors and verified recommendation formatting |
@@ -129,7 +130,9 @@ Surface adapters account for supported node styles, text backgrounds, translucen
 Sequence diagrams have an ordered message model for participant groups, frames, notes and message backgrounds.
 [`contrast/sequence-model.ts`](contrast/sequence-model.ts) places each label over the participant columns it spans: a group's fill, the page gap between groups, or the page beside an edge participant.
 Rect fills composite over that region in statement order.
-Lifelines and message lines are exposed as connector surfaces, which the text policy ignores.
+Lifelines and message lines are exposed as Connector surfaces, which the text policy ignores.
+Graph edges become Connectors in [`contrast/rendered.ts`](contrast/rendered.ts), over every container between each end and their closest shared container.
+An unmodelled Connector is scoped to the connector policy, so it never blocks the text audit.
 Custom `themeCSS`, unsupported rendering modes and unmodelled surfaces report unauditable errors rather than guessed contrast.
 Theme transactions restore Mermaid configuration between theme resolutions.
 

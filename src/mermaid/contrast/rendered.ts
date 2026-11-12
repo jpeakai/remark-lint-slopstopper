@@ -3,7 +3,7 @@ import type { MermaidConfig } from "mermaid";
 import type { Edge, LayoutData, Node } from "mermaid/dist/rendering-util/types.js";
 import { propertiesOf } from "../styling/properties.ts";
 import type { StyleDirective } from "../styling/types.ts";
-import { compositeOver, withOpacity } from "./colors.ts";
+import { alphaOf, compositeOver, withOpacity } from "./colors.ts";
 import type { TextSurface, ThemeVariables } from "./theme.ts";
 
 type RenderNode = Node & { styles?: string[]; attributes?: readonly unknown[] };
@@ -234,4 +234,137 @@ export function styledSurfaces(ctx: PaintContext): TextSurface[] {
   const background = backdropReader(ctx, nodes);
 
   return [...ctx.data.nodes.flatMap((node) => nodeSurfaces(node, ctx, background)), ...edgeSurfaces(ctx)];
+}
+
+// Connector strokes, measured by a separate policy. Mermaid 11.17.2 paints an
+// edge and its arrowhead in the family's line colour unless a link style
+// sets `stroke`; `stroke-opacity` dims only the line, `opacity` both.
+const EDGE_STROKE: Record<string, string> = { stateDiagram: "transitionColor" };
+const NO_MARKER = new Set(["none", "arrow_open"]);
+const HIDDEN = new Set(["none", "transparent"]);
+
+// Keep the authored colour text unless opacity changes it.
+const paint = (stroke: string, alpha: number): string => (alpha === 1 ? stroke : withOpacity(stroke, alpha));
+
+export interface Connectors {
+  surfaces: TextSurface[];
+  unsupported: string[];
+}
+
+function edgeStyles(edge: Edge): string[] {
+  const own = (edge as { style?: string | string[] }).style;
+
+  return [...(edge.cssCompiledStyles ?? []), ...(Array.isArray(own) ? own : own ? [own] : [])];
+}
+
+function ancestors(nodes: Map<string, RenderNode>, id: string): string[] {
+  const out: string[] = [];
+
+  for (let parent = nodes.get(id)?.parentId; parent && !out.includes(parent); parent = nodes.get(parent)?.parentId) {
+    out.push(parent);
+  }
+
+  return out;
+}
+
+// An edge crosses every container between each end and their closest shared
+// container, so each of those backdrops is a candidate behind the line.
+function lineBackdrops(nodes: Map<string, RenderNode>, background: (id?: string) => string, edge: Edge): string[] {
+  const from = ancestors(nodes, edge.start ?? "");
+  const to = ancestors(nodes, edge.end ?? "");
+  const shared = from.find((id) => to.includes(id));
+  const crossed = [
+    ...from.slice(0, shared ? from.indexOf(shared) : from.length),
+    ...to.slice(0, shared ? to.indexOf(shared) : to.length),
+  ];
+
+  return [...new Set([...crossed.map((id) => background(id)), background(shared)])];
+}
+
+function strokeOf(edge: Edge, ctx: PaintContext): { stroke: string; dim: number; whole: number } {
+  const own = propertiesOf(edgeStyles(edge));
+  const stroke = own.stroke ?? ctx.vars[EDGE_STROKE[ctx.kind] ?? "lineColor"];
+
+  if (typeof stroke !== "string") {
+    throw new Error(`edge ${edge.id} has no resolved stroke colour`);
+  }
+
+  return {
+    stroke,
+    dim: Number(own["stroke-opacity"] ?? 1),
+    whole: Number(own.opacity ?? 1),
+  };
+}
+
+function edgeName(nodes: Map<string, RenderNode>, edge: Edge): string {
+  const label = (id = "") => {
+    const node = nodes.get(id);
+
+    return (typeof node?.label === "string" && node.label.trim()) || id;
+  };
+
+  return `edge ${label(edge.start)} → ${label(edge.end)}`;
+}
+
+interface Scene {
+  ctx: PaintContext;
+  nodes: Map<string, RenderNode>;
+  background: (id?: string) => string;
+}
+
+function edgeConnectors(edge: Edge, index: number, { ctx, nodes, background }: Scene): TextSurface[] {
+  const { stroke, dim, whole } = strokeOf(edge, ctx);
+
+  if (edge.thickness === "invisible" || HIDDEN.has(stroke.trim().toLowerCase())) {
+    return [];
+  }
+
+  try {
+    alphaOf(stroke);
+  } catch {
+    throw new Error(`edge ${edge.id} stroke ${stroke} is not a CSS colour`);
+  }
+
+  const directive = ctx.directives.find(
+    (item) => item.kind === "linkStyle" && [String(index), "default"].includes(item.selector),
+  );
+  const line = directive?.line ?? 1;
+  const name = edgeName(nodes, edge);
+  const surfaces = lineBackdrops(nodes, background, edge).map((bg) => ({
+    name: `${name} line`,
+    foreground: paint(stroke, dim * whole),
+    background: bg,
+    line,
+  }));
+  const markers = [
+    [edge.arrowTypeStart, edge.start],
+    [edge.arrowTypeEnd, edge.end],
+  ].filter(([type]) => type && !NO_MARKER.has(type));
+
+  for (const [, end] of markers) {
+    surfaces.push({
+      name: `${name} arrowhead`,
+      foreground: paint(stroke, whole),
+      background: background(nodes.get(end ?? "")?.parentId),
+      line,
+    });
+  }
+
+  return surfaces;
+}
+
+export function styledConnectors(ctx: PaintContext): Connectors {
+  const nodes = new Map(ctx.data.nodes.map((node) => [node.id, node as RenderNode]));
+  const background = backdropReader(ctx, nodes);
+  const out: Connectors = { surfaces: [], unsupported: [] };
+
+  for (const [index, edge] of ctx.data.edges.entries()) {
+    try {
+      out.surfaces.push(...edgeConnectors(edge, index, { ctx, nodes, background }));
+    } catch (error) {
+      out.unsupported.push(error instanceof Error ? error.message : String(error));
+    }
+  }
+
+  return out;
 }

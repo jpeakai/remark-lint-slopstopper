@@ -28,6 +28,7 @@ flowchart LR
     LPR["List Promotion"]:::info
     SFA["Surface Analysis"]:::pipeline
     VSC["Viewer Scenario"]:::info
+    CNC["Connector"]:::info
 
     MNT -- states --> REQ
     REQ -- binds --> AGT
@@ -43,6 +44,7 @@ flowchart LR
     DIG -- may carry --> LPR
     SFA -- serves --> POL
     MNT -- reviews --> VSC
+    SFA -- lists --> CNC
 
     linkStyle default color:#0f172a
 
@@ -69,6 +71,12 @@ Definitions live in [`metrics.ts`](src/mermaid/complexity/metrics.ts).
 
 The `CONCEPTS.md` in the working directory whose headings name project terms for the prose policies.
 Only the term names are read, and a missing file is not an error.
+
+## Connector
+
+A line that joins diagram elements, such as a graph edge with its arrowhead, a sequence message line or a lifeline.
+Borders, axes and invisible layout links are not Connectors.
+The Surface Analysis lists Connectors separately from text, and only the connector contrast policy reads them.
 
 ## Custom Policy
 

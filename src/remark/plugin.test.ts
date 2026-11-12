@@ -18,7 +18,7 @@ const options = { maxWords: 8, maxSentences: 2, preset: "low-density" };
 const graph =
   "flowchart LR\n" +
   Array.from({ length: 25 }, (_, i) => `N${i}-->N${i + 1}`).join("\n") +
-  "\nstyle N0 fill:#fff,color:#fff";
+  "\nstyle N0 fill:#fff,color:#fff\nlinkStyle 0 stroke:#ffffff";
 const listsAndGlyphs = [
   "## Docs · API",
   "Needs: a tag; a log; a build.",
@@ -51,6 +51,7 @@ test("prose-only remark execution does not install Mermaid's browser globals", (
     const processor = unified().use(remarkParse).use(plugin, {
       rules: {
         "contrast-text-below-aa": false,
+        "contrast-connectors-below-minimum": false,
         "complexity-visual-score-acceptable-exceeded": false
       }
     });
@@ -192,6 +193,7 @@ test("each enabled Mermaid policy reports malformed diagrams", async () => {
 
   assert.deepEqual(messages.map((message) => message.ruleId).sort(), [
     "complexity-visual-score-acceptable-exceeded",
+    "contrast-connectors-below-minimum",
     "contrast-text-below-aa",
   ]);
   assert.ok(messages.every((message) => message.fatal === true));
