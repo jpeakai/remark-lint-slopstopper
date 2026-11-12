@@ -62,6 +62,7 @@
   },
   "scripts": {
     "fix:examples": "bun run examples/scripts/prompt-to-fix.ts",
+    "render:examples": "node examples/scripts/render-examples.ts",
     "build": "bun build src/cli/main.ts --outfile dist/cli.js --target=node --packages=external && bun build index.ts src/remark/plugin.ts src/document/context.ts src/document/language-view.ts --root . --outdir dist --splitting --target=node --format=esm --packages=external && tsc --project config/tsconfig.build.json",
     "prepublishOnly": "bun run check",
     "prepack": "bun run build",
@@ -69,6 +70,7 @@
     "test:node": "node --test \"src/**/*.test.ts\"",
     "test:examples": "node --test examples/scripts/*.test.ts",
     "test:site": "node --test docs-site/browser.test.mjs",
+    "test:render": "node --test examples/scripts/browser/*.test.ts",
     "typecheck": "tsc --project config/tsconfig.json",
     "format": "biome check --write --unsafe --only=style/useBlockStatements index.ts src && bun run format:spacing && biome format --write .",
     "format:spacing": "eslint --fix index.ts src examples/scripts --max-warnings 0",

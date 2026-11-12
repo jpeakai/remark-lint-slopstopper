@@ -67,6 +67,24 @@ jobs:
       - name: Check visual examples
         run: bun run test:site
 
+      - name: Check the render verifier
+        run: bun run test:render
+
+      # Every comparison must render in each viewer scenario; originals are
+      # rendered separately so their deliberate failures stay recorded.
+      - name: Render diagram comparisons
+        run: bun run render:examples
+
+      - name: Render diagram originals
+        run: bun run render:examples --originals
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: diagram-renders
+          path: tmp/renders
+          if-no-files-found: error
+
       - uses: actions/configure-pages@v6
         if: steps.mode.outputs.deploy == 'true'
 

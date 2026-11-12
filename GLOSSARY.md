@@ -27,6 +27,7 @@ flowchart LR
     IPR["Interpunct Run"]:::info
     LPR["List Promotion"]:::info
     SFA["Surface Analysis"]:::pipeline
+    VSC["Viewer Scenario"]:::info
 
     MNT -- states --> REQ
     REQ -- binds --> AGT
@@ -41,6 +42,7 @@ flowchart LR
     DOC -- derives --> IPR
     DIG -- may carry --> LPR
     SFA -- serves --> POL
+    MNT -- reviews --> VSC
 
     linkStyle default color:#0f172a
 
@@ -127,3 +129,8 @@ See [the splitting README](src/mermaid/splitting/README.md).
 The theme-by-theme list of text surfaces Mermaid paints in one diagram, with each foreground, background and source line.
 Styling it cannot model is listed explicitly instead of guessed.
 Mermaid policies read it and own their thresholds; [`analyzeSurfaces`](src/mermaid/contrast/analysis.ts) builds it.
+
+## Viewer Scenario
+
+One way a reader sees a rendered diagram: a theme, a page background and an image format.
+The render verifier draws every diagram example in each Viewer Scenario; see [the runner guide](examples/scripts/README.md#verify-renders).
