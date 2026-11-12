@@ -79,4 +79,29 @@ rules: {
 ```
 
 The defaults follow GitHub's canvas colours.
+
+## Match Material for MkDocs
+
+Material for MkDocs repaints Mermaid with its palette, so give the `mkdocs-material` viewer the colours it measures in each palette:
+
+```js
+options: {
+  viewer: "mkdocs-material",
+  host: {
+    light: {
+      canvas: "#ffffff", text: "#36464e", edge: "#36464e",
+      nodeFill: "#526cfe1a", accent: "#526cfe",
+      clusterFill: "#00000012", accentText: "#ffffff"
+    },
+    dark: {
+      canvas: "#1e2129", text: "#d5d8e2", edge: "#d5d8e2",
+      nodeFill: "#526cfe1a", accent: "#526cfe",
+      clusterFill: "#e3e5ec1f", accentText: "#ffffff"
+    }
+  }
+}
+```
+
+These values approximate Material's default indigo palette.
+Replace them with your site's measured values; see [Mermaid viewer profiles](../RULES.md#mermaid-viewer-profiles) for each anchor.
 See the [configuration reference](../reference/configuration.md) for types and the [rules](../RULES.md) for policy-specific limits.

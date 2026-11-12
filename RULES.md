@@ -36,8 +36,8 @@ Configuration uses the short policy name after the slash.
 | `prose/list-stacked-interpunct-runs` | Interpunct runs stacked on several lines | None specific | Nested List Promotion when every line has a label |
 | `prose/punctuation-em-dash-in-prose` | An em-dash in prose | None specific | Parentheses for a pair, a colon for a lone dash |
 | `prose/punctuation-interpunct-in-prose` | A stray interpunct outside a claimed run | None specific | A comma for each spaced interpunct |
-| `mermaid/contrast-text-below-aa` | Rendered text below 4.5:1 or styling that cannot be audited | `canvas: {light, dark}` | None |
-| `mermaid/contrast-connectors-below-minimum` | Connecting lines and arrowheads below 3:1, or connectors that cannot be audited | `canvas: {light, dark}` | None |
+| `mermaid/contrast-text-below-aa` | Rendered text below 4.5:1 or styling that cannot be audited | `canvas` or `viewer` with `host` | None |
+| `mermaid/contrast-connectors-below-minimum` | Connecting lines and arrowheads below 3:1, or connectors that cannot be audited | `canvas` or `viewer` with `host` | None |
 | `mermaid/complexity-visual-score-acceptable-exceeded` | Visual complexity exceeding the acceptable score | `preset`, `complexity` overrides | None |
 
 ### Sentence layout
@@ -397,6 +397,33 @@ Invisible layout links (`~~~`), hidden strokes and node or container borders are
 Flowchart, class, state and ER edges are supported, as are sequence message lines and lifelines.
 Families that draw no relationship lines, such as pie, gantt and xychart, pass without findings.
 Every other family reports that its connectors cannot be audited.
+
+### Mermaid viewer profiles
+
+Both contrast policies take a `viewer` profile that describes how the host paints Mermaid.
+`github`, the default, renders the default theme on a light page and the dark theme on a dark page, over `canvas`.
+
+`mkdocs-material` follows Material for MkDocs.
+Material renders the default theme in both palettes and restyles flowchart, class, state, ER and sequence diagrams with its own CSS.
+Its colours come from the site's palette, so the profile takes measured `host.light` and `host.dark` colours instead of `canvas`:
+
+| Anchor | Material custom property | Paints |
+| --- | --- | --- |
+| `canvas` | `--md-default-bg-color` | The page and label boxes; must be opaque |
+| `text` | `--md-mermaid-label-fg-color` | Node, cluster and title text |
+| `edge` | `--md-mermaid-edge-color` | Edges, edge labels, messages and notes |
+| `nodeFill` | `--md-mermaid-node-bg-color` | Nodes, sequence groups and rects |
+| `accent` | `--md-mermaid-node-fg-color` | Sequence frame labels and number badges |
+| `clusterFill` | `--md-default-fg-color--lightest` | Flowchart clusters |
+| `accentText` | `--md-accent-bg-color` | Sequence numbers, needed only with `autonumber` |
+
+Read each value with the browser's developer tools on a page in each palette.
+A missing or invalid anchor is a configuration error that names it.
+
+On those five families the host colours replace authored theme variables, as Material's stylesheet does.
+Colours from inline styles, class definitions and link styles still win over the host.
+Material repaints every sequence `box` and `rect` with its node fill, and translucent fills are composited before measuring.
+Other families keep Mermaid's default theme in both palettes, so a light pie on Material's dark palette fails.
 
 ### Mermaid visual complexity
 

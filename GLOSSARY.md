@@ -29,6 +29,7 @@ flowchart LR
     SFA["Surface Analysis"]:::pipeline
     VSC["Viewer Scenario"]:::info
     CNC["Connector"]:::info
+    VPR["Viewer Profile"]:::rule
 
     MNT -- states --> REQ
     REQ -- binds --> AGT
@@ -45,6 +46,7 @@ flowchart LR
     SFA -- serves --> POL
     MNT -- reviews --> VSC
     SFA -- lists --> CNC
+    VPR -- shapes --> SFA
 
     linkStyle default color:#0f172a
 
@@ -137,6 +139,12 @@ See [the splitting README](src/mermaid/splitting/README.md).
 The theme-by-theme list of text surfaces Mermaid paints in one diagram, with each foreground, background and source line.
 Styling it cannot model is listed explicitly instead of guessed.
 Mermaid policies read it and own their thresholds; [`analyzeSurfaces`](src/mermaid/contrast/analysis.ts) builds it.
+
+## Viewer Profile
+
+How a host paints Mermaid, set by the contrast policies' `viewer` option: `github` or `mkdocs-material`.
+It decides the theme each mode renders and which host colours replace the theme's.
+See [Mermaid viewer profiles](RULES.md#mermaid-viewer-profiles).
 
 ## Viewer Scenario
 
