@@ -62,6 +62,7 @@
   },
   "scripts": {
     "fix:examples": "bun run examples/scripts/prompt-to-fix.ts",
+    "render:examples": "node examples/scripts/render-examples.ts",
     "build": "bun build src/cli/main.ts --outfile dist/cli.js --target=node --packages=external && bun build index.ts src/remark/plugin.ts src/document/context.ts src/document/language-view.ts --root . --outdir dist --splitting --target=node --format=esm --packages=external && tsc --project config/tsconfig.build.json",
     "prepublishOnly": "bun run check",
     "prepack": "bun run build",
