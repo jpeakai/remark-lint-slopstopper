@@ -24,10 +24,20 @@ Arguments after `--` are forwarded literally to `codex exec`.
 
 Each run creates an isolated Codex home under `tmp/codex-runs/`.
 Personal configuration is not copied, but repository and system guidance remains discoverable.
+
 The runner copies the saved login with owner-only permissions unless `CODEX_API_KEY` is set.
 Use `--auth-file PATH` for another saved login or `--codex-home PATH` for a new, unused run directory.
 Authentication is checked before diagrams are reset.
 Retained run directories can contain credentials; remove them when no longer needed.
+
+Before resetting anything, the runner checks that visual verification can run.
+It resolves a browser, launches it and renders a test diagram through the site renderer:
+
+- `--browser PATH`, or else `CHROME_PATH`, names the browser explicitly; a missing or non-executable path is an error, never replaced by another browser
+- without either, Playwright's Chromium must be installed; run `bunx playwright install chromium` once
+
+If the browser or the renderer fails, no fixed diagram is reset and no run directory is created.
+Codex then receives the verified browser as `CHROME_PATH` and a `tmp/` folder inside its run directory as `TMPDIR`.
 
 Run `make site` after repairs, or `make site-serve` to review them in the local site.
 

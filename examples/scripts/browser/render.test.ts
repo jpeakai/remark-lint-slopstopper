@@ -2,7 +2,8 @@ import assert from "node:assert/strict";
 import { mkdir, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { test } from "node:test";
-import { type Manifest, pngDimensions, renderExamples } from "../render.ts";
+import { type Manifest, pngDimensions, renderExamples, resolveBrowser, verifyRenderer } from "../render.ts";
+import { repairExamples } from "../repair.ts";
 
 // Real Chromium renders. Playwright's browser is used unless CHROME_PATH names one.
 const executablePath = process.env.CHROME_PATH;
@@ -92,4 +93,29 @@ test("a file without Mermaid fences fails instead of passing with nothing to che
     manifest.failures.map((failure) => failure.reason),
     ["examples/01-empty/diagram-fixed.md has no Mermaid fences"],
   );
+});
+
+test("the preflight resolves a real browser and renders a test diagram", async () => {
+  const browser = await resolveBrowser(executablePath);
+
+  const dimensions = await verifyRenderer(browser);
+
+  assert.ok(dimensions.width > 0 && dimensions.height > 0);
+});
+
+test("a repair passes the browser preflight before failing on its own login", async (t) => {
+  const root = await scratchRoot(t, { "01-valid/diagram.md": VALID, "01-valid/diagram-fixed.md": "reviewed" });
+
+  await writeFile(join(root, "examples", "fix-prompt.md"), "Repair the diagrams.");
+
+  await assert.rejects(
+    repairExamples(root, {
+      ...(executablePath ? { browser: executablePath } : {}),
+      authFile: join(root, "missing-auth.json"),
+      skills: [],
+      codexArgs: [],
+    }),
+    /ENOENT.*missing-auth\.json/,
+  );
+  assert.equal(await readFile(join(root, "examples", "01-valid", "diagram-fixed.md"), "utf8"), "reviewed");
 });

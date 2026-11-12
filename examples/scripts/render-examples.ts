@@ -2,7 +2,7 @@
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
-import { renderExamples } from "./render.ts";
+import { renderExamples, resolveBrowser } from "./render.ts";
 
 const ROOT = fileURLToPath(new URL("../../", import.meta.url));
 
@@ -38,12 +38,11 @@ async function main(): Promise<void> {
     return;
   }
 
-  const executablePath = process.env.CHROME_PATH;
   const manifest = await renderExamples(ROOT, {
     set: values.originals ? "original" : "comparison",
     examples: positionals,
     out: values.out,
-    ...(executablePath ? { executablePath } : {}),
+    executablePath: await resolveBrowser(process.env.CHROME_PATH),
   });
   const where = join(values.out, manifest.set, "manifest.json");
 

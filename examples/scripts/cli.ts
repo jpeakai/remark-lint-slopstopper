@@ -24,8 +24,10 @@ export function parseOptions(argv: string[]): Options {
   return options;
 }
 
+const PATH_OPTIONS = new Set(["--skill", "--codex-home", "--auth-file", "--browser"]);
+
 function consumeOption(arg: string, args: string[], options: Options): void {
-  if (arg !== "--skill" && arg !== "--codex-home" && arg !== "--auth-file") {
+  if (!PATH_OPTIONS.has(arg)) {
     options.codexArgs.push(arg);
 
     return;
@@ -41,6 +43,8 @@ function consumeOption(arg: string, args: string[], options: Options): void {
     options.skills.push(value);
   } else if (arg === "--codex-home") {
     options.codexHome = value;
+  } else if (arg === "--browser") {
+    options.browser = value;
   } else {
     options.authFile = value;
   }

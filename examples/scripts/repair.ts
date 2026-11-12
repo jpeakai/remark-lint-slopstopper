@@ -1,8 +1,9 @@
 import { spawn } from "node:child_process";
-import { copyFile, readdir, readFile, stat } from "node:fs/promises";
+import { copyFile, mkdir, readdir, readFile, stat } from "node:fs/promises";
 import { join } from "node:path";
 import { prepareCodexHome } from "./codex-home.ts";
 import type { Options } from "./options.ts";
+import { resolveBrowser, verifyRenderer } from "./render.ts";
 
 async function exampleNames(root: string, selection?: string): Promise<string[]> {
   if (selection) {
@@ -31,11 +32,20 @@ async function exampleNames(root: string, selection?: string): Promise<string[]>
     .sort();
 }
 
-function runCodex(root: string, home: string, args: string[], prompt: string): Promise<void> {
+interface CodexRun {
+  home: string;
+  args: string[];
+  prompt: string;
+
+  // Environment the verified preflight hands to Codex and its subagents.
+  shared: Record<string, string>;
+}
+
+function runCodex(root: string, { home, args, prompt, shared }: CodexRun): Promise<void> {
   return new Promise((resolve, reject) => {
     const child = spawn("codex", ["exec", "--sandbox", "workspace-write", ...args, "-"], {
       cwd: root,
-      env: { ...process.env, CODEX_HOME: home },
+      env: { ...process.env, ...shared, CODEX_HOME: home },
       stdio: ["pipe", "inherit", "inherit"],
     });
     const interrupt = () => child.kill("SIGINT");
@@ -79,7 +89,22 @@ export async function repairExamples(root: string, options: Options): Promise<vo
   }
 
   let prompt = await readFile(join(root, "examples", "fix-prompt.md"), "utf8");
+
+  // Visual verification must work before any comparison is overwritten, and
+  // before a run directory receives a copy of the saved login.
+  const browser = await resolveBrowser(options.browser ?? process.env.CHROME_PATH).catch((error: Error) => {
+    throw new Error(`${error.message} No fixed diagrams were reset.`);
+  });
+
+  await verifyRenderer(browser).catch((error: Error) => {
+    throw new Error(`${error.message} No fixed diagrams were reset.`);
+  });
+
   const { home, skills } = await prepareCodexHome(root, options);
+  const scratch = join(home, "tmp");
+
+  await mkdir(scratch, { recursive: true });
+  console.error(`Browser: ${browser}`);
 
   console.error(`Codex home: ${home}`);
 
@@ -95,5 +120,5 @@ export async function repairExamples(root: string, options: Options): Promise<vo
     await copyFile(join(root, "examples", name, "diagram.md"), join(root, "examples", name, "diagram-fixed.md"));
   }
 
-  await runCodex(root, home, options.codexArgs, prompt);
+  await runCodex(root, { home, args: options.codexArgs, prompt, shared: { CHROME_PATH: browser, TMPDIR: scratch } });
 }
