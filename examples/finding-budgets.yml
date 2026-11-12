@@ -1,0 +1,59 @@
+# The most diagram findings each comparison may report, with the reason.
+# Every finding a comparison reports must fall under an entry here; fewer is
+# fine, so a resolved limitation needs no edit. Budgets bound regression
+# tests only: the plugin still reports every finding as an error.
+#
+# surface is the text before the finding's first colon, or "unauditable" for
+# a surface the policy cannot measure. theme applies to measured surfaces.
+
+13-architecture--checkout-infrastructure--architecture-groups-services:
+  - rule: mermaid/contrast-connectors-below-minimum
+    surface: unauditable
+    max: 1
+    reason: architecture connectors are not modelled by the connector policy
+
+14-block--order-worker-stages--block-labels:
+  - rule: mermaid/contrast-connectors-below-minimum
+    surface: unauditable
+    max: 1
+    reason: block connectors are not modelled by the connector policy
+
+16-eventmodeling--order-placement-event-model--ui-command-event-read-model-cards:
+  - rule: mermaid/contrast-connectors-below-minimum
+    surface: unauditable
+    max: 1
+    reason: eventmodeling connectors are not modelled by the connector policy
+
+20-mindmap--fulfilment-readiness-checklist--mindmap-branches:
+  - rule: mermaid/contrast-connectors-below-minimum
+    surface: unauditable
+    max: 1
+    reason: mindmap connectors are not modelled by the connector policy
+
+22-radar--fulfilment-capability-comparison--radar-axes-legend-labels:
+  - rule: mermaid/contrast-text-below-aa
+    surface: axis speed
+    theme: dark
+    max: 1
+    reason: Mermaid's dark theme keeps radar axis labels at #333333 on the dark page
+  - rule: mermaid/contrast-text-below-aa
+    surface: axis reliability
+    theme: dark
+    max: 1
+    reason: Mermaid's dark theme keeps radar axis labels at #333333 on the dark page
+  - rule: mermaid/contrast-text-below-aa
+    surface: axis coverage
+    theme: dark
+    max: 1
+    reason: Mermaid's dark theme keeps radar axis labels at #333333 on the dark page
+  - rule: mermaid/contrast-text-below-aa
+    surface: axis cost
+    theme: dark
+    max: 1
+    reason: Mermaid's dark theme keeps radar axis labels at #333333 on the dark page
+
+23-requirementDiagram--reservation-safety-requirements--requirement-nodes:
+  - rule: mermaid/contrast-connectors-below-minimum
+    surface: unauditable
+    max: 1
+    reason: requirement connectors are not modelled by the connector policy
