@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
-import { mkdir, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, readdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { test } from "node:test";
+import { fileURLToPath } from "node:url";
+import { acceptExample } from "../acceptance.ts";
+import { loadBudgets } from "../budgets.ts";
+import { loadTranslations } from "../families.ts";
 import { type Manifest, pngDimensions, renderExamples, resolveBrowser, verifyRenderer } from "../render.ts";
 import { repairExamples, verifyRepairRenders } from "../repair.ts";
 
@@ -139,5 +143,48 @@ test("verified repair renders write a manifest and fail on a comparison that can
   await assert.rejects(
     verifyRepairRenders(root, ["02-broken"], render),
     /failed render verification:\n02-broken#1\/light\/white\/png: /,
+  );
+});
+
+test("each comparison is accepted on its own evidence, and a broken download rejects it", async (t) => {
+  const root = await scratchRoot(t, {});
+  const site = join(root, "site");
+  const real = fileURLToPath(new URL("../../", import.meta.url));
+  const names = (await readdir(real)).filter((name) => /^(03|22)-/.test(name)).sort();
+
+  for (const name of names) {
+    await cp(join(real, name), join(root, "examples", name), { recursive: true });
+    await mkdir(join(site, "examples", name), { recursive: true });
+    await writeFile(join(site, "examples", name, "index.html"), "<!doctype html>");
+    await mkdir(join(site, "assets", "examples", name), { recursive: true });
+
+    for (const file of ["diagram.md", "diagram-fixed.md"]) {
+      await cp(join(real, name, file), join(site, "assets", "examples", name, `${file}.txt`));
+    }
+  }
+
+  const context = {
+    budgets: loadBudgets(await readFile(join(real, "finding-budgets.yml"), "utf8")),
+    translations: loadTranslations(await readFile(join(real, "translations.yml"), "utf8")),
+    renders: await renderExamples(root, { set: "comparison", out: join(root, "renders"), ...browserOption }),
+    site,
+  };
+  const [clean, radar] = names;
+
+  assert.ok(clean && radar);
+
+  const accepted = await acceptExample(root, radar, context);
+
+  assert.equal(accepted.accepted, true, JSON.stringify(accepted.checks));
+  assert.equal(accepted.limitations.length, 4);
+
+  await writeFile(join(site, "assets", "examples", clean, "diagram-fixed.md.txt"), "stale download");
+
+  const rejected = await acceptExample(root, clean, context);
+
+  assert.equal(rejected.accepted, false);
+  assert.deepEqual(
+    rejected.checks.filter((item) => !item.passed).map((item) => [item.name, item.problems]),
+    [["site", ["the diagram-fixed.md download differs from its source"]]],
   );
 });

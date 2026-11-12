@@ -132,9 +132,10 @@ const ZENUML = {
     Promise.reject(new Error("zenuml is drawn by an external mermaid add-on that is not installed")),
 };
 
-// Mermaid core is loaded once, when this module loads, so its diagram detection
-// is there for synchronous type detection. The shim goes in first, and
-// initialize registers every diagram's detector.
+// Mermaid core loads once, on first use, and every caller shares that load.
+// The shim goes in first, and initialize registers every diagram's detector.
+// A top-level await here would make every importing module async-evaluating,
+// which let overlapping first imports see unfinished modules.
 const loadMermaid = async (): Promise<typeof import("mermaid").default> => {
   installDomShim();
 
@@ -146,17 +147,23 @@ const loadMermaid = async (): Promise<typeof import("mermaid").default> => {
   return mermaid;
 };
 
-const mermaidCore = await loadMermaid();
-
 export type MermaidCore = typeof import("mermaid").default;
 
-export const getMermaidCore = async (): Promise<MermaidCore> => mermaidCore;
+let mermaidCore: Promise<MermaidCore> | undefined;
+
+export const getMermaidCore = (): Promise<MermaidCore> => {
+  mermaidCore ??= loadMermaid();
+
+  return mermaidCore;
+};
 
 // The diagram type mermaid's own detection gives a diagram, past its
 // frontmatter, directives and comments, or null when mermaid detects none.
-export const detectType = (content: string): string | null => {
+export const detectType = async (content: string): Promise<string | null> => {
+  const core = await getMermaidCore();
+
   try {
-    return mermaidCore.detectType(content);
+    return core.detectType(content);
   } catch (err) {
     if (err instanceof Error && err.name === "UnknownDiagramError") {
       return null;

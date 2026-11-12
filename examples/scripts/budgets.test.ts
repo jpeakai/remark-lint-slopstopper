@@ -132,3 +132,10 @@ test("a combined document reports exactly what each example reports alone", asyn
     assert.deepEqual(mine, alone, name);
   }
 });
+
+test("budget reasons survive YAML intact, including colour values", () => {
+  assert.ok(
+    (budgets[RADAR] ?? []).every((entry) => entry.reason.endsWith("#333333 on the dark page")),
+    "an unquoted # starts a YAML comment and truncates the reason",
+  );
+});

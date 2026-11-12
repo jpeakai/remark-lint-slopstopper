@@ -32,6 +32,7 @@ flowchart LR
     VPR["Viewer Profile"]:::rule
     FBG["Finding Budget"]:::rule
     PTR["Portable Translation"]:::rule
+    ACR["Acceptance Record"]:::record
 
     MNT -- states --> REQ
     REQ -- binds --> AGT
@@ -51,6 +52,7 @@ flowchart LR
     VPR -- shapes --> SFA
     FBG -- bounds --> DIG
     PTR -- complements --> FBG
+    ACR -- applies --> FBG
 
     linkStyle default color:#0f172a
 
@@ -61,6 +63,11 @@ flowchart LR
     classDef pipeline  fill:#047857,stroke:#6ee7b7,color:#fff,stroke-width:2px
     classDef record    fill:#334155,stroke:#cbd5e1,color:#fff,stroke-width:2px
 ```
+
+## Acceptance Record
+
+The evidence that one diagram comparison passed its family, facts, findings, renders and site checks on its own.
+`bun run accept:examples` writes one per example; see [the runner guide](examples/scripts/README.md#accept-comparisons).
 
 ## Agent
 

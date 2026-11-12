@@ -12,6 +12,8 @@ A finding without a budget, or over its allowance, fails the package checks; few
 A comparison keeps its original's diagram family.
 A Portable Translation to another family needs an entry in [translations.yml](translations.yml).
 Its fact check must find every label, relationship, order and number of the original.
+
+Each comparison is accepted on its own evidence by `bun run accept:examples`, which writes an Acceptance Record per example; see the [runner guide](scripts/README.md#accept-comparisons).
 The site uses Mermaid 12.2.0; the package's analysis engine keeps its separately pinned version.
 
 Use **jpai-essentials:mermaidjs-diagrams** from the **jpeakai/skills** plugin for repair and styling guidance.

@@ -71,17 +71,17 @@ test("memoBySource forgets its oldest source past 512 sources", async () => {
   assert.deepEqual(await memo("oldest"), { source: "oldest", read: 514 });
 });
 
-test("detectType names a diagram past its frontmatter", () => {
-  assert.equal(detectType("---\ntitle: T\n---\nflowchart LR\nA-->B"), "flowchart-v2");
-  assert.equal(detectType("sequenceDiagram\nA->>B: hi"), "sequence");
+test("detectType names a diagram past its frontmatter", async () => {
+  assert.equal(await detectType("---\ntitle: T\n---\nflowchart LR\nA-->B"), "flowchart-v2");
+  assert.equal(await detectType("sequenceDiagram\nA->>B: hi"), "sequence");
 });
 
-test("detectType answers null when mermaid detects no diagram", () => {
-  assert.equal(detectType("not a diagram"), null);
+test("detectType answers null when mermaid detects no diagram", async () => {
+  assert.equal(await detectType("not a diagram"), null);
 });
 
 test("a zenuml diagram is detected and fails to load with the reason", async () => {
-  assert.equal(detectType("zenuml\nA.b()"), "zenuml");
+  assert.equal(await detectType("zenuml\nA.b()"), "zenuml");
 
   const mermaid = await getMermaidCore();
 
