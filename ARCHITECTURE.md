@@ -75,6 +75,24 @@ Prose-only configurations do not initialise Mermaid or install its browser globa
 [`rules.ts`](src/rules.ts) lists the policy identifiers and the order automatic edits land in.
 Mermaid parse failures are supporting diagnostics, not a separate configurable policy.
 
+## Configuration and dispatch
+
+How does one configuration reach each policy?
+
+The [remark adapter](src/remark/plugin.ts) reads its plugin options from `.remarkrc`, or from flags the [CLI](src/cli/arguments.ts) maps into the same shape.
+Each registry rule in [`rules.ts`](src/rules.ts) stays enabled until its short name is turned off.
+
+For every enabled rule, the adapter merges the shared `options` with that rule's own settings, so a rule's value wins.
+It runs the matching orchestrator with `rules` set to that one rule, and passes every enabled policy's merged options as `policies`.
+A policy can therefore defer to another one, as the comma list rules defer to the plain-run threshold.
+The Mermaid orchestrator loads on first use only, through one shared import, because loading Mermaid installs browser globals.
+
+[`findingsForRule`](src/diagnostics.ts) keeps the rule's own Diagnostics.
+A Mermaid parse failure is reported once and re-attributed to each enabled Mermaid policy as `Cannot evaluate`.
+The adapter emits every finding as a fatal remark message, then native lint comments remove suppressed ones before any edit is chosen.
+
+[`plugin.test.ts`](src/remark/plugin.test.ts) covers enabled and disabled settings, suppression and parse attribution.
+
 ## Shared prose analysis
 
 How do prose policies reuse language work without reparsing the host tree?
@@ -97,6 +115,7 @@ flowchart LR
 [`DocumentContext`](src/document/context.ts) indexes paragraphs and text nodes, then attaches one `data.language` view to each.
 The view exposes projected text without starting NLP.
 Its non-enumerable `sentences` getter dynamically loads Compromise and memoises one Promise per view.
+
 [`LanguageView`](src/document/language-view.ts) supplies sentence boundaries, word counts, clause signals and lexical cohesion cues.
 These cues guide edits; they do not guarantee semantic topic boundaries.
 The [paragraph planner](src/prose/paragraph-plan.ts) owns policy-specific lexical grouping and budget-respecting break selection.
@@ -118,14 +137,45 @@ The [List Promotion builder](src/prose/promotion.ts) slices item text from the s
 
 ## Mermaid analysis and split planning
 
-The [Mermaid subsystem](src/mermaid/README.md) selects actual fences from the host tree and serialises analysis around mutable official parser and theme state.
-Its two policies score visual complexity and rendered text contrast, including both viewer themes.
-Parse failures become errors for the selected policy; disabled policies do not run.
+The [Mermaid subsystem](src/mermaid/README.md) selects actual fences from the host tree.
+Mermaid's parser and theme engine are process-wide singletons, so [`analyzeMermaid`](src/mermaid/analyze.ts) runs one job at a time.
 Bounded caches reuse canonical parser results while diagnostics always reflect the current host tree.
 
-The [split planner](src/mermaid/splitting/README.md) can recommend overview and detail diagrams after independent recoverability, emitted-source and information-loss checks.
-Mermaid policies provide guidance without automatic edits.
+Three policies read each fence:
+
+| Policy | Reads | Threshold |
+| --- | --- | --- |
+| `mermaid/complexity-visual-score-acceptable-exceeded` | Canonical statistics | The Complexity Preset's acceptable score |
+| `mermaid/contrast-text-below-aa` | Text surfaces of the Surface Analysis | 4.5:1 |
+| `mermaid/contrast-connectors-below-minimum` | Connector surfaces of the Surface Analysis | 3:1 |
+
+Both contrast policies share one Surface Analysis per fence, built by [`analyzeSurfaces`](src/mermaid/contrast/analysis.ts).
+It renders nothing; it resolves what Mermaid would paint in each viewer mode from official parser models.
+The Viewer Profile in [`viewer.ts`](src/mermaid/contrast/viewer.ts) chooses each mode's theme and canvas, and for Material for MkDocs the host colours.
+[`theme.ts`](src/mermaid/contrast/theme.ts) accepts any theme the pinned engine defines, per SLOP-0044.
+Theme resolution restores Mermaid's configuration whether it succeeds or fails.
+
+A Split Plan is a verified recommendation, not an edit.
+The [split planner](src/mermaid/splitting/README.md) runs only above the acceptable score, and offers overview and detail sources after independent recoverability, emitted-source and information-loss checks.
+Mermaid policies never edit diagram source.
 Sequence diagrams are not split because graph extraction would discard message order.
+
+## Failure propagation
+
+What does a reader see when analysis cannot finish?
+
+| Failure | Result | Implementation | Test |
+| --- | --- | --- | --- |
+| Mermaid syntax error | Each enabled Mermaid policy reports `Cannot evaluate`; that fence gets no other findings | [`diagnostics.ts`](src/diagnostics.ts) | [`plugin.test.ts`](src/remark/plugin.test.ts) |
+| Unmodelled styling, theme or diagram family | An unauditable error, never a guessed ratio | [`analysis.ts`](src/mermaid/contrast/analysis.ts) | [`analysis.test.ts`](src/mermaid/contrast/analysis.test.ts) |
+| A Connector that cannot be modelled | An unauditable connector error; the text audit continues | [`analysis.ts`](src/mermaid/contrast/analysis.ts) | [`connectors.test.ts`](src/mermaid/contrast/connectors.test.ts) |
+| Invalid options, such as an incomplete viewer host | A thrown `TypeError`; remark reports `Cannot process file` and the CLI exits 2 | [`viewer.ts`](src/mermaid/contrast/viewer.ts) | [`viewer.test.ts`](src/mermaid/contrast/viewer.test.ts) |
+| An edit that fails verification | No `fix` is offered and the finding stays | [`edits.ts`](src/document/edits.ts) | [`edits.test.ts`](src/document/edits.test.ts) |
+| Edits that verify alone but not together | The first lands; the next round reports the rest again | [`context.ts`](src/document/context.ts) | [`edits.test.ts`](src/document/edits.test.ts) |
+| A processing exception in fix mode | Nothing is written for that file | [`run.ts`](src/cli/run.ts) | [`run.test.ts`](src/cli/run.test.ts) |
+| A concepts file that exists but cannot be read | The error propagates; only an absent file is optional | [`concepts.ts`](src/document/concepts.ts) | [`concepts.test.ts`](src/document/concepts.test.ts) |
+
+Terms in Title Case, such as Surface Analysis and Connector, are defined in the [glossary](GLOSSARY.md).
 
 ## Event model: remark execution and fixes
 
@@ -186,7 +236,14 @@ Its compiler returns the edited source, preserving unrelated formatting instead 
 Which objects are shared during one analysed document revision?
 
 ```mermaid
- erDiagram
+---
+config:
+  themeVariables:
+    edgeLabelBackground: '#f1f5f9'
+    tertiaryColor: '#f1f5f9'
+    textColor: '#0f172a'
+---
+erDiagram
     DocumentContext ||--|| Root : wraps
     Root ||--o{ Paragraph : indexes
     Root ||--o{ Text : indexes
@@ -195,9 +252,9 @@ Which objects are shared during one analysed document revision?
     LanguageView ||--o{ LanguageSentence : resolves
     DocumentContext ||..o{ Diagnostic : produces
     Diagnostic ||--o| TextEdit : offers
-    classDef ingress fill:#2563eb33,stroke:#2563eb,stroke-width:2px
-    classDef compute fill:#7c3aed33,stroke:#7c3aed,stroke-width:2px
-    classDef data fill:#0f766e33,stroke:#0d9488,stroke-width:2px
+    classDef ingress fill:#2563eb,stroke:#bfdbfe,color:#ffffff,stroke-width:2px
+    classDef compute fill:#7c3aed,stroke:#ddd6fe,color:#ffffff,stroke-width:2px
+    classDef data fill:#0f766e,stroke:#99f6e4,color:#ffffff,stroke-width:2px
     class Root,Paragraph,Text ingress
     class DocumentContext,LanguageView compute
     class LanguageSentence,Diagnostic,TextEdit data
@@ -209,6 +266,7 @@ Each diagnostic contains a rule identifier, message and absolute UTF-16 range; i
 Diagnostics are returned results, not stored fields on `DocumentContext`.
 
 Containment edges summarise descendants rather than immediate mdast parent relationships.
+
 Each reporting round creates its own document context.
 Node projections and language views live in context-local WeakMaps.
 [`memoBySource`](src/mermaid/parsing/engine.ts) bounds official parser-result caches and returns cloned values.
@@ -247,8 +305,10 @@ sequenceDiagram
 ```
 
 [`concepts.ts`](src/document/concepts.ts) uses `VFile.cwd` through the adapter.
+
 Direct `createDocument` callers can pass `cwd`, which defaults to the process working directory.
 Only that directory's `CONCEPTS.md` is inspected; there is no ancestor search.
+
 The first sentence request reads the file, and every view in that context shares its vocabulary snapshot.
 Fresh contexts, including fixer rounds, read a fresh snapshot when requested.
 Absent files yield an empty vocabulary; other file-access failures propagate.

@@ -1,10 +1,10 @@
 # Mermaid analysis architecture
 
-This subsystem checks actual Mermaid code fences for visual complexity and readable text in light and dark themes.
+This subsystem checks actual Mermaid code fences for visual complexity, readable text and visible Connectors in light and dark themes.
 It uses official parser models and reports positioned errors through the custom remark plugin.
 It does not edit diagram source automatically.
 
-Start with the [package architecture](../../ARCHITECTURE.md) for the document and event models.
+Start with the [package architecture](../../ARCHITECTURE.md) for the document and event models, configuration and failure propagation.
 Read [contributing](../../CONTRIBUTING.md) to add a policy.
 The [split planner](splitting/README.md) documents its own architecture and contracts; this page treats it as one component.
 
@@ -18,7 +18,8 @@ flowchart TD
     A --> F[Actual Mermaid fences]:::data
     F --> P[Official parsers]:::external
     P --> C[Complexity policy]:::logic
-    P --> T[Contrast policy]:::logic
+    P --> SA[Surface Analysis]:::data
+    SA --> T[Contrast policies]:::logic
     C --> S[Split planner]:::logic
     S --> R[Positioned diagnostics]:::data
     C --> R
