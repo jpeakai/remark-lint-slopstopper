@@ -10,7 +10,7 @@ import {
   type SequenceRegion,
   sequenceFeatures,
 } from "./sequence-model.ts";
-import { type Canvas, GITHUB_CANVAS, resolveThemes, SUPPORTED_THEMES, THEMES, type Theme } from "./theme.ts";
+import { type Canvas, GITHUB_CANVAS, resolveThemes, THEMES, type Theme, themeProblem } from "./theme.ts";
 
 // Sequence surfaces resolved through Mermaid's parser and theme engine.
 // Text and connector surfaces are returned; policies own every WCAG decision.
@@ -87,7 +87,7 @@ const parseSequence = async (mermaid: MermaidCore, source: string): Promise<Pars
   return { config, db: db as unknown as SequenceDB, lineOf, rectLines: linesOf("rect"), boxLines: linesOf("box") };
 };
 
-const unmodelled = (config: MermaidConfig): { selector: string; reason: string } | null => {
+const unmodelled = (mermaid: MermaidCore, config: MermaidConfig): { selector: string; reason: string } | null => {
   if (config.themeCSS !== undefined) {
     return {
       selector: "themeCSS",
@@ -95,16 +95,9 @@ const unmodelled = (config: MermaidConfig): { selector: string; reason: string }
     };
   }
 
-  const pinned = config.theme;
+  const reason = themeProblem(mermaid, config.theme, "sequence");
 
-  if (pinned !== undefined && !SUPPORTED_THEMES.includes(pinned)) {
-    return {
-      selector: "theme",
-      reason: `the ${String(pinned)} theme is not modelled, only ${SUPPORTED_THEMES.join(", ")}`,
-    };
-  }
-
-  return null;
+  return reason ? { selector: "theme", reason } : null;
 };
 
 interface SequenceTheme {
@@ -305,7 +298,7 @@ export const scoreSequence = async (source: string, canvas: Canvas = GITHUB_CANV
     return out;
   };
 
-  const problem = unmodelled(config);
+  const problem = unmodelled(mermaid, config);
 
   if (problem) {
     return block(problem.selector, problem.reason);
