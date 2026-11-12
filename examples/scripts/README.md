@@ -1,4 +1,4 @@
-# Run diagram repairs
+# Run diagram repairs and verify renders
 
 The runner resets the selected `diagram-fixed.md` files, then starts one Codex process with the [repair prompt](../fix-prompt.md).
 It requires Node 24 or newer, Bun and the Codex CLI.
@@ -30,3 +30,31 @@ Authentication is checked before diagrams are reset.
 Retained run directories can contain credentials; remove them when no longer needed.
 
 Run `make site` after repairs, or `make site-serve` to review them in the local site.
+
+## Verify renders
+
+A renderer can exit successfully and still write an empty or truncated image.
+The render verifier draws every Mermaid fence in each Viewer Scenario and checks each file it writes:
+
+- light and dark themes
+- white, black and transparent backgrounds
+- PNG and SVG formats
+
+```sh
+bun run render:examples
+```
+
+Pass one or more folder names to render only those examples.
+The expected artifact count comes from the parsed Mermaid fences, so a missing artifact fails the run.
+Each failure names its scenario as `example#fence/theme/background/format`.
+
+Results go to `tmp/renders/comparison/`, with a `manifest.json` recording source hashes, scenarios, artifact paths, sizes and dimensions.
+Use `--out DIR` for another location.
+
+Comparisons must render.
+Originals can fail on purpose, so `--originals` renders them into `tmp/renders/original/` and records their render errors instead of failing.
+
+The verifier uses the site's pinned Mermaid and Playwright's Chromium.
+Install that browser once with `bunx playwright install chromium`, or set `CHROME_PATH` to an installed Chrome or Chromium executable.
+`bun run test:render` checks the verifier itself against real renders, and needs the same browser.
+The documentation site's CI build runs both and uploads the renders as the `diagram-renders` artifact.

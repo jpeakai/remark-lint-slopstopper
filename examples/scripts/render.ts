@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { mkdir, readdir, readFile, stat, writeFile } from "node:fs/promises";
 import { join, relative } from "node:path";
+import { fileURLToPath } from "node:url";
 import { parseDocument } from "htmlparser2";
 import { type Browser, chromium, type Page } from "playwright";
 import { createDocument } from "../../src/document/context.ts";
@@ -9,6 +10,9 @@ import { fences } from "../../src/mermaid/markdown.ts";
 // Deterministic render verification for the diagram examples. A renderer can
 // exit cleanly and still write an empty or truncated file, so every artifact
 // is checked against the scenario matrix the parsed fences demand.
+
+// The site renderer, pinned separately from the analysis engine.
+const MERMAID_SITE = fileURLToPath(new URL("../../node_modules/mermaid-site/", import.meta.url));
 
 export const THEMES = { light: "default", dark: "dark" } as const;
 export const BACKGROUNDS = { white: "#ffffff", black: "#000000", transparent: "transparent" } as const;
@@ -96,7 +100,7 @@ export function pngDimensions(bytes: Uint8Array): Dimensions {
 
   const dimensions = { width: view.getUint32(16), height: view.getUint32(20) };
 
-  if (!dimensions.width || !dimensions.height) {
+  if (!(dimensions.width && dimensions.height)) {
     throw new Error(`PNG has empty dimensions ${dimensions.width}x${dimensions.height}`);
   }
 
@@ -116,7 +120,10 @@ export function svgDimensions(text: string): Dimensions {
 
   const { width, height, viewBox } = root.attribs;
   const absolute = [width, height].map((value) => LENGTH.exec(value ?? "")?.[1]);
-  const box = viewBox?.trim().split(/[\s,]+/).map(Number);
+  const box = viewBox
+    ?.trim()
+    .split(/[\s,]+/)
+    .map(Number);
   const [w, h] =
     absolute[0] && absolute[1] ? absolute.map(Number) : box?.length === 4 ? box.slice(2) : [Number.NaN, Number.NaN];
 
@@ -185,7 +192,12 @@ interface Rendered {
 
 const STAGE = `<!doctype html><html><head><meta charset="utf-8"></head><body style="margin:0;background:transparent"><div id="stage" style="display:inline-block;padding:8px"></div></body></html>`;
 
-async function renderScenario(page: Page, source: string, theme: ThemeName, background: BackgroundName): Promise<Rendered> {
+async function renderScenario(
+  page: Page,
+  source: string,
+  theme: ThemeName,
+  background: BackgroundName,
+): Promise<Rendered> {
   const svg = await page.evaluate(
     async ({ source, theme, colour }) => {
       const runtime = (globalThis as unknown as { mermaid: MermaidGlobal }).mermaid;
@@ -240,7 +252,11 @@ async function writeArtifact(
   scenario: Scenario,
   bytes: Uint8Array | string,
 ): Promise<{ path: string; bytes: number }> {
-  const path = join(out, scenario.example, `fence-${scenario.fence}--${scenario.theme}--${scenario.background}.${scenario.format}`);
+  const path = join(
+    out,
+    scenario.example,
+    `fence-${scenario.fence}--${scenario.theme}--${scenario.background}.${scenario.format}`,
+  );
 
   await mkdir(join(out, scenario.example), { recursive: true });
   await writeFile(path, bytes);
@@ -262,10 +278,10 @@ async function verifyArtifact(path: string, format: Format): Promise<Dimensions>
 export async function renderExamples(root: string, options: RenderOptions): Promise<Manifest> {
   const names = await exampleNames(root, options.examples);
   const out = join(options.out, options.set);
-  const mermaidScript = join(root, "node_modules", "mermaid-site", "dist", "mermaid.min.js");
-  const { version: mermaid } = JSON.parse(
-    await readFile(join(root, "node_modules", "mermaid-site", "package.json"), "utf8"),
-  ) as { version: string };
+  const mermaidScript = join(MERMAID_SITE, "dist", "mermaid.min.js");
+  const { version: mermaid } = JSON.parse(await readFile(join(MERMAID_SITE, "package.json"), "utf8")) as {
+    version: string;
+  };
   const browser = await chromium.launch(options.executablePath ? { executablePath: options.executablePath } : {});
   const manifest: Manifest = {
     set: options.set,
@@ -298,16 +314,18 @@ export async function renderExamples(root: string, options: RenderOptions): Prom
         manifest.failures.push({ scenario: example, reason: `${relative(root, path)} has no Mermaid fences` });
       }
 
-      await renderFile(page, sources, expected, out, manifest);
+      await renderFile({ page, out, manifest }, sources, expected);
     }
   } finally {
     await browser.close();
   }
 
-  if (manifest.artifacts.length + countSkipped(manifest) !== manifest.expected) {
+  const accounted = accountedScenarios(manifest);
+
+  if (accounted !== manifest.expected) {
     manifest.failures.push({
       scenario: "matrix",
-      reason: `expected ${manifest.expected} artifacts, accounted for ${manifest.artifacts.length + countSkipped(manifest)}`,
+      reason: `expected ${manifest.expected} scenario outcomes, accounted for ${accounted}`,
     });
   }
 
@@ -317,16 +335,21 @@ export async function renderExamples(root: string, options: RenderOptions): Prom
   return manifest;
 }
 
-// Each render error stands for both formats of its scenario.
-const countSkipped = (manifest: Manifest): number => manifest.renderErrors.length * FORMATS.length;
+// Every expected scenario ends as an artifact, a named failure or, for
+// originals, a render error standing for both formats of its scenario.
+const accountedScenarios = (manifest: Manifest): number =>
+  manifest.artifacts.length +
+  manifest.failures.filter((failure) => failure.scenario.includes("#")).length +
+  manifest.renderErrors.length * FORMATS.length;
 
-async function renderFile(
-  page: Page,
-  sources: readonly DiagramSource[],
-  expected: readonly Scenario[],
-  out: string,
-  manifest: Manifest,
-): Promise<void> {
+interface Job {
+  page: Page;
+  out: string;
+  manifest: Manifest;
+}
+
+// One browser render serves every format of a fence, theme and background.
+function renderGroups(expected: readonly Scenario[]): Map<string, Scenario[]> {
   const groups = new Map<string, Scenario[]>();
 
   for (const scenario of expected) {
@@ -335,37 +358,44 @@ async function renderFile(
     groups.set(key, [...(groups.get(key) ?? []), scenario]);
   }
 
-  for (const [key, group] of groups) {
+  return groups;
+}
+
+async function renderFile(job: Job, sources: readonly DiagramSource[], expected: readonly Scenario[]): Promise<void> {
+  for (const [key, group] of renderGroups(expected)) {
     const [first] = group;
+    const source = first && sources[first.fence - 1];
 
-    if (!first) {
-      continue;
-    }
-
-    const source = sources[first.fence - 1]?.source ?? "";
-    let rendered: Rendered;
-
-    try {
-      rendered = await renderScenario(page, source, first.theme, first.background);
-    } catch (error) {
-      const failure = { scenario: key, reason: message(error) };
-
-      if (manifest.set === "original") {
-        manifest.renderErrors.push(failure);
-      } else {
-        manifest.failures.push(...group.map((scenario) => ({ scenario: scenario.id, reason: failure.reason })));
-      }
-
-      continue;
-    }
-
-    for (const scenario of group) {
-      await recordArtifact(out, scenario, rendered, manifest);
+    if (first && source) {
+      await renderGroup(job, key, source.source, group as [Scenario, ...Scenario[]]);
     }
   }
 }
 
-async function recordArtifact(out: string, scenario: Scenario, rendered: Rendered, manifest: Manifest): Promise<void> {
+async function renderGroup(job: Job, key: string, source: string, group: [Scenario, ...Scenario[]]): Promise<void> {
+  const { theme, background } = group[0];
+  let rendered: Rendered;
+
+  try {
+    rendered = await renderScenario(job.page, source, theme, background);
+  } catch (error) {
+    const reason = message(error);
+
+    if (job.manifest.set === "original") {
+      job.manifest.renderErrors.push({ scenario: key, reason });
+    } else {
+      job.manifest.failures.push(...group.map((scenario) => ({ scenario: scenario.id, reason })));
+    }
+
+    return;
+  }
+
+  for (const scenario of group) {
+    await recordArtifact(job, scenario, rendered);
+  }
+}
+
+async function recordArtifact({ out, manifest }: Job, scenario: Scenario, rendered: Rendered): Promise<void> {
   try {
     const written = await writeArtifact(out, scenario, scenario.format === "png" ? rendered.png : rendered.svg);
     const dimensions = await verifyArtifact(written.path, scenario.format);
