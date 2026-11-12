@@ -1,0 +1,23 @@
+# Portable translations a comparison may make instead of keeping its family.
+# Any other family change in a repair is rejected. Each mapping has a fact
+# check that keeps the original's labels, relationships, order and numbers.
+
+15-C4Context--checkout-system-context--portable-system-context-view:
+  from: c4
+  to: flowchart
+  reason: C4 arrowheads stay black on dark canvases; a flowchart keeps the context with readable connectors
+
+24-sankey--order-disposition-volumes--flow-labels-volumes:
+  from: sankey
+  to: flowchart
+  reason: Sankey bands use fixed blending that fails dark-canvas contrast; volumes move onto labelled edges
+
+26-timeline--checkout-migration-milestones--timeline-sections-events:
+  from: timeline
+  to: flowchart
+  reason: native timeline arrowheads fail dark-theme contrast; period arrows keep the chronology
+
+28-treeView--checkout-repository-ownership--portable-ownership-hierarchy:
+  from: treeView
+  to: flowchart
+  reason: a flowchart hierarchy stays readable in both themes and keeps every parent and child

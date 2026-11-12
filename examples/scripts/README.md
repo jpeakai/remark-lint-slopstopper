@@ -39,6 +39,9 @@ It resolves a browser, launches it and renders a test diagram through the site r
 If the browser or the renderer fails, no fixed diagram is reset and no run directory is created.
 Codex then receives the verified browser as `CHROME_PATH` and a `tmp/` folder inside its run directory as `TMPDIR`.
 
+After Codex finishes, the runner checks each selected comparison's diagram family.
+A family change fails the run, naming the file, unless [translations.yml](../translations.yml) approves it as a Portable Translation and its facts survive.
+
 Run `make site` after repairs, or `make site-serve` to review them in the local site.
 
 ## Verify renders

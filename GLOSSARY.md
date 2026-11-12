@@ -31,6 +31,7 @@ flowchart LR
     CNC["Connector"]:::info
     VPR["Viewer Profile"]:::rule
     FBG["Finding Budget"]:::rule
+    PTR["Portable Translation"]:::rule
 
     MNT -- states --> REQ
     REQ -- binds --> AGT
@@ -49,6 +50,7 @@ flowchart LR
     SFA -- lists --> CNC
     VPR -- shapes --> SFA
     FBG -- bounds --> DIG
+    PTR -- complements --> FBG
 
     linkStyle default color:#0f172a
 
@@ -132,6 +134,11 @@ It is built in [`promotion.ts`](src/prose/promotion.ts).
 
 The owner of this repo.
 Only the Maintainer states a Requirement.
+
+## Portable Translation
+
+An approved change of a diagram example to another Mermaid family that keeps every label, relationship, order and number of the original.
+Each one is listed with its reason and fact check in [translations.yml](examples/translations.yml).
 
 ## Requirement
 
