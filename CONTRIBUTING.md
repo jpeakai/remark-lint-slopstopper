@@ -138,6 +138,9 @@ See [the site workflow](docs/documentation-site.md) for the source map and previ
 
 For CLI changes, run `bun run build` and `node dist/cli.js --help` as well as the package checks.
 Verify the packed binary when changing dependencies, exports or the `bin` entry.
+`bun run test:consumer` packs the package and installs the archive into a clean project without install scripts.
+It then checks every export, the CLI and the type declarations from there.
+It needs registry access to install dependencies, and CI runs it after the package check.
 
 From the repository root:
 

@@ -34,6 +34,7 @@ Lines marked *(defaulted)* come from the `standard` flavour rather than from wha
 | `src/**/README.md` | Architecture of the subsystem in that directory | Contributors | That subsystem's design changes |
 | `examples/` | Runnable remark configs, numbered diagram comparisons and repair guidance | Consumers | An entry point, option or example changes |
 | `examples/scripts/` | Diagram repair runner and local skill selection | Contributors | The repair workflow changes |
+| `scripts/` | Package verification that runs against the packed archive | Contributors | Release verification changes |
 | `src/mermaid/fixtures/` | Aggregate regression inputs for whole-document analysis | Contributors | A tested contract changes |
 | `adrs/*.yml` | Immutable accepted decisions, authored as data | Both | A binding decision is made |
 | `adrs/record.schema.json`, `adrs/okf_render.py`, `adrs/templates/` | The bundle's schema, templates and generator | Contributors | The record shape or rendering changes |

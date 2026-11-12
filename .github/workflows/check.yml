@@ -15,3 +15,5 @@ jobs:
           bun-version-file: .bun-version
       - run: bun install --frozen-lockfile
       - run: bun run check
+      # Pack the package and use it from a clean project, as a consumer would.
+      - run: bun run test:consumer
