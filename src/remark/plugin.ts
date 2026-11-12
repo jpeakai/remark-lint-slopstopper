@@ -57,9 +57,7 @@ function setting(value: RemarkRuleSetting | undefined): Setting | null {
 const shortName = (ruleId: PolicyRuleId): ShortRuleId => ruleId.split("/")[1] as ShortRuleId;
 
 // Mermaid installs browser globals, so it loads only when a Mermaid policy
-// runs. Its module awaits Mermaid at the top level, and Bun hands a second,
-// overlapping import() the namespace before evaluation finishes, so every
-// caller shares the first import.
+// runs, and every file shares the first import.
 let mermaidAnalysis: Promise<typeof import("../mermaid/analyze.ts")> | undefined;
 
 const loadMermaidAnalysis = () => {

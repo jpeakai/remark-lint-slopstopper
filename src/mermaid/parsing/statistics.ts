@@ -69,7 +69,7 @@ export const UNKNOWN_TYPE = "unknown";
 export const extractStats = memoBySource((content) => readStats(content));
 
 async function readStats(content: string): Promise<DiagramStats> {
-  const type = detectType(content);
+  const type = await detectType(content);
   const keyword = keywordOf(type) ?? UNKNOWN_TYPE;
 
   // 1. Langium grammar (@mermaid-js/parser) — typed AST, no DOM needed.
