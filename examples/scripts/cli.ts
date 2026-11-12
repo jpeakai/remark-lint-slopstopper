@@ -24,10 +24,42 @@ export function parseOptions(argv: string[]): Options {
   return options;
 }
 
-const PATH_OPTIONS = new Set(["--skill", "--codex-home", "--auth-file", "--browser"]);
+// Options that take a path, and where each one lands.
+const PATH_OPTIONS: Record<string, (options: Options, value: string) => void> = {
+  "--skill": (options, value) => {
+    options.skills.push(value);
+  },
+  "--codex-home": (options, value) => {
+    options.codexHome = value;
+  },
+  "--auth-file": (options, value) => {
+    options.authFile = value;
+  },
+  "--browser": (options, value) => {
+    options.browser = value;
+  },
+};
+
+function consumeRender(args: string[], options: Options): void {
+  const value = args.shift();
+
+  if (value !== "full" && value !== "matched") {
+    throw new Error("Expected full or matched after --render");
+  }
+
+  options.render = value;
+}
 
 function consumeOption(arg: string, args: string[], options: Options): void {
-  if (!PATH_OPTIONS.has(arg)) {
+  if (arg === "--render") {
+    consumeRender(args, options);
+
+    return;
+  }
+
+  const assign = PATH_OPTIONS[arg];
+
+  if (!assign) {
     options.codexArgs.push(arg);
 
     return;
@@ -39,13 +71,5 @@ function consumeOption(arg: string, args: string[], options: Options): void {
     throw new Error(`Expected a path after ${arg}`);
   }
 
-  if (arg === "--skill") {
-    options.skills.push(value);
-  } else if (arg === "--codex-home") {
-    options.codexHome = value;
-  } else if (arg === "--browser") {
-    options.browser = value;
-  } else {
-    options.authFile = value;
-  }
+  assign(options, value);
 }

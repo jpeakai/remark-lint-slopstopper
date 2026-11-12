@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { prepareCodexHome } from "./codex-home.ts";
 import { guardExamples } from "./families.ts";
 import type { Options } from "./options.ts";
-import { resolveBrowser, verifyRenderer } from "./render.ts";
+import { type Matrix, renderExamples, resolveBrowser, verifyRenderer } from "./render.ts";
 
 async function exampleNames(root: string, selection?: string): Promise<string[]> {
   if (selection) {
@@ -129,5 +129,46 @@ export async function repairExamples(root: string, options: Options): Promise<vo
 
   if (problems.length) {
     throw new Error(`Repaired diagrams failed the family guard:\n${problems.join("\n")}`);
+  }
+
+  if (agentFailed()) {
+    return;
+  }
+
+  await verifyRepairRenders(root, names, {
+    executablePath: browser,
+    out: join(home, "renders"),
+    matrix: options.render,
+  });
+}
+
+// Codex's own exit status, set by runCodex, marks a failed agent run.
+const agentFailed = (): boolean => Boolean(process.exitCode) && process.exitCode !== 0;
+
+// A later check must not turn an agent's nonzero exit into a generic 1.
+export const failureExitCode = (current: string | number | null | undefined): number =>
+  typeof current === "number" && current !== 0 ? current : 1;
+
+// Render each selected comparison and fail on any missing, empty or invalid
+// artifact; the manifest stays in the run directory as evidence.
+export async function verifyRepairRenders(
+  root: string,
+  names: readonly string[],
+  render: { executablePath: string; out: string; matrix?: Matrix | undefined },
+): Promise<void> {
+  const manifest = await renderExamples(root, {
+    set: "comparison",
+    examples: [...names],
+    out: render.out,
+    executablePath: render.executablePath,
+    matrix: render.matrix ?? "full",
+  });
+
+  console.error(`Render manifest: ${join(render.out, "comparison", "manifest.json")}`);
+
+  if (manifest.failures.length) {
+    throw new Error(
+      `Repaired diagrams failed render verification:\n${manifest.failures.map((f) => `${f.scenario}: ${f.reason}`).join("\n")}`,
+    );
   }
 }
