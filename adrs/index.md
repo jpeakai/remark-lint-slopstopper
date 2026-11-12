@@ -47,6 +47,7 @@
 | [SLOP-0041](0041-standalone-cli-runs-the-native-remark-engine.md) | The standalone CLI runs the native remark engine with explicit write controls | accepted |
 | [SLOP-0042](0042-biome-remains-the-only-typescript-linter.md) | Biome remains the only TypeScript linter with a 120-character wrapping target | superseded |
 | [SLOP-0043](0043-eslint-only-enforces-blank-line-placement.md) | ESLint only enforces blank-line placement while Biome owns other TypeScript checks | accepted |
+| [SLOP-0044](0044-theme-selection-is-delegated-to-the-pinned-engine.md) | Theme selection is delegated to the pinned Mermaid engine, with theme-name renderer branches unauditable per family | accepted |
 # By group
 
 ## architecture
@@ -88,6 +89,7 @@
 * [SLOP-0036](0036-author-families-keep-groups-apart.md) - Dotted namespaces, id prefixes and shared status stems are read as the author's grouping and are not mixed first
 * [SLOP-0037](0037-a-group-is-named-by-what-it-holds.md) - Regions, heads, families, lanes, ranges, fans, spans and member lists name a group before any single member does
 * [SLOP-0038](0038-a-stub-names-exactly-one-thing-and-draws-each-edge-once.md) - Stubs name their group as the overview shows it, share a box in flowcharts, and never repeat an edge
+* [SLOP-0044](0044-theme-selection-is-delegated-to-the-pinned-engine.md) - A pinned theme counts when the pinned Mermaid defines it, unless that family's renderer branches on its name
 ## model
 
 * [SLOP-0004](0004-lazy-language-view-on-nodes.md) - node.data.language exposes projected text at once and one memoised sentence Promise only when a rule asks for it
@@ -213,3 +215,5 @@ The same edge set is rendered as prose in [graph.md](graph.md), and as data in [
 * SLOP-0039 --see_also--> SLOP-0006
 * SLOP-0042 --superseded_by--> SLOP-0043
 * SLOP-0043 --supersedes--> SLOP-0042
+* SLOP-0044 --see_also--> SLOP-0026
+* SLOP-0044 --see_also--> SLOP-0028

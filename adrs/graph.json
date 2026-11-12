@@ -652,6 +652,19 @@
     },
     {
       "data": {
+        "id": "SLOP-0044",
+        "label": "0044",
+        "parent": "group-mermaid",
+        "colour": "#7c3aed",
+        "file": "0044-theme-selection-is-delegated-to-the-pinned-engine.md",
+        "title": "Theme selection is delegated to the pinned Mermaid engine, with theme-name renderer branches unauditable per family",
+        "description": "A pinned theme counts when the pinned Mermaid defines it, unless that family's renderer branches on its name",
+        "status": "accepted",
+        "tags": "mermaid, contrast, accessibility"
+      }
+    },
+    {
+      "data": {
         "id": "SLOP-0002-depended_on_by-SLOP-0012",
         "source": "SLOP-0002",
         "target": "SLOP-0012",
@@ -1548,6 +1561,26 @@
         "label": "supersedes",
         "relation": "supersedes",
         "note": "Blank-line placement becomes automatic through a narrowly scoped companion linter"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0044-see_also-SLOP-0026",
+        "source": "SLOP-0044",
+        "target": "SLOP-0026",
+        "label": "see also",
+        "relation": "see_also",
+        "note": "the engine that resolves theme colours also decides which themes exist"
+      }
+    },
+    {
+      "data": {
+        "id": "SLOP-0044-see_also-SLOP-0028",
+        "source": "SLOP-0044",
+        "target": "SLOP-0028",
+        "label": "see also",
+        "relation": "see_also",
+        "note": "an unknown theme or an unmodelled renderer branch is reported, not guessed"
       }
     }
   ],
