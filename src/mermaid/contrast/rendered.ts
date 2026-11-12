@@ -5,6 +5,7 @@ import { propertiesOf } from "../styling/properties.ts";
 import type { StyleDirective } from "../styling/types.ts";
 import { alphaOf, compositeOver, withOpacity } from "./colors.ts";
 import type { TextSurface, ThemeVariables } from "./theme.ts";
+import type { HostColours } from "./viewer.ts";
 
 type RenderNode = Node & { styles?: string[]; attributes?: readonly unknown[] };
 interface PaintContext {
@@ -14,6 +15,10 @@ interface PaintContext {
   page: string;
   config: MermaidConfig;
   directives: StyleDirective[];
+
+  // Material for MkDocs colours, when its CSS restyles this family. Its rules
+  // beat theme variables but lose to authored inline styles.
+  host?: HostColours | undefined;
 }
 
 const SUPPORTED_PROPERTIES = new Set([
@@ -41,9 +46,32 @@ function properties(node: RenderNode): Record<string, string> {
   return result;
 }
 
+// Material's .node, .cluster and .statediagram-cluster rules, measured on
+// Mermaid 11.17.2: class notes keep the theme, state notes take the node fill,
+// and a composite state's inner box shows the label background.
+function hostFill(node: RenderNode, ctx: PaintContext): string | undefined {
+  const { host } = ctx;
+
+  if (!host || (isNote(node) && ctx.kind === "classDiagram")) {
+    return;
+  }
+
+  if (!isContainer(node)) {
+    return host.nodeFill;
+  }
+
+  return ctx.kind === "stateDiagram" ? host.canvas : host.clusterFill;
+}
+
 function defaultFill(node: RenderNode, ctx: PaintContext): string {
   if (node.shape === "noteGroup") {
     return "transparent";
+  }
+
+  const hosted = hostFill(node, ctx);
+
+  if (hosted) {
+    return hosted;
   }
 
   if (isNote(node)) {
@@ -72,6 +100,10 @@ function containerFill(node: RenderNode, ctx: PaintContext): string {
 function defaultText(node: RenderNode, ctx: PaintContext): string {
   if (isNote(node)) {
     return ctx.vars.noteTextColor;
+  }
+
+  if (ctx.host) {
+    return ctx.host.text;
   }
 
   if (isContainer(node)) {
@@ -128,7 +160,7 @@ function stateTitleBackground(
     return background(node.id);
   }
 
-  return compositeOver(own.fill ?? ctx.vars.compositeTitleBackground, background(node.parentId));
+  return compositeOver(own.fill ?? ctx.host?.nodeFill ?? ctx.vars.compositeTitleBackground, background(node.parentId));
 }
 
 function nodeSurfaces(node: RenderNode, ctx: PaintContext, background: (id?: string) => string): TextSurface[] {
@@ -152,18 +184,26 @@ function nodeSurfaces(node: RenderNode, ctx: PaintContext, background: (id?: str
     return result;
   }
 
-  const rows = [ctx.vars.rowOdd, own.fill ?? ctx.vars.rowEven];
+  return [...result, ...erRows(node, ctx, own, { foreground, background: bg })];
+}
 
-  for (const [i, fill] of rows.entries()) {
-    result.push({
-      name: `${node.label ?? node.id} ${i ? "rowEven" : "rowOdd"}`,
-      foreground,
-      background: compositeOver(fill, bg),
-      line: directiveLine(node, ctx.directives),
-    });
-  }
+// Material repaints both ER row stripes with its node fill.
+function erRows(
+  node: RenderNode,
+  ctx: PaintContext,
+  own: Record<string, string>,
+  paint: { foreground: string; background: string },
+): TextSurface[] {
+  const rows = ctx.host
+    ? [ctx.host.nodeFill, own.fill ?? ctx.host.nodeFill]
+    : [ctx.vars.rowOdd, own.fill ?? ctx.vars.rowEven];
 
-  return result;
+  return rows.map((fill, i) => ({
+    name: `${node.label ?? node.id} ${i ? "rowEven" : "rowOdd"}`,
+    foreground: paint.foreground,
+    background: compositeOver(fill, paint.background),
+    line: directiveLine(node, ctx.directives),
+  }));
 }
 
 function htmlLabelBackground(ctx: PaintContext): string {
@@ -176,6 +216,10 @@ function htmlLabelBackground(ctx: PaintContext): string {
 }
 
 function edgeBackground(ctx: PaintContext): string {
+  if (ctx.host) {
+    return ctx.host.canvas;
+  }
+
   if (ctx.kind === "classDiagram") {
     return compositeOver(ctx.vars.mainBkg, ctx.page);
   }
@@ -192,6 +236,10 @@ function edgeBackground(ctx: PaintContext): string {
 }
 
 function edgeText(edge: Edge, ctx: PaintContext): string {
+  if (ctx.host) {
+    return propertiesOf(edgeStyles(edge)).color ?? ctx.host.edge;
+  }
+
   if (ctx.kind === "classDiagram") {
     return ctx.vars.classText;
   }
@@ -283,7 +331,7 @@ function lineBackdrops(nodes: Map<string, RenderNode>, background: (id?: string)
 
 function strokeOf(edge: Edge, ctx: PaintContext): { stroke: string; dim: number; whole: number } {
   const own = propertiesOf(edgeStyles(edge));
-  const stroke = own.stroke ?? ctx.vars[EDGE_STROKE[ctx.kind] ?? "lineColor"];
+  const stroke = own.stroke ?? ctx.host?.edge ?? ctx.vars[EDGE_STROKE[ctx.kind] ?? "lineColor"];
 
   if (typeof stroke !== "string") {
     throw new Error(`edge ${edge.id} has no resolved stroke colour`);

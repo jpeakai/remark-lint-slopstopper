@@ -34,7 +34,9 @@ Each enabled Custom Policy emits a fatal VFile message with source `remark-lint`
 | `maxSentences` | Paragraph sentence budget | `5` |
 | `minItems` | List run policies that expose a threshold | Rule-specific; see [Rules](../RULES.md#custom-policies) |
 | `preset` | Mermaid visual complexity | `"high-density"` |
-| `canvas` | Mermaid text and connector contrast | GitHub light and dark canvases |
+| `canvas` | Mermaid text and connector contrast with the `github` viewer | GitHub light and dark canvases |
+| `viewer` | Mermaid text and connector contrast | `"github"`; or `"mkdocs-material"` |
+| `host` | Mermaid contrast with the `mkdocs-material` viewer | None; `light` and `dark` anchors are required |
 | `complexity` | Mermaid visual complexity | Preset thresholds and default weights |
 
 `minItems` is a whole number of at least two.

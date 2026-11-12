@@ -13,6 +13,9 @@ Anything under `Unreleased` is on `main` but not yet released.
   It covers graph edges and sequence message lines and lifelines.
   It is enabled with the other custom policies; families whose connectors are not modelled report an unauditable error.
 
+- A `viewer` option for both Mermaid contrast policies, with `github` (the default) and `mkdocs-material` profiles.
+  The Material profile measures diagrams against the site's palette colours, given as `host` anchors.
+
 ### Changed
 
 - Mermaid contrast policies accept any theme the pinned Mermaid defines, such as `neo` and `neo-dark`, instead of a fixed list.

@@ -3,7 +3,7 @@ import type { DiagramStats } from "../parsing/statistics.ts";
 import type { Report } from "../report.ts";
 import { type AnalyzedSurface, analyzeSurfaces, type UnsupportedStyling } from "./analysis.ts";
 import { compositeOver, wcagRatio } from "./colors.ts";
-import { resolvedCanvas } from "./policy.ts";
+import { resolveViewer } from "./viewer.ts";
 
 // Connecting lines and arrowheads are graphical objects, so WCAG 1.4.11 asks
 // for 3:1 against what lies behind them, independently of text contrast.
@@ -18,7 +18,7 @@ export async function reportConnectors(
   options: RuleOptions,
   report: Report,
 ): Promise<void> {
-  const analysis = await analyzeSurfaces(source, stats, resolvedCanvas(options));
+  const analysis = await analyzeSurfaces(source, stats, resolveViewer(options));
 
   for (const surface of analysis.surfaces.filter((item) => item.kind === "connector")) {
     checkConnector(surface, report);

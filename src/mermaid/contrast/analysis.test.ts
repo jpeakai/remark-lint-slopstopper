@@ -5,7 +5,8 @@ import { extractStats } from "../parsing/statistics.ts";
 import { analyzeSurfaces } from "./analysis.ts";
 import { GITHUB_CANVAS } from "./theme.ts";
 
-const analyze = async (source: string) => analyzeSurfaces(source, await extractStats(source), GITHUB_CANVAS);
+const analyze = async (source: string) =>
+  analyzeSurfaces(source, await extractStats(source), { name: "github", canvas: GITHUB_CANVAS });
 
 test("surfaces expose kind, theme, colours and the authored source line", async () => {
   const source = "---\ntitle: Orders\n---\nflowchart TD\n  A[Api] --> B[Db]\n  style A fill:#000000,color:#ffffff";

@@ -138,6 +138,7 @@ An unmodelled Connector is scoped to the connector policy, so it never blocks th
 
 Custom `themeCSS`, unsupported rendering modes and unmodelled surfaces report unauditable errors rather than guessed contrast.
 Theme transactions restore Mermaid configuration between theme resolutions.
+The Viewer Profile in [`contrast/viewer.ts`](contrast/viewer.ts) picks each mode's theme and, for Material for MkDocs, the host colours that replace theme defaults.
 [`contrast/theme.ts`](contrast/theme.ts) accepts a pinned theme when the engine defines it.
 Its `THEME_BRANCHES` lists renderers that branch on a theme name; re-read them on every Mermaid bump.
 

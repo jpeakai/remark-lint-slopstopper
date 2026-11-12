@@ -68,8 +68,10 @@ interface Layout {
   groups: SequenceGroup[];
 }
 
-function actorBackdrops(actors: Actor[], types: Set<string>): string[][] {
-  const fills = actors.filter((actor) => types.has(actor.type)).map((actor) => actor.box?.fill ?? "transparent");
+function actorBackdrops(actors: Actor[], types: Set<string>, repaint?: string): string[][] {
+  const fills = actors
+    .filter((actor) => types.has(actor.type))
+    .map((actor) => (actor.box ? (repaint ?? actor.box.fill) : "transparent"));
 
   return [...new Set(fills)].map((fill) => [fill]);
 }
@@ -122,6 +124,7 @@ interface PaintState {
   rects: number[];
   nextRect: number;
   numbered: boolean;
+  repaint: string | undefined;
   frames: { label: SequenceBackdrop; text: SequenceBackdrop; actors: Set<number> }[];
   openRects: { fills: string[]; rect: number; actors: Set<number> }[];
   closedRects: { fills: string[]; rect: number; lo: number; hi: number }[];
@@ -142,7 +145,7 @@ function closeRect(state: PaintState): void {
 
 function paintEvent(record: Message, state: PaintState): boolean {
   if (record.type === LINE.RECT_START) {
-    state.fills.push(String(record.message));
+    state.fills.push(state.repaint ?? String(record.message));
     state.rects.push(state.nextRect);
     state.openRects.push({ fills: [...state.fills], rect: state.nextRect++, actors: new Set() });
 
@@ -183,6 +186,7 @@ class LabelReader {
     rects: [],
     nextRect: 0,
     numbered: false,
+    repaint: undefined,
     frames: [],
     openRects: [],
     closedRects: [],
@@ -341,7 +345,10 @@ class LabelReader {
   }
 }
 
-function layoutOf(db: SequenceDB): { layout: Layout; unmeasurable: { selector: string; reason: string }[] } {
+function layoutOf(
+  db: SequenceDB,
+  repaint?: string,
+): { layout: Layout; unmeasurable: { selector: string; reason: string }[] } {
   const boxes = db.getBoxes();
   const order = [...db.getActors().keys()];
   const groupAt = order.map((name) => {
@@ -367,7 +374,7 @@ function layoutOf(db: SequenceDB): { layout: Layout; unmeasurable: { selector: s
     layout: {
       order,
       groupAt: groupAt.map((at) => (at === -1 ? undefined : at)),
-      groups: boxes.map((box) => ({ name: box.name ?? "", fill: box.fill })),
+      groups: boxes.map((box) => ({ name: box.name ?? "", fill: repaint ?? box.fill })),
     },
     unmeasurable,
   };
@@ -385,12 +392,16 @@ function lifelines(layout: Layout, rects: PaintState["closedRects"]): SequenceBa
   });
 }
 
-export const sequenceFeatures = (db: SequenceDB): SequenceFeatures => {
+// A host stylesheet can repaint every group box and rect with one fill, as
+// Material for MkDocs does with its node background.
+export const sequenceFeatures = (db: SequenceDB, repaint?: string): SequenceFeatures => {
   const actors = [...db.getActors().values()].filter((actor) => actor.description.trim());
   const boxed = new Set(["participant", "collections", "queue"]);
   const unboxed = new Set(["actor", "boundary", "control", "entity", "database"]);
-  const { layout, unmeasurable } = layoutOf(db);
+  const { layout, unmeasurable } = layoutOf(db, repaint);
   const reader = new LabelReader(db, layout);
+
+  reader.state.repaint = repaint;
 
   for (const record of db.getMessages()) {
     reader.read(record);
@@ -399,8 +410,8 @@ export const sequenceFeatures = (db: SequenceDB): SequenceFeatures => {
   reader.finish();
 
   return {
-    boxedActors: actorBackdrops(actors, boxed),
-    pageActors: actorBackdrops(actors, unboxed),
+    boxedActors: actorBackdrops(actors, boxed, repaint),
+    pageActors: actorBackdrops(actors, unboxed, repaint),
     groups: layout.groups,
     lifelines: lifelines(layout, reader.state.closedRects),
     unsupportedActorTypes: [
