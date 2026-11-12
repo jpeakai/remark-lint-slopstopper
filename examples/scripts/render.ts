@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
-import { mkdir, readdir, readFile, stat, writeFile } from "node:fs/promises";
+import { constants } from "node:fs";
+import { access, mkdir, readdir, readFile, stat, writeFile } from "node:fs/promises";
 import { join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseDocument } from "htmlparser2";
@@ -273,6 +274,65 @@ async function verifyArtifact(path: string, format: Format): Promise<Dimensions>
   }
 
   return format === "png" ? pngDimensions(bytes) : svgDimensions(bytes.toString("utf8"));
+}
+
+const PLAYWRIGHT_INSTALL = "bunx playwright install chromium";
+
+async function executable(path: string): Promise<boolean> {
+  const found = await stat(path).catch(() => null);
+
+  return (
+    Boolean(found?.isFile()) &&
+    (await access(path, constants.X_OK).then(
+      () => true,
+      () => false,
+    ))
+  );
+}
+
+// An explicitly configured browser is used or rejected, never replaced by
+// another one. Without one, Playwright's installed Chromium must exist.
+export async function resolveBrowser(explicit?: string): Promise<string> {
+  if (explicit) {
+    if (!(await executable(explicit))) {
+      throw new Error(
+        `Browser executable not found or not executable: ${explicit}. Point --browser or CHROME_PATH at an installed Chrome or Chromium, or unset both to use Playwright's Chromium.`,
+      );
+    }
+
+    return explicit;
+  }
+
+  const installed = chromium.executablePath();
+
+  if (!(await executable(installed))) {
+    throw new Error(
+      `No browser is available: Playwright's Chromium is not installed at ${installed}. Run ${PLAYWRIGHT_INSTALL}, or set --browser or CHROME_PATH to an installed Chrome or Chromium.`,
+    );
+  }
+
+  return installed;
+}
+
+const PREFLIGHT = "flowchart LR\n  Ready --> Render";
+
+// Launch the browser and render one diagram through the site renderer, so a
+// repair only starts once visual verification is known to work.
+export async function verifyRenderer(executablePath: string): Promise<Dimensions> {
+  const browser = await chromium.launch({ executablePath });
+
+  try {
+    const page = await newStage(browser, join(MERMAID_SITE, "dist", "mermaid.min.js"));
+    const rendered = await renderScenario(page, PREFLIGHT, "light", "white");
+
+    svgDimensions(rendered.svg);
+
+    return pngDimensions(rendered.png);
+  } catch (error) {
+    throw new Error(`The renderer could not draw a test diagram with ${executablePath}: ${message(error)}`);
+  } finally {
+    await browser.close();
+  }
 }
 
 export async function renderExamples(root: string, options: RenderOptions): Promise<Manifest> {
