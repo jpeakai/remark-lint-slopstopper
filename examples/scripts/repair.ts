@@ -2,6 +2,7 @@ import { spawn } from "node:child_process";
 import { copyFile, mkdir, readdir, readFile, stat } from "node:fs/promises";
 import { join } from "node:path";
 import { prepareCodexHome } from "./codex-home.ts";
+import { guardExamples } from "./families.ts";
 import type { Options } from "./options.ts";
 import { resolveBrowser, verifyRenderer } from "./render.ts";
 
@@ -121,4 +122,12 @@ export async function repairExamples(root: string, options: Options): Promise<vo
   }
 
   await runCodex(root, { home, args: options.codexArgs, prompt, shared: { CHROME_PATH: browser, TMPDIR: scratch } });
+
+  // A repair keeps each example's family unless a mapping approves a
+  // translation that keeps the original's facts.
+  const problems = await guardExamples(root, names);
+
+  if (problems.length) {
+    throw new Error(`Repaired diagrams failed the family guard:\n${problems.join("\n")}`);
+  }
 }

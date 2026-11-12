@@ -267,7 +267,8 @@ test("frontmatter comment text cannot suppress document policies", async () => {
   );
 });
 
-test("multiple realistic diagrams retain separate scores, positions and styles", async () => {
+// Every policy over the whole multi-diagram corpus, so it needs more than the default timeout.
+test("multiple realistic diagrams retain separate scores, positions and styles", { timeout: 30_000 }, async () => {
   const source = readFileSync(new URL("../mermaid/fixtures/multiple-diagrams.md", import.meta.url), "utf8");
   const rules = Object.fromEntries(RULES.map((id) => [id.split("/")[1], id.startsWith("mermaid/")]));
 

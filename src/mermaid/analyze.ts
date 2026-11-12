@@ -1,8 +1,10 @@
 import { createDocument, type DocumentContext } from "../document/context.ts";
 import type { Diagnostic, PolicyRuleId, RuleOptions } from "../types.ts";
 import { COMPLEXITY_RULE, reportComplexity } from "./complexity/policy.ts";
+import { analyzeSurfaces } from "./contrast/analysis.ts";
 import { CONNECTOR_RULE, reportConnectors } from "./contrast/connectors.ts";
 import { CONTRAST_RULE, reportContrast } from "./contrast/policy.ts";
+import { resolveViewer } from "./contrast/viewer.ts";
 import { type Fence, fences, sourceLocation } from "./markdown.ts";
 import { extractStats } from "./parsing/statistics.ts";
 import type { Report } from "./report.ts";
@@ -68,11 +70,21 @@ async function analyzeFence(node: Fence, options: MermaidOptions, report: Report
     await reportComplexity(node.value, stats, options, report);
   }
 
-  if (!options.rules || options.rules.includes(CONTRAST_RULE)) {
-    await reportContrast(node.value, stats, options, report);
+  const text = !options.rules || options.rules.includes(CONTRAST_RULE);
+  const connectors = !options.rules || options.rules.includes(CONNECTOR_RULE);
+
+  if (!(text || connectors)) {
+    return;
   }
 
-  if (!options.rules || options.rules.includes(CONNECTOR_RULE)) {
-    await reportConnectors(node.value, stats, options, report);
+  // Both contrast policies read one Surface Analysis of the fence.
+  const analysis = await analyzeSurfaces(node.value, stats, resolveViewer(options));
+
+  if (text) {
+    reportContrast(analysis, report);
+  }
+
+  if (connectors) {
+    reportConnectors(analysis, report);
   }
 }
