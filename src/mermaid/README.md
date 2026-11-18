@@ -150,6 +150,29 @@ The complexity policy calls [split planning](splitting/README.md) only above the
 A recommendation can contain verified diagram sources, a list or matrix alternative, or a refusal with useful limits.
 Sequence diagrams remain lintable but are not split because a graph projection would discard message order.
 
+## Mermaid compatibility
+
+Mermaid's diagram databases and their types are internal to its distribution, so every touch point lives in [`compat/`](compat/):
+
+| Module | Owns |
+| --- | --- |
+| [`compat/types.ts`](compat/types.ts) | The only imports from `mermaid/dist/`, re-exported under unambiguous names |
+| [`compat/api.ts`](compat/api.ts) | The deprecated `mermaidAPI`: a parsed diagram and the resolved site configuration |
+| [`compat/shapes.ts`](compat/shapes.ts) | Checked access: getters run on their own database, and collections, identifiers, numbers and flags are validated |
+
+A changed shape throws `IncompatibleMermaidShape`, which reaches the reader as a positioned `Cannot parse` diagnostic naming what changed.
+It never becomes an empty structure that reads as a simpler diagram.
+A test fails if any other module imports `mermaid/dist/` or touches `mermaidAPI`.
+
+Treemap hierarchy and Cynefin come from public grammar ASTs in [`parsing/projections.ts`](parsing/projections.ts).
+Each projection applies its database's semantics, and its tests use Mermaid's own database as the oracle.
+Treemap surfaces still read the native database, because only it compiles `classDef` styles onto nodes.
+TreeView keeps its native normalisation, which adds the visible slash root.
+
+On every Mermaid bump, run the package checks: `compat/types.ts` fails to compile when a type moves, and the oracle tests fail when a projection drifts.
+Retire `compat/api.ts` when Mermaid's supported API exposes a parsed diagram's database and the resolved configuration.
+Retire a native database read when Mermaid's public parser projects the same facts, and replace it with a projection under the same oracle tests.
+
 ## Verification
 
 Run the [package checks](../../README.md#develop) and inspect the [multiple-diagram corpus](fixtures/multiple-diagrams.md).

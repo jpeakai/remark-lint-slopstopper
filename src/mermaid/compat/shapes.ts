@@ -3,14 +3,19 @@
 // never yield an empty structure that reads as a valid, simpler diagram.
 
 export class IncompatibleMermaidShape extends Error {
-  override name = "IncompatibleMermaidShape";
+  constructor(message: string) {
+    super(message);
+    this.name = "IncompatibleMermaidShape";
+  }
 }
 
 const describe = (value: unknown): string =>
   Array.isArray(value) ? "an array" : value === null ? "null" : typeof value;
 
 const fail = (path: string, expected: string, value: unknown): never => {
-  throw new IncompatibleMermaidShape(`Mermaid's ${path} is ${describe(value)}, expected ${expected}`);
+  throw new IncompatibleMermaidShape(
+    `the installed Mermaid changed shape: its ${path} is ${describe(value)}, expected ${expected}`,
+  );
 };
 
 // Call a database getter on its own database, so getters that use `this` work.

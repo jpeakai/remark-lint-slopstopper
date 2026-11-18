@@ -69,6 +69,7 @@ Prose-only configurations do not initialise Mermaid or install its browser globa
 | [`mermaid/contrast/policy.ts`](src/mermaid/contrast/policy.ts) | Apply the text contrast threshold to the Surface Analysis |
 | [`mermaid/contrast/connectors.ts`](src/mermaid/contrast/connectors.ts) | Apply the 3:1 Connector threshold to the Surface Analysis |
 | [`mermaid/contrast/viewer.ts`](src/mermaid/contrast/viewer.ts) | Validate the Viewer Profile and its measured host colours |
+| [`mermaid/compat/`](src/mermaid/compat/types.ts) | Own every Mermaid distribution type, the deprecated API and checked database access |
 | [`mermaid/complexity/policy.ts`](src/mermaid/complexity/policy.ts) | Calculate VCS and report verified split recommendations |
 
 [`types.ts`](src/types.ts) defines common options, diagnostics and edits.

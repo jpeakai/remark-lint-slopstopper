@@ -1,3 +1,4 @@
+import { flag } from "../compat/shapes.ts";
 import type { SequenceActor as Actor, SequenceMessage as Message, SequenceDB } from "../compat/types.ts";
 import { isSequenceMessage, type SequenceCodes, sequenceCodes } from "../parsing/adapters/sequence.ts";
 
@@ -163,7 +164,7 @@ function paintEvent(record: Message, state: PaintState): boolean {
     return false;
   }
 
-  state.numbered = typeof record.message !== "string" && record.message.visible;
+  state.numbered = typeof record.message !== "string" && flag(record.message.visible, "autonumber visibility");
 
   return true;
 }

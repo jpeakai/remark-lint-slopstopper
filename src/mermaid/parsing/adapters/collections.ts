@@ -1,6 +1,7 @@
 import { getter, list, listGetter } from "../../compat/shapes.ts";
-import type { CynefinDB } from "../../compat/types.ts";
+import type { DomainName } from "../../compat/types.ts";
 import type { AnyDb, Structure } from "../model.ts";
+import type { CynefinView } from "../projections.ts";
 
 interface C4Boundary {
   alias?: string;
@@ -212,14 +213,13 @@ export function adaptXychart(db: AnyDb): Structure {
 
 // The renderer always draws all five labelled domain regions. It clips the
 // confusion domain to three badges and one overflow badge, and skips loops.
-export function adaptCynefin(rawDb: AnyDb): Structure {
-  const db = rawDb as unknown as CynefinDB;
+export function adaptCynefin(db: CynefinView): Structure {
   const domains = db.getDomains();
   const subgraphNames = ["complex", "complicated", "clear", "chaotic", "confusion"];
   const nodeIds: string[] = [];
 
   for (const name of subgraphNames) {
-    const items = domains.get(name as Parameters<typeof domains.get>[0])?.items ?? [];
+    const items = domains.get(name as DomainName)?.items ?? [];
     const visibleCount = name === "confusion" ? Math.min(items.length, 3) : items.length;
 
     for (let i = 0; i < visibleCount; i++) {
@@ -231,7 +231,7 @@ export function adaptCynefin(rawDb: AnyDb): Structure {
     }
   }
 
-  const edges = db.getTransitions().filter((transition) => transition.from !== transition.to).length;
+  const edges = db.getTransitions().length;
 
   return { nodeIds, edges, subgraphNames, maxDepth: 1 };
 }

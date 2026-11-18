@@ -1,3 +1,4 @@
+import { identifier, list } from "../../compat/shapes.ts";
 import type { ClassDB, ErDB, FlowDB } from "../../compat/types.ts";
 import { type AnyDb, architectureDepth, type Structure } from "../model.ts";
 
@@ -101,7 +102,7 @@ const isCountedState = (n: { shape?: string }): boolean => !STATE_NOT_A_STATE.ha
 // Each state's parent with concurrency regions passed over, so a state in a
 // region has the composite around the region as its parent.
 export const stateParents = (db: AnyDb): ((n: StateNode) => string | undefined) => {
-  const all = (db.nodes as StateNode[] | undefined) ?? [];
+  const all = list<StateNode>(db.nodes, "state data nodes");
   const dividers = new Map(all.filter((n) => n.shape === STATE_DIVIDER).map((n) => [n.id ?? "", n.parentId]));
 
   return (n) => {
@@ -124,7 +125,12 @@ export const stateParents = (db: AnyDb): ((n: StateNode) => string | undefined) 
 export const countedStateElements = <N extends StateNode, E extends StateEdge>(
   db: AnyDb,
 ): { nodes: N[]; edges: E[] } => {
-  const all = (db.nodes as N[] | undefined) ?? [];
+  const all = list<N>(db.nodes, "state data nodes");
+
+  for (const node of all) {
+    identifier(node.id, "state data node id");
+  }
+
   const parentOf = stateParents(db);
   const nodes = all.filter(isCountedState).map((n) => {
     const parentId = parentOf(n);
@@ -133,7 +139,7 @@ export const countedStateElements = <N extends StateNode, E extends StateEdge>(
     return (parentId === undefined ? rest : { ...rest, parentId }) as N;
   });
   const kept = new Set(nodes.map((n) => n.id ?? ""));
-  const edges = ((db.edges as E[] | undefined) ?? []).filter((e) => kept.has(e.start ?? "") && kept.has(e.end ?? ""));
+  const edges = list<E>(db.edges, "state data edges").filter((e) => kept.has(e.start ?? "") && kept.has(e.end ?? ""));
 
   return { nodes, edges };
 };

@@ -1,5 +1,6 @@
 import { darken, isDark, lighten } from "khroma";
-import type { CynefinDB, DomainName, VennDB } from "../../compat/types.ts";
+import type { DomainName, VennDB } from "../../compat/types.ts";
+import { type CynefinView, cynefinProjection } from "../../parsing/projections.ts";
 import { compositeOver, withOpacity } from "../colors.ts";
 import type { AddSurface, SurfaceContext, ThemeVariables } from "../theme.ts";
 
@@ -45,8 +46,8 @@ function vennText(region: string[], sets: string[], ctx: SurfaceContext): string
 const vennFill = (id: string, sets: string[], ctx: SurfaceContext): string =>
   ctx.vars[`venn${(sets.indexOf(id) % 8) + 1}`] || ctx.vars.primaryColor;
 
-export function cynefinSurfaces(ctx: SurfaceContext, add: AddSurface): void {
-  const db = ctx.db as CynefinDB;
+export async function cynefinSurfaces(ctx: SurfaceContext, add: AddSurface): Promise<void> {
+  const db = await cynefinProjection(ctx.source);
 
   for (const name of CYNEFIN_DOMAINS) {
     cynefinDomain(ctx, db, name, add);
@@ -72,7 +73,7 @@ function cynefinQuadrants(ctx: SurfaceContext, options: ThemeVariables): string[
   return CYNEFIN_DOMAINS.slice(0, 4).map((name) => compositeOver(withOpacity(options[`${name}Bg`], 0.4), ctx.page));
 }
 
-function cynefinDomain(ctx: SurfaceContext, db: CynefinDB, name: DomainName, add: AddSurface): void {
+function cynefinDomain(ctx: SurfaceContext, db: CynefinView, name: DomainName, add: AddSurface): void {
   const options = { ...ctx.defaults.cynefin, ...ctx.vars.cynefin };
   const quadrants = cynefinQuadrants(ctx, options);
   const backgrounds =

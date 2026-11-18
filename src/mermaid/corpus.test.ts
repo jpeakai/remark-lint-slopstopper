@@ -8,11 +8,12 @@ import { createDocument } from "../document/context.ts";
 import remarkSlopstopper from "../remark/plugin.ts";
 import { analyzeMermaid, MERMAID_RULES } from "./analyze.ts";
 import { diagramFromText } from "./compat/api.ts";
-import type { CynefinDB, SequenceDB, TreeViewDB } from "./compat/types.ts";
+import type { SequenceDB, TreeViewDB } from "./compat/types.ts";
 import { calculateComplexity, thresholdsFrom } from "./complexity/metrics.ts";
 import { fences } from "./markdown.ts";
 import { getMermaidCore } from "./parsing/engine.ts";
 import { extractGraph } from "./parsing/graph.ts";
+import type { CynefinView } from "./parsing/projections.ts";
 import { extractStats } from "./parsing/statistics.ts";
 import { type SplitPlan, splitOutcome } from "./splitting/index.ts";
 
@@ -326,7 +327,7 @@ test("TreeView translation retains the slash root and every hierarchy edge", asy
 });
 test("Cynefin translation retains domain membership and labeled transitions", async () => {
   const item = fixture("cynefin");
-  const db = (await database(item.original)) as CynefinDB;
+  const db = (await database(item.original)) as unknown as CynefinView;
 
   const graph = await extractGraph(item.revised[0] ?? "");
 
