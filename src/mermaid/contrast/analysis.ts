@@ -1,9 +1,8 @@
 import type { MermaidConfig } from "mermaid";
-import type { Diagram } from "mermaid/dist/Diagram.js";
-import type { FlowDB } from "mermaid/dist/diagrams/flowchart/flowDb.js";
-import type { SequenceDB } from "mermaid/dist/diagrams/sequence/sequenceDb.js";
 import { parseDocument } from "yaml";
 import { createDocument } from "../../document/context.ts";
+import { diagramFromText } from "../compat/api.ts";
+import type { Diagram, FlowDB, SequenceDB } from "../compat/types.ts";
 import { getMermaidCore } from "../parsing/engine.ts";
 import type { DiagramStats } from "../parsing/statistics.ts";
 import { readStyles } from "../styling/declarations.ts";
@@ -150,7 +149,7 @@ async function discover(source: string, stats: DiagramStats, viewer: Viewer, ana
     throw new Error(styles.unmodelled.map((item) => item.reason).join("; "));
   }
 
-  const diagram = (await mermaid.mermaidAPI.getDiagramFromText(source)) as Diagram;
+  const diagram = await diagramFromText(mermaid, source);
   const { themes, defaults } = resolveThemes(mermaid, config, modeThemes(viewer));
   const host = viewer.name === "mkdocs-material" && MATERIAL_FAMILIES.has(kind) ? viewer.host : undefined;
   const run: SurfaceRun = { diagram, kind, config, themes, defaults, canvas, styles, host };

@@ -1,3 +1,4 @@
+import { diagramFromText } from "../compat/api.ts";
 import { isLangiumType, type LangiumType, readLangiumStructure } from "./adapters/grammar.ts";
 import { readCoreStructure } from "./adapters/index.ts";
 import { detectType, getMermaidCore, memoBySource } from "./engine.ts";
@@ -83,7 +84,7 @@ async function readStats(content: string): Promise<DiagramStats> {
       // Mermaid's official preprocessing removes YAML/directives before its
       // Langium grammar runs. Feed that same text to the standalone parser.
       const mermaid = await getMermaidCore();
-      const diagram = await mermaid.mermaidAPI.getDiagramFromText(content);
+      const diagram = await diagramFromText(mermaid, content);
 
       return await extractLangiumStats(diagram.text, type, diagram.db);
     } catch (err) {
@@ -152,7 +153,7 @@ async function extractCoreStats(content: string): Promise<DiagramStats> {
   // parse applies the frontmatter/directive configuration before DB inspection.
   await mermaid.parse(content);
 
-  const diagram = await mermaid.mermaidAPI.getDiagramFromText(content);
+  const diagram = await diagramFromText(mermaid, content);
 
   return projectStats(readCoreStructure(diagram.type, diagram.db), diagram.type, "mermaid-core");
 }

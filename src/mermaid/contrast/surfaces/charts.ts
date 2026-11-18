@@ -1,5 +1,4 @@
-import type { PieDB } from "mermaid/dist/diagrams/pie/pieTypes.js";
-import type { RadarDB } from "mermaid/dist/diagrams/radar/types.js";
+import type { PieDB, RadarDB } from "../../compat/types.ts";
 import { withOpacity } from "../colors.ts";
 import type { AddSurface, SurfaceContext } from "../theme.ts";
 

@@ -1,3 +1,4 @@
+import { diagramFromText } from "../compat/api.ts";
 import { calculateComplexity, type ThresholdConfig } from "../complexity/metrics.ts";
 import { getMermaidCore } from "../parsing/engine.ts";
 import { type DiagramGraph, extractGraph } from "../parsing/graph.ts";
@@ -54,7 +55,7 @@ export const isDenseMesh = (graph: Pick<DiagramGraph, "nodes" | "edges">): boole
 // it, and an emitted diagram keeps it.
 export const directionOf = async (source: string): Promise<string> => {
   const mermaid = await getMermaidCore();
-  const { db } = await mermaid.mermaidAPI.getDiagramFromText(source);
+  const { db } = await diagramFromText(mermaid, source);
 
   return db.getDirection?.() ?? "";
 };

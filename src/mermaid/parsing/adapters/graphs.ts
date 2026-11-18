@@ -1,6 +1,4 @@
-import type { ClassDB } from "mermaid/dist/diagrams/class/classDb.js";
-import type { ErDB } from "mermaid/dist/diagrams/er/erDb.js";
-import type { FlowDB } from "mermaid/dist/diagrams/flowchart/flowDb.js";
+import type { ClassDB, ErDB, FlowDB } from "../../compat/types.ts";
 import { type AnyDb, architectureDepth, type Structure } from "../model.ts";
 
 export function adaptFlowchart(db: AnyDb): Structure {

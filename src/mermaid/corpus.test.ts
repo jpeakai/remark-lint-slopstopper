@@ -1,15 +1,14 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
-import type { CynefinDB } from "mermaid/dist/diagrams/cynefin/types.js";
-import type { SequenceDB } from "mermaid/dist/diagrams/sequence/sequenceDb.js";
-import type { TreeViewDB } from "mermaid/dist/diagrams/treeView/types.js";
 import remarkParse from "remark-parse";
 import { unified } from "unified";
 import { VFile } from "vfile";
 import { createDocument } from "../document/context.ts";
 import remarkSlopstopper from "../remark/plugin.ts";
 import { analyzeMermaid, MERMAID_RULES } from "./analyze.ts";
+import { diagramFromText } from "./compat/api.ts";
+import type { CynefinDB, SequenceDB, TreeViewDB } from "./compat/types.ts";
 import { calculateComplexity, thresholdsFrom } from "./complexity/metrics.ts";
 import { fences } from "./markdown.ts";
 import { getMermaidCore } from "./parsing/engine.ts";
@@ -91,7 +90,7 @@ function body(source: string): string {
 async function database(value: string) {
   const core = await getMermaidCore();
 
-  return (await core.mermaidAPI.getDiagramFromText(value)).db;
+  return (await diagramFromText(core, value)).db;
 }
 
 test("initial scenarios cover every supported registered Mermaid detector", async () => {
@@ -108,7 +107,7 @@ test("initial scenarios cover every supported registered Mermaid detector", asyn
   for (const node of before) {
     const parsed = await mermaid.parse(node.value);
 
-    const diagram = await mermaid.mermaidAPI.getDiagramFromText(node.value);
+    const diagram = await diagramFromText(mermaid, node.value);
 
     actual.add(mermaid.detectType(diagram.text, parsed.config));
   }

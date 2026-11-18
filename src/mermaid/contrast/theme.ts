@@ -1,5 +1,6 @@
 import type { MermaidConfig } from "mermaid";
-import type { DiagramDB } from "mermaid/dist/diagram-api/types.js";
+import { siteConfig } from "../compat/api.ts";
+import type { DiagramDB } from "../compat/types.ts";
 import type { MermaidCore } from "../parsing/engine.ts";
 import { alphaOf } from "./colors.ts";
 
@@ -68,16 +69,16 @@ function definesTheme(mermaid: MermaidCore, theme: string): boolean {
     return true;
   }
 
-  const prior = mermaid.mermaidAPI.getSiteConfig();
+  const prior = siteConfig(mermaid);
 
   try {
     mermaid.initialize({ theme: "default" });
 
-    const fallback = JSON.stringify(mermaid.mermaidAPI.getSiteConfig().themeVariables);
+    const fallback = JSON.stringify(siteConfig(mermaid).themeVariables);
 
     mermaid.initialize({ theme: theme as NonNullable<MermaidConfig["theme"]> });
 
-    return JSON.stringify(mermaid.mermaidAPI.getSiteConfig().themeVariables) !== fallback;
+    return JSON.stringify(siteConfig(mermaid).themeVariables) !== fallback;
   } finally {
     mermaid.initialize(prior);
   }
@@ -104,13 +105,13 @@ export function resolveThemes(
   config: MermaidConfig,
   modes: Readonly<Record<Theme, string>> = { light: "default", dark: "dark" },
 ): { themes: Record<Theme, ThemeVariables>; defaults: ThemeVariables } {
-  const prior = mermaid.mermaidAPI.getSiteConfig();
+  const prior = siteConfig(mermaid);
   const themes = {} as Record<Theme, ThemeVariables>;
 
   try {
     mermaid.initialize({ theme: "default" });
 
-    const defaults = mermaid.mermaidAPI.getSiteConfig().themeVariables;
+    const defaults = siteConfig(mermaid).themeVariables;
 
     for (const theme of THEMES) {
       mermaid.initialize({
@@ -119,7 +120,7 @@ export function resolveThemes(
         themeVariables: { ...config.themeVariables },
       });
       themes[theme] = {
-        ...(mermaid.mermaidAPI.getSiteConfig().themeVariables as ThemeVariables),
+        ...(siteConfig(mermaid).themeVariables as ThemeVariables),
       };
     }
 

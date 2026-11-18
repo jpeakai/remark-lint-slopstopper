@@ -8,9 +8,7 @@ import {
   type Radar,
   type Wardley,
 } from "@mermaid-js/parser";
-import type { TreeMapDB } from "mermaid/dist/diagrams/treemap/db.js";
-import type { TreemapNode } from "mermaid/dist/diagrams/treemap/types.js";
-import type { TreeViewDB } from "mermaid/dist/diagrams/treeView/types.js";
+import type { TreeMapDB, TreemapNode, TreeViewDB } from "../../compat/types.ts";
 import { architectureDepth, type Structure, walkTree } from "../model.ts";
 
 // Official Langium AST readers and the DB trees their renderers construct.

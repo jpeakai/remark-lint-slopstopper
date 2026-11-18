@@ -1,7 +1,4 @@
-import type { DiagramStyleClassDef } from "mermaid/dist/diagram-api/types.js";
-import type { ErDB } from "mermaid/dist/diagrams/er/erDb.js";
-import type { FlowDB } from "mermaid/dist/diagrams/flowchart/flowDb.js";
-import type { StateDB } from "mermaid/dist/diagrams/state/stateDb.js";
+import type { DiagramStyleClassDef, ErDB, FlowDB, StateDB } from "../compat/types.ts";
 import type { Db, DirectiveKind, Hook, Method, Reader, Styled } from "./types.ts";
 
 // Family-specific grammar hooks and resolved declaration cascades.

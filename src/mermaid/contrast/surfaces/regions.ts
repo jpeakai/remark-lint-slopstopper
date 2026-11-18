@@ -1,6 +1,5 @@
 import { darken, isDark, lighten } from "khroma";
-import type { CynefinDB, DomainName } from "mermaid/dist/diagrams/cynefin/types.js";
-import type { VennDB } from "mermaid/dist/diagrams/venn/vennTypes.js";
+import type { CynefinDB, DomainName, VennDB } from "../../compat/types.ts";
 import { compositeOver, withOpacity } from "../colors.ts";
 import type { AddSurface, SurfaceContext, ThemeVariables } from "../theme.ts";
 

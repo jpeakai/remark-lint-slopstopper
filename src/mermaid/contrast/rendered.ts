@@ -1,6 +1,6 @@
 import Color from "colorjs.io";
 import type { MermaidConfig } from "mermaid";
-import type { Edge, LayoutData, Node } from "mermaid/dist/rendering-util/types.js";
+import type { LayoutEdge as Edge, LayoutData, LayoutNode as Node } from "../compat/types.ts";
 import { propertiesOf } from "../styling/properties.ts";
 import type { StyleDirective } from "../styling/types.ts";
 import { alphaOf, compositeOver, withOpacity } from "./colors.ts";

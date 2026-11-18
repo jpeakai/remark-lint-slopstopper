@@ -1,7 +1,6 @@
-import type { IshikawaDB } from "mermaid/dist/diagrams/ishikawa/ishikawaDb.js";
-import type { MindmapDB } from "mermaid/dist/diagrams/mindmap/mindmapDb.js";
-import type { RailroadDB, ASTNode as RailroadNode } from "mermaid/dist/diagrams/railroad/railroadTypes.js";
-import { type AnyDb, callGetter, type Structure, walkTree } from "../model.ts";
+import { listGetter } from "../../compat/shapes.ts";
+import type { IshikawaDB, MindmapDB, RailroadDB, RailroadNode } from "../../compat/types.ts";
+import { type AnyDb, type Structure, walkTree } from "../model.ts";
 
 interface BlockItem {
   id?: string;
@@ -12,8 +11,8 @@ interface BlockItem {
 export function adaptBlock(db: AnyDb): Structure {
   // Block uses a recursive tree: container blocks have non-empty `children`,
   // leaf blocks don't. Walk each top-level block in parser order.
-  const roots = callGetter<BlockItem[]>(db, "getBlocks") ?? [];
-  const edges = (callGetter<Array<unknown>>(db, "getEdges") ?? []).length;
+  const roots = listGetter<BlockItem>(db, "getBlocks");
+  const edges = listGetter(db, "getEdges").length;
   const leaves: string[] = [];
   const containers: string[] = [];
   let maxDepth = 0;
