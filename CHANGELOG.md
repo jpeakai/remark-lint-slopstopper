@@ -31,6 +31,9 @@ Anything under `Unreleased` is on `main` but not yet released.
 
 ### Fixed
 
+- `mermaid/contrast-text-below-aa` measures radar axis labels in `textColor`, the fill the browser paints them with.
+  Mermaid only sets their CSS `color` to `radar.axisColor`, which SVG text ignores, so dark-theme axis labels are no longer reported.
+
 - `mermaid/contrast-text-below-aa` measures labels in coloured sequence participant groups against what they actually sit on.
   It no longer reports the whole diagram as unauditable, and it now checks named group titles.
 - Linting several files at once on Bun no longer fails some of them with "Cannot process file" while the Mermaid policies first load.

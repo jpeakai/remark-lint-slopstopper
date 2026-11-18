@@ -13,7 +13,30 @@ import { type Budget, checkBudget, knownSurfaces, loadBudgets } from "./budgets.
 
 const examples = fileURLToPath(new URL("../", import.meta.url));
 const MERMAID_ONLY = { rules: MERMAID_RULES };
-const RADAR = "22-radar--fulfilment-capability-comparison--radar-axes-legend-labels";
+
+// A deliberate limitation, so budget handling stays tested once every real
+// comparison is clean: radar text the dark theme cannot show.
+const RADAR = "99-radar--dark-axis-labels";
+const AXES = ["speed", "reliability", "coverage", "cost"];
+const LIMITED = `\`\`\`mermaid
+---
+config:
+  themeVariables:
+    textColor: "#333333"
+---
+radar-beta
+  axis ${AXES.map((axis) => `${axis}["${axis}"]`).join(", ")}
+\`\`\`
+`;
+const LIMITED_BUDGETS = `${RADAR}:
+${AXES.map(
+  (axis) => `  - rule: mermaid/contrast-text-below-aa
+    surface: axis ${axis}
+    theme: dark
+    max: 1
+    reason: "radar axis labels at #333333 on the dark page"`,
+).join("\n")}
+`;
 
 const budgets = loadBudgets(await readFile(`${examples}finding-budgets.yml`, "utf8"));
 const names = (await readdir(examples, { withFileTypes: true }))
@@ -31,7 +54,9 @@ for (const [name, markdown] of comparisons) {
   findings.set(name, await analyzeMermaid(markdown, MERMAID_ONLY));
 }
 
-const radar = () => ({ markdown: comparisons.get(RADAR) ?? "", found: findings.get(RADAR) ?? [] });
+const limited = loadBudgets(LIMITED_BUDGETS);
+const limitedFindings = await analyzeMermaid(LIMITED, MERMAID_ONLY);
+const radar = () => ({ markdown: LIMITED, found: limitedFindings });
 
 test("every comparison stays within its finding budget", async () => {
   const problems: string[] = [];
@@ -51,7 +76,7 @@ test("every comparison stays within its finding budget", async () => {
 test("a finding without an entry, or over its allowance, is rejected", async () => {
   const { markdown, found } = radar();
   const surfaces = await knownSurfaces(markdown);
-  const full = budgets[RADAR] ?? [];
+  const full = limited[RADAR] ?? [];
   const tight = full.map((entry) => ({ ...entry, max: 1 }));
   const doubled = [...found, ...found.slice(0, 1)];
 
@@ -90,8 +115,10 @@ test("an unknown surface or unexpected rule is rejected even with no findings", 
 test("fewer findings than budgeted pass, so a resolved limitation needs no edit", async () => {
   const { markdown, found } = radar();
 
-  assert.deepEqual(checkBudget(RADAR, found.slice(2), budgets[RADAR] ?? [], await knownSurfaces(markdown)), []);
-  assert.deepEqual(checkBudget(RADAR, [], budgets[RADAR] ?? [], await knownSurfaces(markdown)), []);
+  assert.equal(found.length, AXES.length);
+  assert.deepEqual(checkBudget(RADAR, found, limited[RADAR] ?? [], await knownSurfaces(markdown)), []);
+  assert.deepEqual(checkBudget(RADAR, found.slice(2), limited[RADAR] ?? [], await knownSurfaces(markdown)), []);
+  assert.deepEqual(checkBudget(RADAR, [], limited[RADAR] ?? [], await knownSurfaces(markdown)), []);
 });
 
 test("budgeted findings stay fatal errors through the remark adapter", async () => {
@@ -135,7 +162,7 @@ test("a combined document reports exactly what each example reports alone", asyn
 
 test("budget reasons survive YAML intact, including colour values", () => {
   assert.ok(
-    (budgets[RADAR] ?? []).every((entry) => entry.reason.endsWith("#333333 on the dark page")),
+    (limited[RADAR] ?? []).every((entry) => entry.reason.endsWith("#333333 on the dark page")),
     "an unquoted # starts a YAML comment and truncates the reason",
   );
 });

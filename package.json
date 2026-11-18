@@ -64,6 +64,7 @@
     "fix:examples": "bun run examples/scripts/prompt-to-fix.ts",
     "render:examples": "node examples/scripts/render-examples.ts",
     "accept:examples": "node examples/scripts/accept-examples.ts",
+    "validate:examples": "node examples/scripts/validate-examples.ts",
     "build": "bun build src/cli/main.ts --outfile dist/cli.js --target=node --packages=external && bun build index.ts src/remark/plugin.ts src/document/context.ts src/document/language-view.ts --root . --outdir dist --splitting --target=node --format=esm --packages=external && tsc --project config/tsconfig.build.json",
     "prepublishOnly": "bun run check && bun run test:consumer",
     "prepack": "bun run build",
@@ -79,7 +80,7 @@
     "lint": "biome check --error-on-warnings . && bun run lint:spacing",
     "lint:spacing": "eslint index.ts src examples/scripts --max-warnings 0",
     "lint:dead-code": "knip --config config/knip.json && knip --config config/knip.json --production --strict",
-    "check": "bun run typecheck && bun run build && bun run lint && bun run lint:dead-code && bun run test && bun run test:examples"
+    "check": "bun run typecheck && bun run build && bun run lint && bun run lint:dead-code && bun run test && bun run test:examples && bun run validate:examples"
   },
   "dependencies": {
     "@mermaid-js/parser": "1.2.1",

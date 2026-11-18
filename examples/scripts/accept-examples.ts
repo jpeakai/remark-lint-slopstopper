@@ -17,7 +17,9 @@ const HELP = `Usage: bun run accept:examples [example ...] [--site DIR] [--out D
 
 Accept each diagram comparison on its own evidence: family guard and facts,
 every package policy within its finding budget, verified renders across the
-full matrix, and its site page and source downloads. A combined document of
+full matrix, and its site page and source downloads. A comparison accepted
+only within its budget is not strict; bun run validate:examples is the
+strict gate. A combined document of
 the selected comparisons must report what each reports alone.
 
 Options:
@@ -52,6 +54,10 @@ async function combinedProblems(names: readonly string[]): Promise<string[]> {
 
   return problems;
 }
+
+// Budgeted findings are accepted for review, never reported as strict success.
+const verdict = (record: AcceptanceRecord) =>
+  !record.accepted ? "REJECTED" : record.strict ? "accepted" : "accepted within its Finding Budget (not strict)";
 
 async function main(): Promise<void> {
   const { values, positionals } = parseArgs({
@@ -96,7 +102,7 @@ async function main(): Promise<void> {
 
     records.push(record);
     await writeFile(join(out, `${name}.json`), `${JSON.stringify(record, null, 2)}\n`, { flag: "wx" });
-    console.log(`${record.accepted ? "accepted" : "REJECTED"} ${name}`);
+    console.log(`${verdict(record)} ${name}`);
 
     for (const failed of record.checks.filter((item) => !item.passed)) {
       console.error(`  ${failed.name}: ${failed.problems.join("; ")}`);
@@ -107,7 +113,16 @@ async function main(): Promise<void> {
 
   await writeFile(
     join(out, "acceptance.json"),
-    `${JSON.stringify({ accepted: records.filter((r) => r.accepted).length, examples: records.length, combined }, null, 2)}\n`,
+    `${JSON.stringify(
+      {
+        accepted: records.filter((r) => r.accepted).length,
+        strict: records.filter((r) => r.strict).length,
+        examples: records.length,
+        combined,
+      },
+      null,
+      2,
+    )}\n`,
   );
 
   for (const problem of combined) {

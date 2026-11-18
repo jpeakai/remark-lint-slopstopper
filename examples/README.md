@@ -8,6 +8,7 @@ Originals deliberately exercise complexity, contrast, compatibility and style is
 The comparison files are reviewable examples, not a promise that every policy passes.
 Each remaining diagram finding must fit the example's Finding Budget in [finding-budgets.yml](finding-budgets.yml), which names its rule, surface, theme, allowance and reason.
 A finding without a budget, or over its allowance, fails the package checks; fewer findings pass.
+Every comparison currently passes Strict Validation, which allows no budget at all; `bun run check` runs it.
 
 A comparison keeps its original's diagram family.
 A Portable Translation to another family needs an entry in [translations.yml](translations.yml).

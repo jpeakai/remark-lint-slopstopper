@@ -62,14 +62,15 @@ export function xychartSurfaces(ctx: SurfaceContext, add: AddSurface): void {
   }
 }
 
+// Mermaid styles radar axis labels with CSS `color: axisColor`, which SVG
+// text ignores; their glyphs inherit the root `fill` in textColor, as the
+// legend's do.
 export function radarSurfaces(ctx: SurfaceContext, add: AddSurface): void {
-  const { vars: v, defaults, config } = ctx;
+  const { vars: v } = ctx;
   const db = ctx.db as RadarDB;
 
-  const options = { ...defaults.radar, ...v.radar, ...config.radar };
-
   for (const axis of db.getAxes()) {
-    add(`axis ${axis.name ?? axis}`, options.axisColor);
+    add(`axis ${axis.name ?? axis}`, v.textColor);
   }
 
   for (const curve of db.getCurves()) {

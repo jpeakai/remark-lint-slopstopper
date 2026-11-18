@@ -33,7 +33,7 @@ const fixtures: FamilyFixture[] = [
     "xychart-beta\nx-axis [a,b,c]\nbar [1,2,3]",
     { xyChart: { xAxisLabelColor: "#fff", backgroundColor: "#fff" } },
   ],
-  ["radar", "radar-beta\naxis a,b,c\ncurve one{1,2,3}", { radar: { axisColor: "#fff" } }],
+  ["radar", "radar-beta\naxis a,b,c\ncurve one{1,2,3}", { textColor: "#fff" }],
   ["quadrantChart", "quadrantChart\nquadrant-1 A\nP: [0.3,0.6]", { quadrant1TextFill: "#fff", quadrant1Fill: "#fff" }],
   [
     "requirement",

@@ -2,9 +2,9 @@ import { spawn } from "node:child_process";
 import { copyFile, mkdir, readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { prepareCodexHome } from "./codex-home.ts";
-import { guardExamples } from "./families.ts";
 import type { Options } from "./options.ts";
 import { assertOwnedLocation, canonicalExample } from "./paths.ts";
+import { repairReport, reportFailure, snapshotUnselected, writeReport } from "./postchecks.ts";
 import { type Matrix, renderExamples, resolveBrowser, verifyRenderer } from "./render.ts";
 
 async function exampleNames(root: string, selection?: string): Promise<string[]> {
@@ -152,48 +152,58 @@ export async function repairExamples(root: string, options: Options): Promise<vo
     prompt += `\nFor this run, restrict all delegation, edits and verification to examples/${names[0]}/diagram-fixed.md. Leave every other example unchanged.\n`;
   }
 
+  const before = await snapshotUnselected(root, names);
+
   for (const name of names) {
     await copyFile(join(root, "examples", name, "diagram.md"), join(root, "examples", name, "diagram-fixed.md"));
   }
 
-  const outcome = settleAgent(
-    await runCodex(root, { home, args: options.codexArgs, prompt, shared: { CHROME_PATH: browser, TMPDIR: scratch } }),
-  );
-
-  if (outcome === "cancelled") {
-    return;
-  }
-
-  // A repair keeps each example's family unless a mapping approves a
-  // translation that keeps the original's facts.
-  const problems = await guardExamples(root, names);
-
-  if (problems.length) {
-    throw new Error(`Repaired diagrams failed the family guard:\n${problems.join("\n")}`);
-  }
-
-  if (outcome === "failed") {
-    return;
-  }
-
-  await verifyRepairRenders(root, names, {
-    executablePath: browser,
-    out: renders,
-    matrix: options.render,
+  const agent = await runCodex(root, {
+    home,
+    args: options.codexArgs,
+    prompt,
+    shared: { CHROME_PATH: browser, TMPDIR: scratch },
   });
+
+  if (settleAgent(agent) === "cancelled") {
+    return;
+  }
+
+  // Family, strict lint, renders and scope each run whatever the Agent's exit
+  // or another check's result; a repair keeps each example's family unless a
+  // mapping approves a translation that keeps the original's facts.
+  const report = await repairReport({
+    root,
+    names,
+    agent,
+    before,
+    renders: () => renderProblems(root, names, { executablePath: browser, out: renders, matrix: options.render }),
+  });
+  const reportPath = join(home, "report.json");
+
+  await writeReport(root, reportPath, report);
+  console.error(`Repair report: ${reportPath}`);
+
+  const failure = reportFailure(report);
+
+  if (failure) {
+    throw new Error(failure);
+  }
 }
 
 // A later check must not turn an agent's nonzero exit into a generic 1.
 export const failureExitCode = (current: string | number | null | undefined): number =>
   typeof current === "number" && current !== 0 ? current : 1;
 
-// Render each selected comparison and fail on any missing, empty or invalid
+interface RenderTarget {
+  executablePath: string;
+  out: string;
+  matrix?: Matrix | undefined;
+}
+
+// Render each selected comparison and list every missing, empty or invalid
 // artifact; the manifest stays in the run directory as evidence.
-export async function verifyRepairRenders(
-  root: string,
-  names: readonly string[],
-  render: { executablePath: string; out: string; matrix?: Matrix | undefined },
-): Promise<void> {
+export async function renderProblems(root: string, names: readonly string[], render: RenderTarget): Promise<string[]> {
   const manifest = await renderExamples(root, {
     set: "comparison",
     examples: [...names],
@@ -204,9 +214,13 @@ export async function verifyRepairRenders(
 
   console.error(`Render manifest: ${join(render.out, "comparison", "manifest.json")}`);
 
-  if (manifest.failures.length) {
-    throw new Error(
-      `Repaired diagrams failed render verification:\n${manifest.failures.map((f) => `${f.scenario}: ${f.reason}`).join("\n")}`,
-    );
+  return manifest.failures.map((f) => `${f.scenario}: ${f.reason}`);
+}
+
+export async function verifyRepairRenders(root: string, names: readonly string[], render: RenderTarget): Promise<void> {
+  const problems = await renderProblems(root, names, render);
+
+  if (problems.length) {
+    throw new Error(`Repaired diagrams failed render verification:\n${problems.join("\n")}`);
   }
 }

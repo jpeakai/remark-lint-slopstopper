@@ -162,6 +162,12 @@ Ribbons are not Connectors.
 A verified recommendation for breaking one over-complex Mermaid diagram into smaller ones.
 See [the splitting README](src/mermaid/splitting/README.md).
 
+## Strict Validation
+
+The check that each repaired diagram example keeps its family and facts and reports zero Diagnostics, alone and in one combined document.
+No Finding Budget applies, and lint control comments fail it.
+It is run by `bun run validate:examples` and by the repair runner, from [`strict.ts`](examples/scripts/strict.ts).
+
 ## Surface Analysis
 
 The theme-by-theme list of text surfaces Mermaid paints in one diagram, with each foreground, background and source line.

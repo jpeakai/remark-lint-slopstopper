@@ -39,13 +39,17 @@ It resolves a browser, launches it and renders a test diagram through the site r
 If the browser or the renderer fails, no fixed diagram is reset and no run directory is created.
 Codex then receives the verified browser as `CHROME_PATH` and a `tmp/` folder inside its run directory as `TMPDIR`.
 
-After Codex finishes, the runner checks each selected comparison's diagram family.
-A family change fails the run, naming the file, unless [translations.yml](../translations.yml) approves it as a Portable Translation and its facts survive.
+After Codex finishes, the runner runs four post-checks, each to completion, so one failure never hides another:
 
-When Codex succeeds, the runner then renders the selected comparisons, as described below, into `renders/` inside its run directory.
-A missing, empty or invalid artifact fails the run, and the manifest stays there as evidence.
+- **family:** each comparison keeps its family, unless [translations.yml](../translations.yml) approves a Portable Translation whose facts survive
+- **lint:** strict lint, as `bun run validate:examples` runs it, reports zero Diagnostics
+- **renders:** the selected comparisons render into `renders/` inside the run directory, as described below
+- **scope:** every unselected example's `diagram-fixed.md` is unchanged
+
+A missing, empty or invalid artifact fails the renders check, and the manifest stays there as evidence.
 `--render matched` checks each theme on its own page colour only; the default `--render full` keeps the whole matrix.
-If Codex fails, the run keeps Codex's exit status even when a later check also fails, and nothing is rendered.
+The run writes `report.json` to its run directory with the selected examples, Codex's exit status, each check's result and every strict Diagnostic.
+If Codex fails, the run keeps Codex's exit status even when a post-check also fails.
 
 Run `make site` after repairs, or `make site-serve` to review them in the local site.
 
@@ -86,6 +90,20 @@ Install that browser once with `bunx playwright install chromium`, or set `CHROM
 `bun run test:render` checks the verifier itself against real renders, and needs the same browser.
 The documentation site's CI build runs both and uploads the renders as the `diagram-renders` artifact.
 
+## Validate current outputs
+
+Strict Validation checks the repaired outputs as they stand, with no Finding Budget:
+
+```sh
+bun run validate:examples
+```
+
+Each selected example must keep its family and facts.
+Each `diagram-fixed.md`, and all of them as one combined document, must report zero Diagnostics through the package's remark adapter with every policy at its default.
+A lint control comment such as `<!-- lint disable -->` fails it, since it could silence a policy.
+`bun run check` runs this gate over every example.
+Pass folder names to validate only those, `--render` to also render the full matrix, and `--report FILE` for a JSON report inside `tmp/`.
+
 ## Accept comparisons
 
 An aggregate pass can hide one comparison's regression, so each comparison is accepted on its own evidence:
@@ -104,6 +122,9 @@ For each selected example, the Acceptance Record in a new `tmp/acceptance/<time>
 - **site:** the built site has its page, and both downloads match their sources
 
 The record also lists the budgeted limitations it still shows and any translation it keeps.
+Its `strict` field is true only when the comparison reports no Diagnostics at all.
+A comparison accepted within its Finding Budget is reported as not strict; budgeted findings are never strict lint success.
+
 The run also checks that a combined document of the selected comparisons reports exactly what each reports alone.
 Pass folder names to accept only those examples, and `--site DIR` for a site built elsewhere.
 The documentation site's CI build runs acceptance and uploads the records with the renders.
