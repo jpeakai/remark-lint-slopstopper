@@ -26,6 +26,10 @@ export interface Check {
 export interface AcceptanceRecord {
   example: string;
   accepted: boolean;
+
+  // Accepted with zero Diagnostics: no Finding Budget was needed. A record
+  // accepted only within its budget is never strict lint success.
+  strict: boolean;
   checks: Check[];
 
   // Reasons for the budgeted findings this comparison still reports.
@@ -81,7 +85,11 @@ async function findingsCheck(example: string, markdown: string, budgets: Budgets
     )
     .map((entry) => `${entry.surface}${entry.theme ? ` (${entry.theme})` : ""}: ${entry.reason}`);
 
-  return { check: check("findings", problems), limitations: [...new Set(limitations)] };
+  return {
+    check: check("findings", problems),
+    limitations: [...new Set(limitations)],
+    clean: prose.length === 0 && diagram.length === 0,
+  };
 }
 
 function rendersCheck(example: string, renders: Manifest): Check {
@@ -134,9 +142,12 @@ export async function acceptExample(root: string, example: string, ctx: Acceptan
     await siteCheck(root, example, ctx.site),
   ];
 
+  const accepted = checks.every((item) => item.passed);
+
   return {
     example,
-    accepted: checks.every((item) => item.passed),
+    accepted,
+    strict: accepted && findings.clean,
     checks,
     limitations: findings.limitations,
     ...(translation ? { translation: `${translation.from} to ${translation.to}: ${translation.reason}` } : {}),

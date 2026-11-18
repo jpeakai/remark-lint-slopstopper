@@ -6,24 +6,4 @@
 # surface is the text before the finding's first colon, or "unauditable" for
 # a surface the policy cannot measure. theme applies to measured surfaces.
 
-22-radar--fulfilment-capability-comparison--radar-axes-legend-labels:
-  - rule: mermaid/contrast-text-below-aa
-    surface: axis speed
-    theme: dark
-    max: 1
-    reason: "Mermaid's dark theme keeps radar axis labels at #333333 on the dark page"
-  - rule: mermaid/contrast-text-below-aa
-    surface: axis reliability
-    theme: dark
-    max: 1
-    reason: "Mermaid's dark theme keeps radar axis labels at #333333 on the dark page"
-  - rule: mermaid/contrast-text-below-aa
-    surface: axis coverage
-    theme: dark
-    max: 1
-    reason: "Mermaid's dark theme keeps radar axis labels at #333333 on the dark page"
-  - rule: mermaid/contrast-text-below-aa
-    surface: axis cost
-    theme: dark
-    max: 1
-    reason: "Mermaid's dark theme keeps radar axis labels at #333333 on the dark page"
+{}

@@ -6,8 +6,9 @@ import { fileURLToPath } from "node:url";
 import { acceptExample } from "../acceptance.ts";
 import { loadBudgets } from "../budgets.ts";
 import { loadTranslations } from "../families.ts";
+import { repairReport, snapshotUnselected } from "../postchecks.ts";
 import { type Manifest, pngDimensions, renderExamples, resolveBrowser, verifyRenderer } from "../render.ts";
-import { repairExamples, verifyRepairRenders } from "../repair.ts";
+import { renderProblems, repairExamples, runAgent, verifyRepairRenders } from "../repair.ts";
 
 // Real Chromium renders. Playwright's browser is used unless CHROME_PATH names one.
 const executablePath = process.env.CHROME_PATH;
@@ -158,29 +159,50 @@ test("each comparison is accepted on its own evidence, and a broken download rej
 
   for (const name of names) {
     await cp(join(real, name), join(root, "examples", name), { recursive: true });
+  }
+
+  const [clean, radar] = names;
+
+  assert.ok(clean && radar);
+
+  // Radar text the dark theme cannot show, accepted only within a budget.
+  const limited = join(root, "examples", radar, "diagram-fixed.md");
+  const surfaces = ["axis speed", "axis reliability", "axis coverage", "axis cost", "legend current", "legend target"];
+
+  await writeFile(
+    limited,
+    (await readFile(limited, "utf8")).replace("  themeVariables:\n", '  themeVariables:\n    textColor: "#333333"\n'),
+  );
+
+  for (const name of names) {
     await mkdir(join(site, "examples", name), { recursive: true });
     await writeFile(join(site, "examples", name, "index.html"), "<!doctype html>");
     await mkdir(join(site, "assets", "examples", name), { recursive: true });
 
     for (const file of ["diagram.md", "diagram-fixed.md"]) {
-      await cp(join(real, name, file), join(site, "assets", "examples", name, `${file}.txt`));
+      await cp(join(root, "examples", name, file), join(site, "assets", "examples", name, `${file}.txt`));
     }
   }
 
   const context = {
-    budgets: loadBudgets(await readFile(join(real, "finding-budgets.yml"), "utf8")),
+    budgets: loadBudgets(
+      `${radar}:\n${surfaces
+        .map(
+          (surface) =>
+            `  - { rule: mermaid/contrast-text-below-aa, surface: ${surface}, theme: dark, max: 1, reason: unreadable }`,
+        )
+        .join("\n")}\n`,
+    ),
     translations: loadTranslations(await readFile(join(real, "translations.yml"), "utf8")),
     renders: await renderExamples(root, { set: "comparison", out: join(root, "tmp", "renders"), ...browserOption }),
     site,
   };
-  const [clean, radar] = names;
-
-  assert.ok(clean && radar);
-
   const accepted = await acceptExample(root, radar, context);
 
   assert.equal(accepted.accepted, true, JSON.stringify(accepted.checks));
-  assert.equal(accepted.limitations.length, 4);
+  assert.equal(accepted.strict, false, "budgeted findings are never strict success");
+  assert.equal(accepted.limitations.length, surfaces.length);
+  assert.equal((await acceptExample(root, clean, context)).strict, true);
 
   await writeFile(join(site, "assets", "examples", clean, "diagram-fixed.md.txt"), "stale download");
 
@@ -191,4 +213,45 @@ test("each comparison is accepted on its own evidence, and a broken download rej
     rejected.checks.filter((item) => !item.passed).map((item) => [item.name, item.problems]),
     [["site", ["the diagram-fixed.md download differs from its source"]]],
   );
+});
+
+test("a successful Agent exit followed by a lint failure fails only the lint post-check", async (t) => {
+  const root = await scratchRoot(t, {});
+  const real = fileURLToPath(new URL("../../", import.meta.url));
+  const name = (await readdir(real)).find((entry) => entry.startsWith("03-")) ?? "";
+  const fixed = join(root, "examples", name, "diagram-fixed.md");
+  const agent = join(root, "tmp", "agent.mjs");
+
+  await cp(join(real, name), join(root, "examples", name), { recursive: true });
+  await cp(join(real, "translations.yml"), join(root, "examples", "translations.yml"));
+  await mkdir(join(root, "tmp"), { recursive: true });
+  await writeFile(
+    agent,
+    `import { appendFileSync } from "node:fs";\nappendFileSync(${JSON.stringify(fixed)}, "\\nOrders move fast — mostly.\\n");\n`,
+  );
+
+  const before = await snapshotUnselected(root, [name]);
+  const outcome = await runAgent(process.execPath, [agent], { cwd: root, env: process.env, input: "" });
+  const browser = await resolveBrowser(executablePath);
+  const report = await repairReport({
+    root,
+    names: [name],
+    agent: outcome,
+    before,
+    renders: () =>
+      renderProblems(root, [name], { executablePath: browser, out: join(root, "tmp", "renders"), matrix: "matched" }),
+  });
+
+  assert.equal(outcome.code, 0);
+  assert.deepEqual(
+    report.checks.map((check) => [check.name, check.passed]),
+    [
+      ["family", true],
+      ["lint", false],
+      ["renders", true],
+      ["scope", true],
+    ],
+  );
+  assert.ok(report.lint.some((diagnostic) => diagnostic.example === name));
+  assert.equal(report.passed, false);
 });
