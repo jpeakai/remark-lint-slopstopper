@@ -1,10 +1,7 @@
 import { parse as mermaidParse } from "@mermaid-js/parser";
-import type { ArchitectureDB, PacketDB, RequirementDB } from "../../compat/types.ts";
+import type { ArchitectureDB, BlockDB, C4DB, PacketDB, RequirementDB } from "../../compat/types.ts";
 import { compositeOver } from "../colors.ts";
 import type { AddSurface, SurfaceContext } from "../theme.ts";
-
-type BlockDB = typeof import("mermaid/dist/diagrams/block/blockDB.js").default;
-type C4DB = typeof import("mermaid/dist/diagrams/c4/c4Db.js").default;
 
 export function packetSurfaces(ctx: SurfaceContext, add: AddSurface): void {
   const { vars: v } = ctx;

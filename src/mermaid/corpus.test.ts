@@ -8,7 +8,7 @@ import { createDocument } from "../document/context.ts";
 import remarkSlopstopper from "../remark/plugin.ts";
 import { analyzeMermaid, MERMAID_RULES } from "./analyze.ts";
 import { diagramFromText } from "./compat/api.ts";
-import type { SequenceDB, TreeViewDB } from "./compat/types.ts";
+import type { C4DB, SequenceDB, TreeViewDB } from "./compat/types.ts";
 import { calculateComplexity, thresholdsFrom } from "./complexity/metrics.ts";
 import { fences } from "./markdown.ts";
 import { getMermaidCore } from "./parsing/engine.ts";
@@ -281,7 +281,7 @@ test("phase revisions preserve all 112 sequence messages, notes and actor order"
 
 test("C4 translation retains people, system types, descriptions and relationships", async () => {
   const item = fixture("c4");
-  const db = (await database(item.original)) as typeof import("mermaid/dist/diagrams/c4/c4Db.js");
+  const db = (await database(item.original)) as C4DB;
 
   const graph = await extractGraph(item.revised[0] ?? "");
 

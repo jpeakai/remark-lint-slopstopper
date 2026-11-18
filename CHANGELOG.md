@@ -19,7 +19,12 @@ Anything under `Unreleased` is on `main` but not yet released.
 
 - An opaque white text outline in `themeCSS`, for C4 and TreeView text, is measured as the glyphs' backing instead of being unauditable.
 
+- Sankey labels are measured through the Ribbons that cross them, for diagrams using the documented normal-blend `themeCSS` recipe.
+
 ### Changed
+
+- A Sankey diagram without the normal-blend Ribbon recipe is now reported as unauditable.
+  Its Ribbons multiply-blend over the labels, so the earlier per-label results were not what a reader sees.
 
 - Mermaid contrast policies accept any theme the pinned Mermaid defines, such as `neo` and `neo-dark`, instead of a fixed list.
   An unknown theme name now reports that Mermaid does not define it.

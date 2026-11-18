@@ -870,11 +870,11 @@ quadrantChart
 ## Order disposition volumes
 
 Input family: sankey.
-Use white text on a slate label outline while preserving every flow endpoint and volume.
+Use white text on a slate label outline, with normal-blend ribbons in each source node's colour, while preserving every flow endpoint and volume.
 
 ```mermaid
 ---
-config: {"themeVariables":{"textColor":"#fff","mainBkg":"#334155"}}
+config: {"themeVariables":{"textColor":"#fff","mainBkg":"#334155"},"themeCSS":".link { mix-blend-mode: normal !important; stroke-opacity: 0.16; }","sankey":{"labelStyle":"outlined","linkColor":"source","nodeColors":{"Placed":"#1d4ed8","Payment accepted":"#047857","Payment declined":"#b91c1c","Shipped":"#7c3aed","Cancelled":"#a16207","Delivered":"#0e7490","Returned":"#be185d"}}}
 ---
 sankey-beta
 

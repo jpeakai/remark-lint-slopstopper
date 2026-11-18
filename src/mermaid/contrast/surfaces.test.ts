@@ -18,7 +18,15 @@ const fixtures: FamilyFixture[] = [
   ["gitGraph", 'gitGraph\ncommit id: "a" tag: "v1"', { gitBranchLabel0: "#fff", git0: "#fff" }],
   ["packet", 'packet-beta\n0-15: "Source"', { packet: { labelColor: "#fff", blockFillColor: "#fff" } }],
   ["treemap", 'treemap-beta\n"Root"\n  "Leaf": 10', { treemap: { labelColor: "#fff", leafFillColor: "#fff" } }],
-  ["sankey", "sankey-beta\n\nA,B,10\nB,C,5", { textColor: "#fff", mainBkg: "#fff" }],
+  [
+    "sankey",
+    "sankey-beta\n\nA,B,10\nB,C,5",
+    { textColor: "#fff", mainBkg: "#fff" },
+    {
+      themeCSS: ".link { mix-blend-mode: normal !important; stroke-opacity: 0.16; }",
+      sankey: { labelStyle: "outlined", linkColor: "source", nodeColors: { A: "#1d4ed8", B: "#047857", C: "#b91c1c" } },
+    } as MermaidConfig,
+  ],
   ["kanban", "kanban\ntodo[Todo]\n  task[Task]", { textColor: "#fff", background: "#fff" }],
   [
     "xychart",

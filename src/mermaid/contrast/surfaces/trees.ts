@@ -3,6 +3,7 @@ import type {
   IshikawaDB,
   MindmapDB,
   RailroadDB,
+  RailroadStyleOptions,
   TreeMapDB,
   TreemapNode,
   TreeViewDB,
@@ -131,7 +132,7 @@ export function railroadSurfaces(ctx: SurfaceContext, add: AddSurface): void {
 
 type RailroadPalette = Required<
   Pick<
-    import("mermaid/dist/diagrams/railroad/railroadTypes.js").RailroadStyleOptions,
+    RailroadStyleOptions,
     "terminalFill" | "terminalTextColor" | "nonTerminalFill" | "nonTerminalTextColor" | "specialFill"
   >
 >;

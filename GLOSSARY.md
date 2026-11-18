@@ -151,6 +151,12 @@ Each one is listed with its reason and fact check in [translations.yml](examples
 
 Something the Maintainer has stated the project must do or must never do.
 
+## Ribbon
+
+The filled band a Sankey diagram draws for one flow, with a width proportional to its volume.
+A Ribbon is painted over the node labels it crosses, so text contrast measures those labels through it.
+Ribbons are not Connectors.
+
 ## Split Plan
 
 A verified recommendation for breaking one over-complex Mermaid diagram into smaller ones.

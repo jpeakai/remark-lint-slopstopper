@@ -102,7 +102,7 @@ test("only the compat layer imports Mermaid's distribution or its deprecated API
   const offenders: string[] = [];
 
   for (const path of files.filter((file) => !file.includes(COMPAT))) {
-    if (/from "mermaid\/dist\/|\.mermaidAPI\b/.test(await readFile(path, "utf8"))) {
+    if (/["']mermaid\/dist\/|\.mermaidAPI\b/.test(await readFile(path, "utf8"))) {
       offenders.push(relative(ROOT, path));
     }
   }
