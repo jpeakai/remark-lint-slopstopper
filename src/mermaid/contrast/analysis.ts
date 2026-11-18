@@ -6,6 +6,7 @@ import type { Diagram, FlowDB, SequenceDB } from "../compat/types.ts";
 import { getMermaidCore } from "../parsing/engine.ts";
 import type { DiagramStats } from "../parsing/statistics.ts";
 import { readStyles } from "../styling/declarations.ts";
+import { outlined, textOutline } from "./outline.ts";
 import { styledConnectors, styledSurfaces } from "./rendered.ts";
 import { scoreSequence } from "./sequence.ts";
 import { FAMILY_CONNECTORS } from "./surfaces/connectors.ts";
@@ -137,6 +138,8 @@ async function discover(source: string, stats: DiagramStats, viewer: Viewer, ana
 
   rejectUnmodelledConfig(config);
 
+  const outline = config.themeCSS ? textOutline(config.themeCSS, kind, config) : undefined;
+
   const theme = themeProblem(mermaid, config.theme, kind);
 
   if (theme) {
@@ -152,7 +155,7 @@ async function discover(source: string, stats: DiagramStats, viewer: Viewer, ana
   const diagram = await diagramFromText(mermaid, source);
   const { themes, defaults } = resolveThemes(mermaid, config, modeThemes(viewer));
   const host = viewer.name === "mkdocs-material" && MATERIAL_FAMILIES.has(kind) ? viewer.host : undefined;
-  const run: SurfaceRun = { diagram, kind, config, themes, defaults, canvas, styles, host };
+  const run: SurfaceRun = { diagram, kind, config, themes, defaults, canvas, styles, host, outline };
   const collect = collector(analysis);
 
   collectTitles(diagramTitle(source, diagram), run, collect);
@@ -181,14 +184,13 @@ type SurfaceRun = {
   defaults: ThemeVariables;
   canvas: Canvas;
   styles: Awaited<ReturnType<typeof readStyles>>;
+
+  // The opaque outline the themeCSS recipe draws behind native text, if any.
+  outline: string | undefined;
   host: Readonly<Record<Theme, HostColours>> | undefined;
 };
 
 function rejectUnmodelledConfig(config: MermaidConfig): void {
-  if (config.themeCSS) {
-    throw new Error("custom themeCSS is not modeled");
-  }
-
   if (config.look && config.look !== "classic") {
     throw new Error(`${config.look} rendering is not modeled`);
   }
@@ -222,9 +224,11 @@ function collectTitles(title: unknown, run: SurfaceRun, collect: Collect): void 
 
   for (const theme of THEMES) {
     const surface =
-      host && HOST_TITLES.has(kind)
-        ? { foreground: host[theme].text, background: canvas[theme] }
-        : titleSurface(kind, themes[theme], defaults, canvas[theme]);
+      run.outline && outlined(kind, "diagram title")
+        ? { foreground: titleSurface(kind, themes[theme], defaults, canvas[theme]).foreground, background: run.outline }
+        : host && HOST_TITLES.has(kind)
+          ? { foreground: host[theme].text, background: canvas[theme] }
+          : titleSurface(kind, themes[theme], defaults, canvas[theme]);
 
     collect("title", { name: "diagram title", ...surface }, theme);
   }
@@ -284,7 +288,13 @@ async function collectFamily(run: SurfaceRun, analysis: SurfaceAnalysis, collect
         throw new Error(`${run.kind} text surfaces are not yet modeled`);
       }
 
-      collectLabels(surfaces, theme, collect);
+      collectLabels(
+        surfaces.map((surface) =>
+          run.outline && outlined(run.kind, surface.name) ? { ...surface, background: run.outline } : surface,
+        ),
+        theme,
+        collect,
+      );
 
       await collectFamilyConnectors(run.kind, ctx, theme, { analysis, collect });
     }
