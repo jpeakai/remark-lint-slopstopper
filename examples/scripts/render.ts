@@ -7,6 +7,7 @@ import { parseDocument } from "htmlparser2";
 import { type Browser, chromium, type Page } from "playwright";
 import { createDocument } from "../../src/document/context.ts";
 import { fences } from "../../src/mermaid/markdown.ts";
+import { canonicalExample, ownedOutput } from "./paths.ts";
 
 // Deterministic render verification for the diagram examples. A renderer can
 // exit cleanly and still write an empty or truncated file, so every artifact
@@ -181,13 +182,7 @@ export async function exampleNames(root: string, selection: readonly string[] = 
         .sort();
 
   for (const name of names) {
-    if (!name || name === "." || name === ".." || /[/\\]/.test(name)) {
-      throw new Error(`Expected an example folder name, not ${name}`);
-    }
-
-    if (!(await stat(join(root, "examples", name)).catch(() => null))?.isDirectory()) {
-      throw new Error(`Unknown example: ${name}`);
-    }
+    await canonicalExample(root, name);
   }
 
   if (!names.length) {
@@ -271,7 +266,7 @@ async function writeArtifact(
   );
 
   await mkdir(join(out, scenario.example), { recursive: true });
-  await writeFile(path, bytes);
+  await writeFile(path, bytes, { flag: "wx" });
 
   return { path, bytes: (await stat(path)).size };
 }
@@ -348,7 +343,7 @@ export async function verifyRenderer(executablePath: string): Promise<Dimensions
 
 export async function renderExamples(root: string, options: RenderOptions): Promise<Manifest> {
   const names = await exampleNames(root, options.examples);
-  const out = join(options.out, options.set);
+  const out = await ownedOutput(root, join(options.out, options.set));
   const mermaidScript = join(MERMAID_SITE, "dist", "mermaid.min.js");
   const { version: mermaid } = JSON.parse(await readFile(join(MERMAID_SITE, "package.json"), "utf8")) as {
     version: string;
@@ -401,8 +396,7 @@ export async function renderExamples(root: string, options: RenderOptions): Prom
     });
   }
 
-  await mkdir(out, { recursive: true });
-  await writeFile(join(out, "manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);
+  await writeFile(join(out, "manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`, { flag: "wx" });
 
   return manifest;
 }

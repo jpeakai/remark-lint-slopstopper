@@ -16,7 +16,7 @@ Options:
   --originals  Render diagram.md originals instead of diagram-fixed.md
                comparisons. Their render errors are recorded, not fatal.
   --matched    Render each theme on its own page colour only, as a fast check
-  --out DIR    Output directory (default: tmp/renders)
+  --out DIR    A new output directory inside tmp/ (default: tmp/renders/<time>)
   -h, --help   Show this help and exit
 
 The browser is Playwright's Chromium, or the executable in CHROME_PATH.`;
@@ -27,7 +27,7 @@ async function main(): Promise<void> {
     options: {
       originals: { type: "boolean", default: false },
       matched: { type: "boolean", default: false },
-      out: { type: "string", default: join(ROOT, "tmp", "renders") },
+      out: { type: "string", default: join(ROOT, "tmp", "renders", new Date().toISOString().replace(/[:.]/g, "-")) },
       help: { type: "boolean", short: "h", default: false },
     },
     allowPositionals: true,

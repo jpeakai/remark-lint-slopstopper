@@ -36,7 +36,7 @@ async function scratchRoot(t: { after: (fn: () => Promise<void>) => void }, file
 
 test("every fence renders to validated PNG and SVG files listed in the manifest", async (t) => {
   const root = await scratchRoot(t, { "01-valid/diagram-fixed.md": VALID });
-  const out = join(root, "renders");
+  const out = join(root, "tmp", "renders");
 
   const manifest = await renderExamples(root, { set: "comparison", out, ...browserOption });
 
@@ -66,7 +66,7 @@ test("every fence renders to validated PNG and SVG files listed in the manifest"
 
 test("a comparison that cannot render fails each of its scenarios by name", async (t) => {
   const root = await scratchRoot(t, { "01-broken/diagram-fixed.md": BROKEN });
-  const out = join(root, "renders");
+  const out = join(root, "tmp", "renders");
 
   const manifest = await renderExamples(root, { set: "comparison", out, ...browserOption });
 
@@ -78,7 +78,7 @@ test("a comparison that cannot render fails each of its scenarios by name", asyn
 
 test("deliberately failing originals are recorded separately without failing", async (t) => {
   const root = await scratchRoot(t, { "01-broken/diagram.md": BROKEN, "01-broken/diagram-fixed.md": VALID });
-  const out = join(root, "renders");
+  const out = join(root, "tmp", "renders");
 
   const manifest = await renderExamples(root, { set: "original", out, ...browserOption });
 
@@ -91,7 +91,11 @@ test("deliberately failing originals are recorded separately without failing", a
 test("a file without Mermaid fences fails instead of passing with nothing to check", async (t) => {
   const root = await scratchRoot(t, { "01-empty/diagram-fixed.md": "# No diagram here\n" });
 
-  const manifest = await renderExamples(root, { set: "comparison", out: join(root, "renders"), ...browserOption });
+  const manifest = await renderExamples(root, {
+    set: "comparison",
+    out: join(root, "tmp", "renders"),
+    ...browserOption,
+  });
 
   assert.deepEqual(
     manifest.failures.map((failure) => failure.reason),
@@ -130,7 +134,7 @@ test("verified repair renders write a manifest and fail on a comparison that can
     "02-broken/diagram-fixed.md": BROKEN,
     "03-unselected/diagram-fixed.md": VALID,
   });
-  const out = join(root, "renders");
+  const out = join(root, "tmp", "renders");
   const render = { executablePath: await resolveBrowser(executablePath), out, matrix: "matched" as const };
 
   await verifyRepairRenders(root, ["01-valid"], render);
@@ -141,7 +145,7 @@ test("verified repair renders write a manifest and fail on a comparison that can
   assert.equal(manifest.artifacts.length, 8);
   await assert.rejects(stat(join(out, "comparison", "03-unselected")));
   await assert.rejects(
-    verifyRepairRenders(root, ["02-broken"], render),
+    verifyRepairRenders(root, ["02-broken"], { ...render, out: join(root, "tmp", "renders-broken") }),
     /failed render verification:\n02-broken#1\/light\/white\/png: /,
   );
 });
@@ -166,7 +170,7 @@ test("each comparison is accepted on its own evidence, and a broken download rej
   const context = {
     budgets: loadBudgets(await readFile(join(real, "finding-budgets.yml"), "utf8")),
     translations: loadTranslations(await readFile(join(real, "translations.yml"), "utf8")),
-    renders: await renderExamples(root, { set: "comparison", out: join(root, "renders"), ...browserOption }),
+    renders: await renderExamples(root, { set: "comparison", out: join(root, "tmp", "renders"), ...browserOption }),
     site,
   };
   const [clean, radar] = names;

@@ -1,24 +1,17 @@
 import { spawn } from "node:child_process";
-import { copyFile, mkdir, readdir, readFile, stat } from "node:fs/promises";
+import { copyFile, mkdir, readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { prepareCodexHome } from "./codex-home.ts";
 import { guardExamples } from "./families.ts";
 import type { Options } from "./options.ts";
+import { assertOwnedLocation, canonicalExample } from "./paths.ts";
 import { type Matrix, renderExamples, resolveBrowser, verifyRenderer } from "./render.ts";
 
 async function exampleNames(root: string, selection?: string): Promise<string[]> {
   if (selection) {
     const name = selection.replace(/^examples\//, "");
 
-    if (!name || name === "." || name === ".." || /[/\\]/.test(name)) {
-      throw new Error("Expected an example folder name");
-    }
-
-    const source = join(root, "examples", name, "diagram.md");
-
-    if (!(await stat(source).catch(() => null))?.isFile()) {
-      throw new Error(`Unknown example: ${selection}`);
-    }
+    await canonicalExample(root, name);
 
     return [name];
   }
@@ -127,6 +120,10 @@ export async function repairExamples(root: string, options: Options): Promise<vo
 
   let prompt = await readFile(join(root, "examples", "fix-prompt.md"), "utf8");
 
+  if (options.codexHome) {
+    await assertOwnedLocation(root, options.codexHome);
+  }
+
   // Visual verification must work before any comparison is overwritten, and
   // before a run directory receives a copy of the saved login.
   const browser = await resolveBrowser(options.browser ?? process.env.CHROME_PATH).catch((error: Error) => {
@@ -139,8 +136,10 @@ export async function repairExamples(root: string, options: Options): Promise<vo
 
   const { home, skills } = await prepareCodexHome(root, options);
   const scratch = join(home, "tmp");
+  const renders = join(home, "renders");
 
   await mkdir(scratch, { recursive: true });
+  await assertOwnedLocation(root, renders);
   console.error(`Browser: ${browser}`);
 
   console.error(`Codex home: ${home}`);
@@ -179,7 +178,7 @@ export async function repairExamples(root: string, options: Options): Promise<vo
 
   await verifyRepairRenders(root, names, {
     executablePath: browser,
-    out: join(home, "renders"),
+    out: renders,
     matrix: options.render,
   });
 }
