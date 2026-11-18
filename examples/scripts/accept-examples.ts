@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { mkdir, readFile, stat, writeFile } from "node:fs/promises";
+import { readFile, stat, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
@@ -8,6 +8,7 @@ import { MERMAID_RULES } from "../../src/rules.ts";
 import { type AcceptanceRecord, acceptExample } from "./acceptance.ts";
 import { loadBudgets } from "./budgets.ts";
 import { loadTranslations } from "./families.ts";
+import { ownedOutput } from "./paths.ts";
 import { exampleNames, renderExamples, resolveBrowser } from "./render.ts";
 
 const ROOT = fileURLToPath(new URL("../../", import.meta.url));
@@ -57,7 +58,7 @@ async function main(): Promise<void> {
     args: process.argv.slice(2),
     options: {
       site: { type: "string", default: join(ROOT, "tmp", "site") },
-      out: { type: "string", default: join(ROOT, "tmp", "acceptance") },
+      out: { type: "string", default: join(ROOT, "tmp", "acceptance", new Date().toISOString().replace(/[:.]/g, "-")) },
       help: { type: "boolean", short: "h", default: false },
     },
     allowPositionals: true,
@@ -75,10 +76,11 @@ async function main(): Promise<void> {
   }
 
   const names = await exampleNames(ROOT, positionals);
+  const out = await ownedOutput(ROOT, values.out);
   const renders = await renderExamples(ROOT, {
     set: "comparison",
     examples: names,
-    out: join(values.out, "renders"),
+    out: join(out, "renders"),
     executablePath: await resolveBrowser(process.env.CHROME_PATH),
   });
   const context = {
@@ -89,13 +91,11 @@ async function main(): Promise<void> {
   };
   const records: AcceptanceRecord[] = [];
 
-  await mkdir(values.out, { recursive: true });
-
   for (const name of names) {
     const record = await acceptExample(ROOT, name, context);
 
     records.push(record);
-    await writeFile(join(values.out, `${name}.json`), `${JSON.stringify(record, null, 2)}\n`);
+    await writeFile(join(out, `${name}.json`), `${JSON.stringify(record, null, 2)}\n`, { flag: "wx" });
     console.log(`${record.accepted ? "accepted" : "REJECTED"} ${name}`);
 
     for (const failed of record.checks.filter((item) => !item.passed)) {
@@ -106,7 +106,7 @@ async function main(): Promise<void> {
   const combined = await combinedProblems(names);
 
   await writeFile(
-    join(values.out, "acceptance.json"),
+    join(out, "acceptance.json"),
     `${JSON.stringify({ accepted: records.filter((r) => r.accepted).length, examples: records.length, combined }, null, 2)}\n`,
   );
 
@@ -115,7 +115,7 @@ async function main(): Promise<void> {
   }
 
   if (combined.length || records.some((record) => !record.accepted)) {
-    throw new Error(`Some comparisons were not accepted; see ${values.out}`);
+    throw new Error(`Some comparisons were not accepted; see ${out}`);
   }
 }
 

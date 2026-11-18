@@ -66,8 +66,16 @@ Pass one or more folder names to render only those examples.
 The expected artifact count comes from the parsed Mermaid fences, so a missing artifact fails the run.
 Each failure names its scenario as `example#fence/theme/background/format`.
 
-Results go to `tmp/renders/comparison/`, with a `manifest.json` recording source hashes, scenarios, artifact paths, sizes and dimensions.
-Use `--out DIR` for another location.
+Each run writes to a new `tmp/renders/<time>/comparison/` folder, with a `manifest.json` recording source hashes, scenarios, artifact paths, sizes and dimensions.
+Use `--out DIR` for another new folder inside `tmp/`.
+
+The scripts check their paths before they reset a comparison or launch a browser:
+
+- a selected example must be a real folder inside `examples/`, and its diagram files real files inside it
+- output goes to a new folder inside the project's `tmp/`, reached without filesystem links
+- every artifact, manifest and Acceptance Record is created exclusively, so an existing path cannot redirect or overwrite evidence
+
+A Codex home given with `--codex-home` must therefore also be inside `tmp/`.
 
 Pass `--matched` for the fast matched-background matrix.
 Comparisons must render.
@@ -87,7 +95,7 @@ make site
 bun run accept:examples
 ```
 
-For each selected example, the Acceptance Record in `tmp/acceptance/` records five checks:
+For each selected example, the Acceptance Record in a new `tmp/acceptance/<time>/` folder records five checks:
 
 - **family:** it keeps its family, or makes an approved Portable Translation that keeps its facts
 - **facts:** a same-family comparison keeps every label, relationship, message order and number of its original
