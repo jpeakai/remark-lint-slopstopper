@@ -1,3 +1,4 @@
+import { diagramFromText } from "../compat/api.ts";
 import { getMermaidCore } from "../parsing/engine.ts";
 import { READERS } from "./adapters.ts";
 import { keywordOf, traceParse } from "./lexer.ts";
@@ -17,7 +18,7 @@ export const parseTraced = async (source: string): Promise<ParsedStyles | null> 
   try {
     // parse registers the diagram types before getDiagramFromText detects one.
     await mermaid.parse(source);
-    diagram = (await mermaid.mermaidAPI.getDiagramFromText(source)) as unknown as ParsedDiagram;
+    diagram = (await diagramFromText(mermaid, source)) as unknown as ParsedDiagram;
   } catch {
     return null;
   }

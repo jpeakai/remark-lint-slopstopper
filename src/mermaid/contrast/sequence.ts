@@ -1,5 +1,5 @@
 import type { MermaidConfig } from "mermaid";
-import type { SequenceDB } from "mermaid/dist/diagrams/sequence/sequenceDb.js";
+import type { SequenceDB } from "../compat/types.ts";
 import { getMermaidCore, type MermaidCore } from "../parsing/engine.ts";
 import { parseTraced } from "../styling/declarations.ts";
 import { frontmatterLine } from "../styling/source.ts";

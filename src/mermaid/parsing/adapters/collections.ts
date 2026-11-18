@@ -1,5 +1,7 @@
-import type { CynefinDB } from "mermaid/dist/diagrams/cynefin/types.js";
-import { type AnyDb, callGetter, type Structure } from "../model.ts";
+import { getter, list, listGetter } from "../../compat/shapes.ts";
+import type { DomainName } from "../../compat/types.ts";
+import type { AnyDb, Structure } from "../model.ts";
+import type { CynefinView } from "../projections.ts";
 
 interface C4Boundary {
   alias?: string;
@@ -7,9 +9,9 @@ interface C4Boundary {
 }
 
 export function adaptC4(db: AnyDb): Structure {
-  const shapes = callGetter<Array<{ alias?: string }>>(db, "getC4ShapeArray") ?? [];
-  const rels = callGetter<Array<unknown>>(db, "getRels") ?? [];
-  const boundaries = callGetter<C4Boundary[]>(db, "getBoundaries") ?? [];
+  const shapes = listGetter<{ alias?: string }>(db, "getC4ShapeArray");
+  const rels = listGetter<unknown>(db, "getRels");
+  const boundaries = listGetter<C4Boundary>(db, "getBoundaries");
 
   // Top-level "global" boundary is synthetic; exclude from user-visible count.
   const userBoundaries = boundaries.filter((b) => b.alias && b.alias !== "global");
@@ -31,8 +33,8 @@ interface GanttSection {
 }
 
 export function adaptGantt(db: AnyDb): Structure {
-  const tasks = callGetter<GanttTask[]>(db, "getTasks") ?? [];
-  const sections = callGetter<GanttSection[]>(db, "getSections") ?? [];
+  const tasks = listGetter<GanttTask>(db, "getTasks");
+  const sections = listGetter<GanttSection>(db, "getSections");
 
   return {
     nodeIds: tasks.map((t) => t.id ?? t.task ?? ""),
@@ -51,8 +53,7 @@ interface KanbanNode {
 export function adaptKanban(db: AnyDb): Structure {
   // getData() returns a flat node list; isGroup=true marks columns, tasks
   // point at their column via parentId.
-  const data = callGetter<{ nodes?: KanbanNode[] } | null>(db, "getData");
-  const nodes = data?.nodes ?? [];
+  const nodes = list<KanbanNode>(getter<{ nodes?: unknown }>(db, "getData").nodes, "getData().nodes");
   const columns = nodes.filter((n) => n.isGroup === true);
   const tasks = nodes.filter((n) => n.isGroup === false);
 
@@ -74,10 +75,14 @@ interface QuadrantData {
 // four quadrant boxes are always drawn, so an unlabelled one adds nothing to
 // read, while every point is a mark the reader must place.
 export function adaptQuadrantChart(db: AnyDb): Structure {
-  const data = callGetter<QuadrantData | null>(db, "getQuadrantData");
+  const data = getter<QuadrantData>(db, "getQuadrantData");
   const textOf = (t: QuadrantText): string => (typeof t === "string" ? t : (t?.text ?? ""));
-  const quadrants = (data?.quadrants ?? []).map((q) => textOf(q.text)).filter((t) => t.trim() !== "");
-  const points = (data?.points ?? []).map((p, i) => textOf(p.text) || `point_${i}`);
+  const quadrants = list<{ text: QuadrantText }>(data.quadrants, "getQuadrantData().quadrants")
+    .map((q) => textOf(q.text))
+    .filter((t) => t.trim() !== "");
+  const points = list<{ text: QuadrantText }>(data.points, "getQuadrantData().points").map(
+    (p, i) => textOf(p.text) || `point_${i}`,
+  );
 
   return {
     nodeIds: [...quadrants, ...points],
@@ -102,8 +107,8 @@ export function adaptRequirement(db: AnyDb): Structure {
 }
 
 export function adaptSankey(db: AnyDb): Structure {
-  const nodes = callGetter<Array<{ id?: string }>>(db, "getNodes") ?? [];
-  const links = callGetter<Array<unknown>>(db, "getLinks") ?? [];
+  const nodes = listGetter<{ id?: string }>(db, "getNodes");
+  const links = listGetter<unknown>(db, "getLinks");
 
   return {
     nodeIds: nodes.map((n) => n.id ?? ""),
@@ -125,8 +130,8 @@ interface TimelineSection {
 
 export function adaptTimeline(db: AnyDb): Structure {
   // Every period and every event under it is a box on the page.
-  const tasks = callGetter<TimelineTask[]>(db, "getTasks") ?? [];
-  const sections = callGetter<TimelineSection[]>(db, "getSections") ?? [];
+  const tasks = listGetter<TimelineTask>(db, "getTasks");
+  const sections = listGetter<TimelineSection>(db, "getSections");
 
   return {
     nodeIds: tasks.flatMap((t) => [t.task ?? "", ...(t.events ?? []).map((e) => `${t.task ?? ""}: ${e}`)]),
@@ -145,8 +150,8 @@ interface JourneySection {
 }
 
 export function adaptJourney(db: AnyDb): Structure {
-  const tasks = callGetter<JourneyTask[]>(db, "getTasks") ?? [];
-  const sections = callGetter<JourneySection[]>(db, "getSections") ?? [];
+  const tasks = listGetter<JourneyTask>(db, "getTasks");
+  const sections = listGetter<JourneySection>(db, "getSections");
 
   return {
     nodeIds: tasks.map((t) => t.task ?? ""),
@@ -164,8 +169,8 @@ interface VennSubset {
 }
 
 export function adaptVenn(db: AnyDb): Structure {
-  const sets = callGetter<VennSet[]>(db, "getCurrentSets") ?? [];
-  const subsets = callGetter<VennSubset[]>(db, "getSubsetData") ?? [];
+  const sets = listGetter<VennSet>(db, "getCurrentSets");
+  const subsets = listGetter<VennSubset>(db, "getSubsetData");
 
   // Subsets with multiple sets = unions/intersections = edges.
   const multiSetSubsets = subsets.filter((s) => (s.sets?.length ?? 0) >= 2);
@@ -186,14 +191,17 @@ interface XYChartData {
 // A node is an x position: a category, or, on a numeric x-axis, a point of the
 // longest series.
 export function adaptXychart(db: AnyDb): Structure {
-  const data = callGetter<XYChartData | null>(db, "getXYChartData");
-  const categories = data?.xAxis?.categories ?? [];
+  const data = getter<XYChartData>(db, "getXYChartData");
+
+  // Only a band x-axis has categories; a numeric one has none by design.
+  const categories = data.xAxis?.categories ?? [];
 
   if (categories.length > 0) {
     return { nodeIds: categories, edges: 0, subgraphNames: [], maxDepth: 0 };
   }
 
-  const longest = Math.max(0, ...(data?.plots ?? []).map((p) => p.data?.length ?? 0));
+  const plots = list<{ data?: unknown[] }>(data.plots, "getXYChartData().plots");
+  const longest = Math.max(0, ...plots.map((p) => list(p.data, "getXYChartData().plots[].data").length));
 
   return {
     nodeIds: Array.from({ length: longest }, (_, i) => `x_${i}`),
@@ -205,14 +213,13 @@ export function adaptXychart(db: AnyDb): Structure {
 
 // The renderer always draws all five labelled domain regions. It clips the
 // confusion domain to three badges and one overflow badge, and skips loops.
-export function adaptCynefin(rawDb: AnyDb): Structure {
-  const db = rawDb as unknown as CynefinDB;
+export function adaptCynefin(db: CynefinView): Structure {
   const domains = db.getDomains();
   const subgraphNames = ["complex", "complicated", "clear", "chaotic", "confusion"];
   const nodeIds: string[] = [];
 
   for (const name of subgraphNames) {
-    const items = domains.get(name as Parameters<typeof domains.get>[0])?.items ?? [];
+    const items = domains.get(name as DomainName)?.items ?? [];
     const visibleCount = name === "confusion" ? Math.min(items.length, 3) : items.length;
 
     for (let i = 0; i < visibleCount; i++) {
@@ -224,7 +231,7 @@ export function adaptCynefin(rawDb: AnyDb): Structure {
     }
   }
 
-  const edges = db.getTransitions().filter((transition) => transition.from !== transition.to).length;
+  const edges = db.getTransitions().length;
 
   return { nodeIds, edges, subgraphNames, maxDepth: 1 };
 }

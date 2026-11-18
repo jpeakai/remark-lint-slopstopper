@@ -1,12 +1,18 @@
-import type { ClassDB } from "mermaid/dist/diagrams/class/classDb.js";
-import type { ClassMember, ClassNode, ClassRelation } from "mermaid/dist/diagrams/class/classTypes.js";
-import type { ErDB } from "mermaid/dist/diagrams/er/erDb.js";
-import type { Attribute as ErAttribute, Relationship as ErRelationship } from "mermaid/dist/diagrams/er/erTypes.js";
-import type { FlowDB } from "mermaid/dist/diagrams/flowchart/flowDb.js";
-import type { FlowEdge } from "mermaid/dist/diagrams/flowchart/types.js";
-import type { MindmapDB } from "mermaid/dist/diagrams/mindmap/mindmapDb.js";
-import type { SequenceDB } from "mermaid/dist/diagrams/sequence/sequenceDb.js";
-import type { Message as SequenceRecord } from "mermaid/dist/diagrams/sequence/types.js";
+import { diagramFromText } from "../compat/api.ts";
+import type {
+  ClassDB,
+  ClassMember,
+  ClassNode,
+  ClassRelation,
+  ErAttribute,
+  ErDB,
+  ErRelationship,
+  FlowDB,
+  FlowEdge,
+  MindmapDB,
+  SequenceDB,
+  SequenceMessage as SequenceRecord,
+} from "../compat/types.ts";
 import { flowchartNodeIds } from "./adapters/graphs.ts";
 import { isSequenceMessage, type SequenceCodes, sequenceCodes } from "./adapters/sequence.ts";
 import { getMermaidCore, memoBySource } from "./engine.ts";
@@ -454,7 +460,7 @@ export const extractGraph = memoBySource(async (content: string): Promise<Diagra
 
   await mermaid.parse(content);
 
-  const diagram = await mermaid.mermaidAPI.getDiagramFromText(content);
+  const diagram = await diagramFromText(mermaid, content);
   const type = diagram.type;
   const read = READERS[type];
 

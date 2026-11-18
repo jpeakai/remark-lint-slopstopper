@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { analyzeMermaid, MERMAID_RULES } from "../analyze.ts";
+import { siteConfig } from "../compat/api.ts";
 import { getMermaidCore } from "../parsing/engine.ts";
 import { themeProblem } from "./theme.ts";
 
@@ -49,15 +50,15 @@ test("a theme a renderer branches on is unauditable for that family only", async
 
 test("checking a theme restores Mermaid's configuration whether or not it is defined", async () => {
   const mermaid = await getMermaidCore();
-  const prior = JSON.stringify(mermaid.mermaidAPI.getSiteConfig());
+  const prior = JSON.stringify(siteConfig(mermaid));
 
   themeProblem(mermaid, "neo-dark", "flowchart");
 
-  assert.equal(JSON.stringify(mermaid.mermaidAPI.getSiteConfig()), prior);
+  assert.equal(JSON.stringify(siteConfig(mermaid)), prior);
 
   themeProblem(mermaid, "bogus", "flowchart");
 
-  assert.equal(JSON.stringify(mermaid.mermaidAPI.getSiteConfig()), prior);
+  assert.equal(JSON.stringify(siteConfig(mermaid)), prior);
 });
 
 test("a formerly rejected engine theme is scored from its variables and overrides in both modes", async () => {

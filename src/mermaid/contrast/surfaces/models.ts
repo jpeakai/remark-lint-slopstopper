@@ -1,7 +1,5 @@
 import { parse as mermaidParse } from "@mermaid-js/parser";
-import type { ArchitectureDB } from "mermaid/dist/diagrams/architecture/architectureDb.js";
-import type { PacketDB } from "mermaid/dist/diagrams/packet/db.js";
-import type { RequirementDB } from "mermaid/dist/diagrams/requirement/requirementDb.js";
+import type { ArchitectureDB, PacketDB, RequirementDB } from "../../compat/types.ts";
 import { compositeOver } from "../colors.ts";
 import type { AddSurface, SurfaceContext } from "../theme.ts";
 

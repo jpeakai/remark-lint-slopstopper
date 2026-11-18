@@ -1,4 +1,4 @@
-import type { GitGraphDB } from "mermaid/dist/diagrams/git/gitGraphTypes.js";
+import type { GitGraphDB } from "../../compat/types.ts";
 import { compositeOver, withOpacity } from "../colors.ts";
 import type { AddSurface, SurfaceContext, ThemeVariables } from "../theme.ts";
 

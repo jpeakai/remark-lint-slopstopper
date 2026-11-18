@@ -1,5 +1,5 @@
-import type { SequenceDB } from "mermaid/dist/diagrams/sequence/sequenceDb.js";
-import type { Actor, Message } from "mermaid/dist/diagrams/sequence/types.js";
+import { flag } from "../compat/shapes.ts";
+import type { SequenceActor as Actor, SequenceMessage as Message, SequenceDB } from "../compat/types.ts";
 import { isSequenceMessage, type SequenceCodes, sequenceCodes } from "../parsing/adapters/sequence.ts";
 
 // Ordered parser events determine which sequence labels exist and which
@@ -164,7 +164,7 @@ function paintEvent(record: Message, state: PaintState): boolean {
     return false;
   }
 
-  state.numbered = typeof record.message !== "string" && record.message.visible;
+  state.numbered = typeof record.message !== "string" && flag(record.message.visible, "autonumber visibility");
 
   return true;
 }

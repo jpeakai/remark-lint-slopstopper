@@ -1,9 +1,12 @@
-import type { IshikawaDB } from "mermaid/dist/diagrams/ishikawa/ishikawaDb.js";
-import type { MindmapDB } from "mermaid/dist/diagrams/mindmap/mindmapDb.js";
-import type { ASTNode, RailroadDB } from "mermaid/dist/diagrams/railroad/railroadTypes.js";
-import type { TreeMapDB } from "mermaid/dist/diagrams/treemap/db.js";
-import type { TreemapNode } from "mermaid/dist/diagrams/treemap/types.js";
-import type { TreeViewDB } from "mermaid/dist/diagrams/treeView/types.js";
+import type {
+  RailroadNode as ASTNode,
+  IshikawaDB,
+  MindmapDB,
+  RailroadDB,
+  TreeMapDB,
+  TreemapNode,
+  TreeViewDB,
+} from "../../compat/types.ts";
 import { walkTree } from "../../parsing/model.ts";
 import { propertiesOf } from "../../styling/properties.ts";
 import { compositeOver } from "../colors.ts";

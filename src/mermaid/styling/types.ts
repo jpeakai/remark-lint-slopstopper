@@ -1,4 +1,4 @@
-import type { Diagram } from "mermaid/dist/Diagram.js";
+import type { Diagram } from "../compat/types.ts";
 
 // One styled thing in the parser's result: a classDef, a node, entity, state
 // or class that a style statement styles, or an edge that a linkStyle styles.

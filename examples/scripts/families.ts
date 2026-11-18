@@ -1,8 +1,9 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import type { TreeViewDB } from "mermaid/dist/diagrams/treeView/types.js";
 import { parse } from "yaml";
 import { createDocument } from "../../src/document/context.ts";
+import { diagramFromText } from "../../src/mermaid/compat/api.ts";
+import type { TreeViewDB } from "../../src/mermaid/compat/types.ts";
 import { fences } from "../../src/mermaid/markdown.ts";
 import { getMermaidCore } from "../../src/mermaid/parsing/engine.ts";
 import { extractGraph } from "../../src/mermaid/parsing/graph.ts";
@@ -33,9 +34,14 @@ export interface Translation {
 
 type FactCheck = (original: string, comparison: string) => Promise<string[]>;
 type Graph = Awaited<ReturnType<typeof extractGraph>>;
-type C4DB = typeof import("mermaid/dist/diagrams/c4/c4Db.js");
 
-const core = async (source: string) => (await (await getMermaidCore()).mermaidAPI.getDiagramFromText(source)).db;
+// The C4 database getters a fact check reads.
+interface C4DB {
+  getC4ShapeArray(): unknown[];
+  getRels(): unknown[];
+}
+
+const core = async (source: string) => (await diagramFromText(await getMermaidCore(), source)).db;
 
 const plain = (label: string): string =>
   label

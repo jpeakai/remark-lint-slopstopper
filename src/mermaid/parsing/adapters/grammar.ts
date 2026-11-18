@@ -8,10 +8,10 @@ import {
   type Radar,
   type Wardley,
 } from "@mermaid-js/parser";
-import type { TreeMapDB } from "mermaid/dist/diagrams/treemap/db.js";
-import type { TreemapNode } from "mermaid/dist/diagrams/treemap/types.js";
-import type { TreeViewDB } from "mermaid/dist/diagrams/treeView/types.js";
+import type { TreeViewDB } from "../../compat/types.ts";
 import { architectureDepth, type Structure, walkTree } from "../model.ts";
+import { cynefinProjection, type TreemapItem, treemapProjection } from "../projections.ts";
+import { adaptCynefin } from "./collections.ts";
 
 // Official Langium AST readers and the DB trees their renderers construct.
 
@@ -30,7 +30,8 @@ const LANGIUM_READERS = {
   gitGraph: async (content) => adaptLangiumGitGraph(await langiumParse("gitGraph", content)),
   packet: async (content) => adaptLangiumPacket(await langiumParse("packet", content)),
   radar: async (content) => adaptLangiumRadar(await langiumParse("radar", content)),
-  treemap: async (_content, db) => adaptParsedTree((db as TreeMapDB).getRoot().children),
+  treemap: async (content) => adaptParsedTree(await treemapProjection(content)),
+  cynefin: async (content) => adaptCynefin(await cynefinProjection(content)),
   treeView: async (_content, db) => adaptParsedTree([(db as TreeViewDB).getRoot()]),
   wardley: async (content) => adaptLangiumWardley(await langiumParse("wardley", content)),
   eventmodeling: async (content) => adaptLangiumEventModeling(await langiumParse("eventmodeling", content)),
@@ -106,7 +107,7 @@ function adaptLangiumRadar(ast: Radar): Structure {
 
 // Read actual visible roots: treeView renders its generated slash root,
 // whereas treemap does not render its unnamed wrapper.
-function adaptParsedTree(roots: TreemapNode[]): Structure {
+function adaptParsedTree(roots: readonly TreemapItem[]): Structure {
   const items = roots.flatMap((root) => [...walkTree(root)]);
 
   return {

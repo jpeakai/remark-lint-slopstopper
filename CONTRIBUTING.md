@@ -101,6 +101,8 @@ Missing concepts files are optional, while other read failures remain visible.
 Document the policy's identifier, options, example findings, corrections and fixer limits in [RULES.md](RULES.md).
 
 Keep official parser access within the serial Mermaid job.
+
+Import Mermaid's internal types from [`compat/types.ts`](src/mermaid/compat/types.ts) and read databases through [`compat/shapes.ts`](src/mermaid/compat/shapes.ts), never from `mermaid/dist/` directly.
 Do not extract diagram syntax with regular expressions when the canonical parser model supplies it.
 For colour assertions, read the Surface Analysis from `analyzeSurfaces` in [`contrast/analysis.ts`](src/mermaid/contrast/analysis.ts) and keep thresholds in the policy.
 Report its `unsupported` entries rather than treating a partial analysis as a pass.

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { siteConfig } from "../compat/api.ts";
 import { getMermaidCore } from "../parsing/engine.ts";
 import { extractStats } from "../parsing/statistics.ts";
 import { analyzeSurfaces } from "./analysis.ts";
@@ -60,7 +61,7 @@ test("declaration-level unsupported styling carries its selector and line", asyn
 
 test("a failure after theme resolution restores Mermaid's site configuration", async () => {
   const mermaid = await getMermaidCore();
-  const prior = JSON.stringify(mermaid.mermaidAPI.getSiteConfig());
+  const prior = JSON.stringify(siteConfig(mermaid));
   const source = [
     "---",
     "config:",
@@ -75,5 +76,5 @@ test("a failure after theme resolution restores Mermaid's site configuration", a
   const analysis = await analyze(source);
 
   assert.deepEqual(analysis.unsupported, [{ reason: "inline HTML label styles are not modeled" }]);
-  assert.equal(JSON.stringify(mermaid.mermaidAPI.getSiteConfig()), prior);
+  assert.equal(JSON.stringify(siteConfig(mermaid)), prior);
 });

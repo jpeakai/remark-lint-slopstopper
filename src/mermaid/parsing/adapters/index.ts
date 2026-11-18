@@ -1,7 +1,6 @@
 import type { AnyDb, Structure } from "../model.ts";
 import {
   adaptC4,
-  adaptCynefin,
   adaptGantt,
   adaptJourney,
   adaptKanban,
@@ -51,7 +50,6 @@ const CORE_ADAPTERS: Record<string, CoreAdapter> = {
   railroadEbnf: adaptRailroad,
   railroadAbnf: adaptRailroad,
   railroadPeg: adaptRailroad,
-  cynefin: adaptCynefin,
 };
 
 // Eventmodeling's DB getState() performs SVG text measurement. Read its official

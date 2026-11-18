@@ -156,9 +156,3 @@ export function* walkTree<T extends { children?: readonly T[] }>(
 // Canonical Mermaid DB adapters. No parser loading or source interpretation.
 
 export type AnyDb = Record<string, unknown>;
-
-export function callGetter<T>(db: AnyDb, name: string): T | null {
-  const fn = db[name];
-
-  return typeof fn === "function" ? ((fn as () => T)() ?? null) : null;
-}
