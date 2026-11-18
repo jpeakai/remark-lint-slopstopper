@@ -10,7 +10,8 @@ Anything under `Unreleased` is on `main` but not yet released.
 ### Added
 
 - `mermaid/contrast-connectors-below-minimum` requires connecting lines and arrowheads to reach 3:1 in both themes.
-  It covers graph edges and sequence message lines and lifelines.
+  It covers graph edges, sequence message lines and lifelines.
+  It also measures the native lines of most other families that draw relationships, such as C4, mindmap and timeline.
   It is enabled with the other custom policies; families whose connectors are not modelled report an unauditable error.
 
 - A `viewer` option for both Mermaid contrast policies, with `github` (the default) and `mkdocs-material` profiles.

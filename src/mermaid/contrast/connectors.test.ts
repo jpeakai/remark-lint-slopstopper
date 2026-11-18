@@ -102,10 +102,13 @@ test("sequence message lines and lifelines are connectors", async () => {
 test("families are supported, connector-free or explicitly unauditable", async () => {
   assert.deepEqual(await analyzeMermaid(fenced('pie\n  "A": 1', { lineColor: "#ffffff" }), ONLY), []);
 
-  const mindmap = await analyzeMermaid(fenced("mindmap\n  Root\n    Child"), ONLY);
+  const wardley = await analyzeMermaid(
+    fenced("wardley-beta\ncomponent A [0.5, 0.5]\ncomponent B [0.2, 0.3]\nA -> B"),
+    ONLY,
+  );
 
-  assert.deepEqual(names(mindmap), ["Connector contrast cannot be audited"]);
-  assert.match(mindmap[0]?.message ?? "", /mindmap connectors are not modeled/);
+  assert.deepEqual(names(wardley), ["Connector contrast cannot be audited"]);
+  assert.match(wardley[0]?.message ?? "", /wardley connectors are not modeled/);
 });
 
 test("connector and text policies run and stay silent independently", async () => {
@@ -131,4 +134,65 @@ test("a styled connector reports at its linkStyle line, and an unreadable stroke
   assert.equal(markdown.slice(finding?.start, finding?.end).trim(), "linkStyle 0 stroke:#ffffff");
   assert.ok(unreadable.length > 0);
   assert.ok(unreadable.every((item) => item.message.startsWith("Connector contrast cannot be audited")));
+});
+
+const GITHUB = { light: "#ffffff", dark: "#0d1117" };
+const findingsOf = async (source: string) =>
+  (await analyzeMermaid(`\`\`\`mermaid\n${source}\n\`\`\``, { ...ONLY, canvas: GITHUB })).map(
+    (finding) => `${finding.message.split(":")[0]} | ${finding.message.match(/in the (\w+) theme/)?.[1] ?? "-"}`,
+  );
+
+test("native family connectors fail where the browser paints them unreadably, in each theme", async () => {
+  assert.deepEqual(await findingsOf("treeView-beta\nroot\n  child"), ["tree line | dark"]);
+  assert.deepEqual(await findingsOf('C4Context\nSystem(a, "A")\nSystem(b, "B")\nRel(a, b, "uses")'), [
+    "relation a → b line | dark",
+  ]);
+  assert.deepEqual(
+    await findingsOf(
+      '---\nconfig:\n  themeVariables:\n    treeView:\n      lineColor: "#888888"\n---\ntreeView-beta\nroot\n  child',
+    ),
+    [],
+  );
+});
+
+test("readable native family connectors pass in both themes", async () => {
+  for (const source of [
+    "architecture-beta\n  service a(server)[A]\n  service b(server)[B]\n  a:R --> L:b",
+    "requirementDiagram\nrequirement r {\nid: 1\ntext: t\nrisk: low\nverifymethod: test\n}\nelement e {\ntype: x\n}\ne - satisfies -> r",
+    "ishikawa-beta\nEffect\n  Cause",
+    'railroad-beta\nmain = terminal("x");',
+    "block-beta\n  columns 2\n  a b\n  a --> b",
+    "timeline\n  2026 : Launch",
+  ]) {
+    assert.deepEqual(await findingsOf(source), [], source);
+  }
+});
+
+test("a C4 or timeline arrowhead inherits the diagram's text paint", async () => {
+  const pale = '---\nconfig:\n  themeVariables:\n    textColor: "#eeeeee"\n---\n';
+
+  assert.ok(
+    (await findingsOf(`${pale}C4Context\nSystem(a, "A")\nSystem(b, "B")\nRel(a, b, "uses")`)).includes(
+      "relation a → b arrowhead | light",
+    ),
+  );
+  assert.ok((await findingsOf(`${pale}timeline\n  2026 : Launch`)).includes("timeline arrowhead | light"));
+});
+
+test("the timeline baseline falls back to black when the palette limit names no colour", async () => {
+  // With a palette limit of 2, the last section rule paints cScaleLabel1.
+  const labelled = (label: string) =>
+    `---\nconfig:\n  themeVariables:\n    THEME_COLOR_LIMIT: 2\n    cScaleLabel1: "${label}"\n---\ntimeline\n  2026 : Launch`;
+
+  assert.deepEqual(await findingsOf(labelled("#eeeeee")), ["timeline line | light"]);
+  assert.deepEqual(await findingsOf(labelled("inherit")), ["timeline line | dark"]);
+});
+
+test("block edges inside a composite block are explicitly unauditable", async () => {
+  const findings = await analyzeMermaid(
+    fenced("block-beta\n  columns 1\n  block:outer\n    a b\n  end\n  a --> b"),
+    ONLY,
+  );
+
+  assert.match(findings.map((finding) => finding.message).join("\n"), /block edges inside composite blocks/);
 });
