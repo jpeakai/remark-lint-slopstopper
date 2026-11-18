@@ -32,50 +32,34 @@ import {
 } from "./surfaces/trees.ts";
 import type { AddSurface, SurfaceContext, TextSurface, ThemeVariables } from "./theme.ts";
 
+// Each family's title paint on the page, where it differs from titleColor.
+const PAGE_TITLES: Record<string, (vars: ThemeVariables, defaults: ThemeVariables) => string | undefined> = {
+  pie: (vars) => vars.pieTitleTextColor ?? vars.titleColor,
+  venn: (vars) => vars.vennTitleTextColor ?? vars.titleColor,
+  quadrantChart: (vars) => vars.quadrantTitleFill ?? vars.titleColor,
+
+  // A C4 title has no fill of its own and inherits the root text paint.
+  c4: (vars) => vars.textColor,
+  packet: (vars) => vars.packet?.titleColor ?? "black",
+  treemap: (vars) => vars.treemap?.titleColor ?? vars.titleColor,
+  cynefin: (vars, defaults) => vars.cynefin?.labelColor ?? defaults.cynefin.labelColor,
+};
+
 export function titleSurface(
   kind: string,
   vars: ThemeVariables,
   defaults: ThemeVariables,
   page: string,
 ): Omit<TextSurface, "name"> {
-  const keys: Record<string, string> = {
-    pie: "pieTitleTextColor",
-    venn: "vennTitleTextColor",
-    quadrantChart: "quadrantTitleFill",
-  };
-
-  if (keys[kind]) {
-    return {
-      foreground: vars[keys[kind]] ?? vars.titleColor,
-      background: page,
-    };
-  }
-
-  if (kind === "packet") {
-    return { foreground: vars.packet?.titleColor ?? "black", background: page };
-  }
-
-  if (kind === "treemap") {
-    return {
-      foreground: vars.treemap?.titleColor ?? vars.titleColor,
-      background: page,
-    };
-  }
-
-  if (kind === "cynefin") {
-    return {
-      foreground: vars.cynefin?.labelColor ?? defaults.cynefin.labelColor,
-      background: page,
-    };
-  }
-
   if (kind === "xychart") {
     const xy = { ...defaults.xyChart, ...vars.xyChart };
 
     return { foreground: xy.titleColor, background: xy.backgroundColor };
   }
 
-  return { foreground: vars.titleColor ?? vars.textColor, background: page };
+  const paint = PAGE_TITLES[kind];
+
+  return { foreground: paint ? paint(vars, defaults) : (vars.titleColor ?? vars.textColor), background: page };
 }
 
 type SurfaceAdapter = (ctx: SurfaceContext, add: AddSurface) => void | Promise<void>;

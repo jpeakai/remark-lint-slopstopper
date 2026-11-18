@@ -357,6 +357,17 @@ The rule resolves supported styles, theme colours and translucent backgrounds us
 The default page canvas follows GitHub; pass the host's opaque `canvas.light` and `canvas.dark` values when different.
 Unsupported CSS or unmodelled surfaces produce unauditable errors instead of passing silently.
 
+Custom `themeCSS` is unauditable, with one exception: an opaque white text outline for C4 or TreeView text.
+The outline is drawn before each glyph, so the glyph is measured against it at 4.5:1:
+
+```text
+.treeView-node-label { paint-order: stroke; stroke: #ffffff; stroke-width: 3px; stroke-linejoin: round; }
+```
+
+Use the selector `text` for C4, where the outline reaches every label and the title.
+A C4 title inherits the diagram's root text colour.
+Any other declaration, selector, stroke colour, width or join is reported as unauditable, as is C4 HTML text.
+
 A diagram that pins a theme is checked in that theme in both viewer modes, if the pinned Mermaid defines it.
 An unknown theme name is an error rather than a silent fallback to the default colours.
 A few renderers paint redux themes differently by name; those themes are unauditable for the sequence, ER, gitGraph, mindmap and timeline families.
