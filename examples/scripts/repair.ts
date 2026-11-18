@@ -42,15 +42,32 @@ interface CodexRun {
   shared: Record<string, string>;
 }
 
-function runCodex(root: string, { home, args, prompt, shared }: CodexRun): Promise<void> {
+export interface AgentOutcome {
+  code: number | null;
+  signal: NodeJS.Signals | null;
+
+  // The first cancellation the parent received, whatever the child did with it.
+  cancelled: NodeJS.Signals | null;
+}
+
+// Run an agent with the prompt on stdin, forwarding cancellation to it. The
+// parent remembers its own first cancellation, because a child may catch the
+// signal and still exit zero.
+export function runAgent(
+  command: string,
+  args: string[],
+  options: { cwd: string; env: NodeJS.ProcessEnv; input: string },
+): Promise<AgentOutcome> {
   return new Promise((resolve, reject) => {
-    const child = spawn("codex", ["exec", "--sandbox", "workspace-write", ...args, "-"], {
-      cwd: root,
-      env: { ...process.env, ...shared, CODEX_HOME: home },
-      stdio: ["pipe", "inherit", "inherit"],
-    });
-    const interrupt = () => child.kill("SIGINT");
-    const terminate = () => child.kill("SIGTERM");
+    let cancelled: NodeJS.Signals | null = null;
+    const child = spawn(command, args, { cwd: options.cwd, env: options.env, stdio: ["pipe", "inherit", "inherit"] });
+    const forward = (signal: NodeJS.Signals) => () => {
+      cancelled ??= signal;
+      child.kill(signal);
+    };
+
+    const interrupt = forward("SIGINT");
+    const terminate = forward("SIGTERM");
     const cleanup = () => {
       process.removeListener("SIGINT", interrupt);
       process.removeListener("SIGTERM", terminate);
@@ -60,25 +77,44 @@ function runCodex(root: string, { home, args, prompt, shared }: CodexRun): Promi
     process.on("SIGTERM", terminate);
     child.stdin.on("error", (error: NodeJS.ErrnoException) => {
       if (error.code !== "EPIPE") {
+        cleanup();
         reject(error);
       }
     });
-    child.stdin.end(prompt);
+    child.stdin.end(options.input);
     child.on("error", (error) => {
       cleanup();
       reject(error);
     });
     child.on("exit", (code, signal) => {
       cleanup();
-
-      if (signal) {
-        process.kill(process.pid, signal);
-      } else {
-        process.exitCode = code ?? 1;
-      }
-
-      resolve();
+      resolve({ code, signal, cancelled });
     });
+  });
+}
+
+// Apply an agent's outcome to this process. A cancellation, the parent's or
+// the child's own signal, ends this process with that signal once the
+// forwarding listeners are gone; nothing after it may run.
+export function settleAgent(outcome: AgentOutcome): "cancelled" | "failed" | "succeeded" {
+  const signal = outcome.cancelled ?? outcome.signal;
+
+  if (signal) {
+    process.kill(process.pid, signal);
+
+    return "cancelled";
+  }
+
+  process.exitCode = outcome.code ?? 1;
+
+  return outcome.code === 0 ? "succeeded" : "failed";
+}
+
+function runCodex(root: string, { home, args, prompt, shared }: CodexRun): Promise<AgentOutcome> {
+  return runAgent("codex", ["exec", "--sandbox", "workspace-write", ...args, "-"], {
+    cwd: root,
+    env: { ...process.env, ...shared, CODEX_HOME: home },
+    input: prompt,
   });
 }
 
@@ -121,7 +157,13 @@ export async function repairExamples(root: string, options: Options): Promise<vo
     await copyFile(join(root, "examples", name, "diagram.md"), join(root, "examples", name, "diagram-fixed.md"));
   }
 
-  await runCodex(root, { home, args: options.codexArgs, prompt, shared: { CHROME_PATH: browser, TMPDIR: scratch } });
+  const outcome = settleAgent(
+    await runCodex(root, { home, args: options.codexArgs, prompt, shared: { CHROME_PATH: browser, TMPDIR: scratch } }),
+  );
+
+  if (outcome === "cancelled") {
+    return;
+  }
 
   // A repair keeps each example's family unless a mapping approves a
   // translation that keeps the original's facts.
@@ -131,7 +173,7 @@ export async function repairExamples(root: string, options: Options): Promise<vo
     throw new Error(`Repaired diagrams failed the family guard:\n${problems.join("\n")}`);
   }
 
-  if (agentFailed()) {
+  if (outcome === "failed") {
     return;
   }
 
@@ -141,9 +183,6 @@ export async function repairExamples(root: string, options: Options): Promise<vo
     matrix: options.render,
   });
 }
-
-// Codex's own exit status, set by runCodex, marks a failed agent run.
-const agentFailed = (): boolean => Boolean(process.exitCode) && process.exitCode !== 0;
 
 // A later check must not turn an agent's nonzero exit into a generic 1.
 export const failureExitCode = (current: string | number | null | undefined): number =>
