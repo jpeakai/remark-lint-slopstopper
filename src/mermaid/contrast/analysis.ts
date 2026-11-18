@@ -8,6 +8,7 @@ import type { DiagramStats } from "../parsing/statistics.ts";
 import { readStyles } from "../styling/declarations.ts";
 import { styledConnectors, styledSurfaces } from "./rendered.ts";
 import { scoreSequence } from "./sequence.ts";
+import { FAMILY_CONNECTORS } from "./surfaces/connectors.ts";
 import { familySurfaces, titleSurface } from "./surfaces.ts";
 import {
   type Canvas,
@@ -75,7 +76,7 @@ const STYLED_FAMILIES = ["flowchart", "classDiagram", "stateDiagram", "erDiagram
 
 // Families whose connectors are modelled, and families that draw none: their
 // lines are axes, borders or decoration rather than relationships.
-const CONNECTOR_FAMILIES = new Set([...STYLED_FAMILIES, "sequence"]);
+const CONNECTOR_FAMILIES = new Set([...STYLED_FAMILIES, "sequence", ...Object.keys(FAMILY_CONNECTORS)]);
 const CONNECTOR_FREE = new Set([
   "info",
   "pie",
@@ -84,7 +85,6 @@ const CONNECTOR_FREE = new Set([
   "packet",
   "kanban",
   "journey",
-  "timeline",
   "venn",
   "cynefin",
   "radar",
@@ -285,6 +285,8 @@ async function collectFamily(run: SurfaceRun, analysis: SurfaceAnalysis, collect
       }
 
       collectLabels(surfaces, theme, collect);
+
+      await collectFamilyConnectors(run.kind, ctx, theme, { analysis, collect });
     }
   }
 }
@@ -308,5 +310,30 @@ function collectConnectors(
     if (!analysis.unsupported.some((item) => item.reason === reason)) {
       analysis.unsupported.push({ reason, scope: "connector" });
     }
+  }
+}
+
+// A family's Connectors, or a connector-only gap when they cannot be resolved,
+// so a connector problem never blocks the text audit.
+async function collectFamilyConnectors(
+  kind: string,
+  ctx: Parameters<NonNullable<(typeof FAMILY_CONNECTORS)[string]>>[0],
+  theme: Theme,
+  sinks: { analysis: SurfaceAnalysis; collect: Collect },
+): Promise<void> {
+  const connectors = FAMILY_CONNECTORS[kind];
+
+  if (!connectors) {
+    return;
+  }
+
+  try {
+    collectConnectors(await connectors(ctx), theme, sinks);
+  } catch (error) {
+    collectConnectors(
+      { surfaces: [], unsupported: [error instanceof Error ? error.message : String(error)] },
+      theme,
+      sinks,
+    );
   }
 }

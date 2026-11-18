@@ -395,6 +395,17 @@ Each edge is measured over every container it crosses, from each end up to their
 Invisible layout links (`~~~`), hidden strokes and node or container borders are not connectors.
 
 Flowchart, class, state and ER edges are supported, as are sequence message lines and lifelines.
+Native connectors are also measured, each from the paint Mermaid's renderer uses:
+
+- architecture, block, requirement, event modelling and ishikawa lines with their arrowheads
+- mindmap branch edges in their section colours
+- C4 relations and TreeView hierarchy lines
+- railroad tracks
+- the timeline baseline and event connectors
+
+A C4 or timeline arrowhead has no fill of its own and inherits the diagram's text colour.
+Block edges inside a composite block report that they cannot be audited.
+
 Families that draw no relationship lines, such as pie, gantt and xychart, pass without findings.
 Every other family reports that its connectors cannot be audited.
 
