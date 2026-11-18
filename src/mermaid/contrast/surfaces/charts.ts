@@ -1,10 +1,6 @@
-import type { PieDB, RadarDB } from "../../compat/types.ts";
+import type { PieDB, QuadrantDB, RadarDB, XYChartDB } from "../../compat/types.ts";
 import { withOpacity } from "../colors.ts";
 import type { AddSurface, SurfaceContext } from "../theme.ts";
-
-type SankeyDB = typeof import("mermaid/dist/diagrams/sankey/sankeyDB.js").default;
-type XYChartDB = typeof import("mermaid/dist/diagrams/xychart/xychartDb.js").default;
-type QuadrantDB = typeof import("mermaid/dist/diagrams/quadrant-chart/quadrantDb.js").default;
 
 export function pieSurfaces(ctx: SurfaceContext, add: AddSurface): void {
   const { vars: v, config } = ctx;
@@ -28,17 +24,6 @@ export function pieSurfaces(ctx: SurfaceContext, add: AddSurface): void {
 
     add(`legend ${label}`, v.pieLegendTextColor);
     index = (index % 12) + 1;
-  }
-}
-
-export function sankeySurfaces(ctx: SurfaceContext, add: AddSurface): void {
-  const { vars: v } = ctx;
-  const db = ctx.db as SankeyDB;
-
-  for (const node of db.getNodes()) {
-    // Mermaid outlines labels with a 4px mainBkg stroke before painting
-    // the foreground. That outline is the immediate letter background.
-    add(node.ID, v.textColor, v.mainBkg || v.background || "#fff");
   }
 }
 

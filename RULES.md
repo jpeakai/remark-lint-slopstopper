@@ -368,6 +368,23 @@ Use the selector `text` for C4, where the outline reaches every label and the ti
 A C4 title inherits the diagram's root text colour.
 Any other declaration, selector, stroke colour, width or join is reported as unauditable, as is C4 HTML text.
 
+Sankey Ribbons are drawn over the node labels, and natively they multiply-blend, which a contrast ratio cannot express.
+A Sankey diagram is auditable only with this normal-blend recipe as its whole `themeCSS`:
+
+```text
+.link { mix-blend-mode: normal !important; stroke-opacity: 0.16; }
+```
+
+Each Ribbon must also have one opaque colour.
+Set `sankey.linkColor` to `source`, `target` or one colour, and give every node an opaque colour in `sankey.nodeColors`.
+
+The rule follows Mermaid's own layout to find which Ribbons cross each label.
+It then measures the label under every combination of those Ribbons, up to four.
+An `outlined` label is measured over its outline in `mainBkg`.
+
+Gradient Ribbons, circular flows, non-positive volumes and labels under more than four Ribbons are reported as unauditable.
+Ribbons are filled areas rather than Connectors, so the connector policy does not measure them.
+
 A diagram that pins a theme is checked in that theme in both viewer modes, if the pinned Mermaid defines it.
 An unknown theme name is an error rather than a silent fallback to the default colours.
 A few renderers paint redux themes differently by name; those themes are unauditable for the sequence, ER, gitGraph, mindmap and timeline families.

@@ -53,3 +53,15 @@ export type { TreeViewDB } from "mermaid/dist/diagrams/treeView/types.js";
 export type { VennDB } from "mermaid/dist/diagrams/venn/vennTypes.js";
 
 export type { Edge as LayoutEdge, LayoutData, Node as LayoutNode } from "mermaid/dist/rendering-util/types.js";
+
+export type XYChartDB = typeof import("mermaid/dist/diagrams/xychart/xychartDb.js").default;
+export type QuadrantDB = typeof import("mermaid/dist/diagrams/quadrant-chart/quadrantDb.js").default;
+export type BlockDB = typeof import("mermaid/dist/diagrams/block/blockDB.js").default;
+export type C4DB = typeof import("mermaid/dist/diagrams/c4/c4Db.js").default;
+export type GanttDB = typeof import("mermaid/dist/diagrams/gantt/ganttDb.js").default;
+export type KanbanDB = typeof import("mermaid/dist/diagrams/kanban/kanbanDb.js").default;
+export type JourneyDB = typeof import("mermaid/dist/diagrams/user-journey/journeyDb.js").default;
+export type TimelineDB = typeof import("mermaid/dist/diagrams/timeline/timelineDb.js").default;
+export type WardleyDB = typeof import("mermaid/dist/diagrams/wardley/wardleyDb.js").default;
+
+export type { RailroadStyleOptions } from "mermaid/dist/diagrams/railroad/railroadTypes.js";

@@ -1,12 +1,6 @@
-import type { GitGraphDB } from "../../compat/types.ts";
+import type { GanttDB, GitGraphDB, JourneyDB, KanbanDB, TimelineDB, WardleyDB } from "../../compat/types.ts";
 import { compositeOver, withOpacity } from "../colors.ts";
 import type { AddSurface, SurfaceContext, ThemeVariables } from "../theme.ts";
-
-type GanttDB = typeof import("mermaid/dist/diagrams/gantt/ganttDb.js").default;
-type KanbanDB = typeof import("mermaid/dist/diagrams/kanban/kanbanDb.js").default;
-type JourneyDB = typeof import("mermaid/dist/diagrams/user-journey/journeyDb.js").default;
-type TimelineDB = typeof import("mermaid/dist/diagrams/timeline/timelineDb.js").default;
-type WardleyDB = typeof import("mermaid/dist/diagrams/wardley/wardleyDb.js").default;
 
 export function ganttSurfaces(ctx: SurfaceContext, add: AddSurface): void {
   const { vars: v, page } = ctx;

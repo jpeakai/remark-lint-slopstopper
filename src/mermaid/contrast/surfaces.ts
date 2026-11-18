@@ -1,11 +1,5 @@
 import { compositeOver } from "./colors.ts";
-import {
-  pieSurfaces,
-  quadrantChartSurfaces,
-  radarSurfaces,
-  sankeySurfaces,
-  xychartSurfaces,
-} from "./surfaces/charts.ts";
+import { pieSurfaces, quadrantChartSurfaces, radarSurfaces, xychartSurfaces } from "./surfaces/charts.ts";
 import {
   architectureSurfaces,
   blockSurfaces,
@@ -23,6 +17,7 @@ import {
   wardleySurfaces,
 } from "./surfaces/planning.ts";
 import { cynefinSurfaces, vennSurfaces } from "./surfaces/regions.ts";
+import { sankeySurfaces } from "./surfaces/sankey.ts";
 import {
   ishikawaSurfaces,
   mindmapSurfaces,

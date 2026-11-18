@@ -78,7 +78,10 @@ const STYLED_FAMILIES = ["flowchart", "classDiagram", "stateDiagram", "erDiagram
 // Families whose connectors are modelled, and families that draw none: their
 // lines are axes, borders or decoration rather than relationships.
 const CONNECTOR_FAMILIES = new Set([...STYLED_FAMILIES, "sequence", ...Object.keys(FAMILY_CONNECTORS)]);
+
+// Sankey ribbons are filled areas, measured as the backdrop of the labels under them.
 const CONNECTOR_FREE = new Set([
+  "sankey",
   "info",
   "pie",
   "quadrantChart",
@@ -138,7 +141,8 @@ async function discover(source: string, stats: DiagramStats, viewer: Viewer, ana
 
   rejectUnmodelledConfig(config);
 
-  const outline = config.themeCSS ? textOutline(config.themeCSS, kind, config) : undefined;
+  // Sankey validates its own ribbon recipe; any other themeCSS must be a text outline.
+  const outline = config.themeCSS && kind !== "sankey" ? textOutline(config.themeCSS, kind, config) : undefined;
 
   const theme = themeProblem(mermaid, config.theme, kind);
 
